@@ -1,0 +1,248 @@
+// prisma/schema.prisma
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ── USERS ──────────────────────────────────────────────────────────────────
+model User {
+  id            String    @id @default(uuid())
+  email         String    @unique
+  passwordHash  String
+  name          String
+  avatar        String?
+  role          UserRole  @default(CUSTOMER)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  // Relations
+  farm          Farm?
+  favorites     Favorite[]
+  orders        Order[]
+  reviews       Review[]
+  notifications Notification[]
+  sessions      Session[]
+
+  @@index([email])
+}
+
+enum UserRole {
+  CUSTOMER
+  FARMER
+  ADMIN
+}
+
+model Session {
+  id        String   @id @default(uuid())
+  userId    String
+  token     String   @unique
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([token])
+}
+
+// ── FARMS ──────────────────────────────────────────────────────────────────
+model Farm {
+  id          String    @id @default(uuid())
+  ownerId     String    @unique
+  name        String
+  description String    @db.Text
+  type        FarmType
+  lat         Float
+  lng         Float
+  address     String
+  city        String
+  region      String
+  phone       String?
+  email       String?
+  website     String?
+  hours       String?
+  founded     Int?
+  hectares    Float?
+  bio         Boolean   @default(false)
+  delivery    Boolean   @default(false)
+  eshop       Boolean   @default(false)
+  verified    Boolean   @default(false)
+  active      Boolean   @default(true)
+  coverImage  String?
+  images      String[]
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  // Relations
+  owner       User      @relation(fields: [ownerId], references: [id])
+  products    Product[]
+  favorites   Favorite[]
+  orders      Order[]
+  reviews     Review[]
+  seasonalOffers SeasonalOffer[]
+
+  @@index([type])
+  @@index([region])
+  @@index([bio])
+  @@index([lat, lng])
+}
+
+enum FarmType {
+  bio
+  veggie
+  meat
+  dairy
+  honey
+  wine
+  herbs
+  market
+}
+
+// ── PRODUCTS ───────────────────────────────────────────────────────────────
+model Product {
+  id          String    @id @default(uuid())
+  farmId      String
+  name        String
+  description String?   @db.Text
+  emoji       String
+  price       Float
+  unit        String    // "kg", "l", "ks", "balení"
+  stock       Int       @default(0)
+  category    String
+  seasonal    Boolean   @default(false)
+  seasonStart Int?      // month 1-12
+  seasonEnd   Int?
+  images      String[]
+  active      Boolean   @default(true)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  farm        Farm      @relation(fields: [farmId], references: [id], onDelete: Cascade)
+  orderItems  OrderItem[]
+  seasonalOffers SeasonalOffer[]
+
+  @@index([farmId])
+  @@index([category])
+}
+
+// ── ORDERS ─────────────────────────────────────────────────────────────────
+model Order {
+  id              String      @id @default(uuid())
+  userId          String
+  farmId          String
+  status          OrderStatus @default(PENDING)
+  totalAmount     Float
+  deliveryType    String      // "pickup" | "delivery"
+  deliveryAddress String?
+  note            String?
+  stripePaymentId String?
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+
+  user            User        @relation(fields: [userId], references: [id])
+  farm            Farm        @relation(fields: [farmId], references: [id])
+  items           OrderItem[]
+
+  @@index([userId])
+  @@index([farmId])
+  @@index([status])
+}
+
+enum OrderStatus {
+  PENDING
+  CONFIRMED
+  PREPARING
+  READY
+  DELIVERED
+  CANCELLED
+}
+
+model OrderItem {
+  id        String  @id @default(uuid())
+  orderId   String
+  productId String
+  quantity  Int
+  unitPrice Float
+  total     Float
+
+  order     Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  product   Product @relation(fields: [productId], references: [id])
+}
+
+// ── FAVORITES ──────────────────────────────────────────────────────────────
+model Favorite {
+  id        String   @id @default(uuid())
+  userId    String
+  farmId    String
+  createdAt DateTime @default(now())
+
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  farm      Farm     @relation(fields: [farmId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, farmId])
+  @@index([userId])
+}
+
+// ── REVIEWS ────────────────────────────────────────────────────────────────
+model Review {
+  id        String   @id @default(uuid())
+  userId    String
+  farmId    String
+  rating    Int      // 1-5
+  text      String?  @db.Text
+  createdAt DateTime @default(now())
+
+  user      User     @relation(fields: [userId], references: [id])
+  farm      Farm     @relation(fields: [farmId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, farmId])
+  @@index([farmId])
+}
+
+// ── SEASONAL OFFERS ────────────────────────────────────────────────────────
+model SeasonalOffer {
+  id          String   @id @default(uuid())
+  farmId      String
+  productId   String?
+  title       String
+  description String?
+  emoji       String
+  validFrom   DateTime
+  validTo     DateTime
+  discount    Float?   // percentage
+  createdAt   DateTime @default(now())
+
+  farm        Farm     @relation(fields: [farmId], references: [id], onDelete: Cascade)
+  product     Product? @relation(fields: [productId], references: [id])
+
+  @@index([farmId])
+  @@index([validFrom, validTo])
+}
+
+// ── NOTIFICATIONS ──────────────────────────────────────────────────────────
+model Notification {
+  id        String           @id @default(uuid())
+  userId    String
+  type      NotificationType
+  title     String
+  body      String
+  read      Boolean          @default(false)
+  data      Json?
+  createdAt DateTime         @default(now())
+
+  user      User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, read])
+}
+
+enum NotificationType {
+  ORDER_STATUS
+  SEASONAL_OFFER
+  NEW_PRODUCT
+  REVIEW_REPLY
+  SYSTEM
+}
