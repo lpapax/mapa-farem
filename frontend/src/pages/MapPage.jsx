@@ -214,40 +214,52 @@ function MapboxMap({ farms, selectedId, onSelect, userLocation, radius, dark, ma
         map.getSource('farms-cluster').setData(geojson);
       }
 
-      // Individuální markery (viditelné při přiblížení > zoom 10)
+      // Individuální markery — lazy: jen při zoom >= 11, jen viditelná oblast
       Object.values(markersRef.current).forEach(m => m.remove());
       markersRef.current = {};
-      farms.forEach(farm => {
+
+      function createPin(farm) {
         const color = COLORS[farm.type] || '#5F8050';
         const isActive = farm.id === selectedId;
         const el = document.createElement('div');
-        const pinSize = isActive ? 52 : 42;
-        const emojiSize = isActive ? 22 : 18;
-        el.style.cssText = `cursor:pointer;transition:transform 0.2s;transform:${isActive?'scale(1.15)':'scale(1)'};filter:drop-shadow(0 ${isActive?'5px 14px':'3px 8px'} rgba(0,0,0,${isActive?'.4':'.25'}))`;
-        el.innerHTML = `
-          <div style="display:flex;flex-direction:column;align-items:center">
-            <svg width="${pinSize}" height="${pinSize*1.3}" viewBox="0 0 52 68" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <path d="M26 2C14.95 2 6 10.95 6 22C6 36.5 26 66 26 66C26 66 46 36.5 46 22C46 10.95 37.05 2 26 2Z"
-                fill="${color}" stroke="white" stroke-width="3"/>
-              <circle cx="26" cy="22" r="12" fill="rgba(255,255,255,0.25)"/>
-              <text x="26" y="28" text-anchor="middle" font-size="${emojiSize}">${farm.emoji}</text>
-            </svg>
-          </div>`;
+        el.style.cssText = `cursor:pointer;transition:transform 0.15s;transform:${isActive?'scale(1.2)':'scale(1)'};filter:drop-shadow(0 3px 8px rgba(0,0,0,.25))`;
+        el.innerHTML = `<svg width="36" height="47" viewBox="0 0 52 68" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M26 2C14.95 2 6 10.95 6 22C6 36.5 26 66 26 66C26 66 46 36.5 46 22C46 10.95 37.05 2 26 2Z" fill="${color}" stroke="white" stroke-width="3"/>
+          <text x="26" y="30" text-anchor="middle" font-size="18">${farm.emoji}</text>
+        </svg>`;
         el.addEventListener('click', () => onSelect(farm));
+        return el;
+      }
 
-        // Marker je viditelný jen při zoom > 10 (jinak cluster)
-        const marker = new window.mapboxgl.Marker({ element: el, anchor:'bottom' })
-          .setLngLat([farm.lng, farm.lat]);
+      function updateMarkers() {
+        const zoom = map.getZoom();
+        if (zoom < 11) {
+          // Skryj všechny piny — clustery jsou aktivní
+          Object.values(markersRef.current).forEach(m => m.getElement().style.display = 'none');
+          return;
+        }
+        // Zobraz jen farmy ve viditelné oblasti
+        const bounds = map.getBounds();
+        farms.forEach(farm => {
+          const inBounds = farm.lat >= bounds.getSouth() && farm.lat <= bounds.getNorth()
+            && farm.lng >= bounds.getWest() && farm.lng <= bounds.getEast();
+          if (!inBounds) {
+            if (markersRef.current[farm.id]) markersRef.current[farm.id].getElement().style.display = 'none';
+            return;
+          }
+          if (!markersRef.current[farm.id]) {
+            const el = createPin(farm);
+            const marker = new window.mapboxgl.Marker({ element: el, anchor:'bottom' }).setLngLat([farm.lng, farm.lat]).addTo(map);
+            markersRef.current[farm.id] = marker;
+          } else {
+            markersRef.current[farm.id].getElement().style.display = 'block';
+          }
+        });
+      }
 
-        // Piny viditelné jen při zoom >= 11 (jinak clustery)
-        const updateVisibility = () => {
-          el.style.display = map.getZoom() >= 11 ? 'block' : 'none';
-        };
-        map.on('zoom', updateVisibility);
-        updateVisibility();
-        marker.addTo(map);
-        markersRef.current[farm.id] = marker;
-      });
+      map.on('moveend', updateMarkers);
+      map.on('zoomend', updateMarkers);
+      updateMarkers();
     };
 
     const tryBuild = () => {
