@@ -191,14 +191,59 @@ function MapboxMap({ farms, selectedId, onSelect, userLocation, radius, dark, ma
     };
   }, []);
 
-  // Změna stylu mapy za běhu
+  // Změna stylu mapy za běhu — po načtení nového stylu obnoví source + layers
   useEffect(() => {
     const map = mapInstance.current;
     if (!map || !mapStyleUrl) return;
     map.setStyle(mapStyleUrl);
+    map.once('styledata', () => {
+      // Obnoví cluster source
+      if (!map.getSource('farms-cluster')) {
+        map.addSource('farms-cluster', {
+          type: 'geojson',
+          data: { type:'FeatureCollection', features: farms.map(f => ({
+            type: 'Feature',
+            geometry: { type:'Point', coordinates:[f.lng, f.lat] },
+            properties: { id: f.id, type: f.type, name: f.name, emoji: f.emoji },
+          }))},
+          cluster: true,
+          clusterMaxZoom: 11,
+          clusterRadius: 50,
+        });
+        map.addLayer({
+          id: 'clusters', type: 'circle', source: 'farms-cluster',
+          filter: ['has', 'point_count'],
+          paint: {
+            'circle-color': ['step', ['get','point_count'], '#7DB05A', 10, '#C99B30', 50, '#9B2226'],
+            'circle-radius': ['step', ['get','point_count'], 20, 10, 28, 50, 36],
+            'circle-stroke-width': 3, 'circle-stroke-color': 'white', 'circle-opacity': 0.9,
+          },
+        });
+        map.addLayer({
+          id: 'cluster-count', type: 'symbol', source: 'farms-cluster',
+          filter: ['has', 'point_count'],
+          layout: { 'text-field': '{point_count_abbreviated}', 'text-size': 13,
+            'text-font': ['DIN Offc Pro Medium', 'Arial Unicode MS Bold'] },
+          paint: { 'text-color': 'white' },
+        });
+        map.on('click', 'clusters', e => {
+          const features = map.queryRenderedFeatures(e.point, { layers:['clusters'] });
+          const clusterId = features[0].properties.cluster_id;
+          map.getSource('farms-cluster').getClusterExpansionZoom(clusterId, (err, zoom) => {
+            if (!err) map.easeTo({ center: features[0].geometry.coordinates, zoom: zoom + 0.5 });
+          });
+        });
+        map.on('mouseenter', 'clusters', () => map.getCanvas().style.cursor = 'pointer');
+        map.on('mouseleave', 'clusters', () => map.getCanvas().style.cursor = '');
+      }
+      // Znovu zobraz piny
+      Object.values(markersRef.current).forEach(m => m.addTo(map));
+    });
   }, [mapStyleUrl]);
 
-  // Markery farem — načtení hned + velké čitelné ikonky + cluster data
+  // Markery farem — clustering + lazy piny + popup na klik
+  const popupRef = useRef(null);
+
   useEffect(() => {
     const buildMarkers = (map) => {
       // Aktualizuj GeoJSON source pro clustering
@@ -207,42 +252,73 @@ function MapboxMap({ farms, selectedId, onSelect, userLocation, radius, dark, ma
         features: farms.map(f => ({
           type: 'Feature',
           geometry: { type:'Point', coordinates:[f.lng, f.lat] },
-          properties: { id: f.id, type: f.type, name: f.name },
+          properties: { id: f.id, type: f.type, name: f.name, emoji: f.emoji },
         })),
       };
       if (map.getSource('farms-cluster')) {
         map.getSource('farms-cluster').setData(geojson);
       }
 
-      // Individuální markery — lazy: jen při zoom >= 11, jen viditelná oblast
+      // Lazy piny — vytvoří se jen pro viditelnou oblast při zoom >= 11
       Object.values(markersRef.current).forEach(m => m.remove());
       markersRef.current = {};
+
+      function showPopup(farm) {
+        if (popupRef.current) { popupRef.current.remove(); popupRef.current = null; }
+        const color = COLORS[farm.type] || '#5F8050';
+        popupRef.current = new window.mapboxgl.Popup({ offset:50, closeButton:true, maxWidth:'280px', className:'farm-popup' })
+          .setLngLat([farm.lng, farm.lat])
+          .setHTML(`
+            <div style="font-family:'DM Sans',sans-serif;border-radius:12px;overflow:hidden">
+              <div style="padding:14px 16px 10px;background:linear-gradient(135deg,${color},${color}bb);color:white">
+                <div style="font-size:28px;line-height:1">${farm.emoji}</div>
+                <div style="font-size:15px;font-weight:700;margin-top:4px;line-height:1.2">${farm.name}</div>
+                <div style="font-size:11px;opacity:.85;margin-top:3px">📍 ${farm.loc || 'Česká republika'}</div>
+                <div style="margin-top:6px;display:flex;gap:4px;flex-wrap:wrap">
+                  ${farm.bio?'<span style="font-size:10px;font-weight:700;background:rgba(255,255,255,.25);border-radius:50px;padding:2px 8px">🌱 BIO</span>':''}
+                  ${farm.eshop?'<span style="font-size:10px;font-weight:700;background:rgba(255,255,255,.25);border-radius:50px;padding:2px 8px">🛒 E-shop</span>':''}
+                  <span style="font-size:10px;font-weight:700;background:rgba(255,255,255,.25);border-radius:50px;padding:2px 8px">⭐ ${farm.rating||4.0}</span>
+                </div>
+              </div>
+              <div style="padding:10px 14px 12px;background:white">
+                <div style="font-size:11px;color:#666;margin-bottom:6px">🕐 ${farm.hours||'Ověřte telefonicky'}</div>
+                ${farm.phone?`<div style="font-size:11px;color:#444;margin-bottom:6px">📞 ${farm.phone}</div>`:''}
+                ${farm.website?`<div style="margin-bottom:8px"><a href="${farm.website}" target="_blank" style="font-size:11px;color:#3A5728;text-decoration:underline">🌐 Web farmy</a></div>`:''}
+                <button onclick="window.__goToFarm('${farm.id}')"
+                  style="width:100%;padding:8px;background:${color};color:white;border:none;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer">
+                  📋 Více info
+                </button>
+              </div>
+            </div>`)
+          .addTo(map);
+        onSelect(farm);
+      }
 
       function createPin(farm) {
         const color = COLORS[farm.type] || '#5F8050';
         const isActive = farm.id === selectedId;
         const el = document.createElement('div');
-        el.style.cssText = `cursor:pointer;transition:transform 0.15s;transform:${isActive?'scale(1.2)':'scale(1)'};filter:drop-shadow(0 3px 8px rgba(0,0,0,.25))`;
-        el.innerHTML = `<svg width="36" height="47" viewBox="0 0 52 68" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <path d="M26 2C14.95 2 6 10.95 6 22C6 36.5 26 66 26 66C26 66 46 36.5 46 22C46 10.95 37.05 2 26 2Z" fill="${color}" stroke="white" stroke-width="3"/>
-          <text x="26" y="30" text-anchor="middle" font-size="18">${farm.emoji}</text>
+        el.style.cssText = `cursor:pointer;transition:transform 0.15s;transform:${isActive?'scale(1.25)':'scale(1)'};filter:drop-shadow(0 ${isActive?'4px 10px':'2px 6px'} rgba(0,0,0,${isActive?'.4':'.2'}))`;
+        el.innerHTML = `<svg width="40" height="52" viewBox="0 0 52 68" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M26 2C14.95 2 6 10.95 6 22C6 36.5 26 66 26 66C26 66 46 36.5 46 22C46 10.95 37.05 2 26 2Z" fill="${color}" stroke="white" stroke-width="3.5"/>
+          <circle cx="26" cy="22" r="13" fill="rgba(255,255,255,0.2)"/>
+          <text x="26" y="29" text-anchor="middle" font-size="17" dominant-baseline="middle">${farm.emoji}</text>
         </svg>`;
-        el.addEventListener('click', () => onSelect(farm));
+        el.addEventListener('click', (e) => { e.stopPropagation(); showPopup(farm); });
         return el;
       }
 
       function updateMarkers() {
         const zoom = map.getZoom();
         if (zoom < 11) {
-          // Skryj všechny piny — clustery jsou aktivní
           Object.values(markersRef.current).forEach(m => m.getElement().style.display = 'none');
           return;
         }
-        // Zobraz jen farmy ve viditelné oblasti
         const bounds = map.getBounds();
+        const pad = 0.05;
         farms.forEach(farm => {
-          const inBounds = farm.lat >= bounds.getSouth() && farm.lat <= bounds.getNorth()
-            && farm.lng >= bounds.getWest() && farm.lng <= bounds.getEast();
+          const inBounds = farm.lat >= bounds.getSouth()-pad && farm.lat <= bounds.getNorth()+pad
+            && farm.lng >= bounds.getWest()-pad && farm.lng <= bounds.getEast()+pad;
           if (!inBounds) {
             if (markersRef.current[farm.id]) markersRef.current[farm.id].getElement().style.display = 'none';
             return;
@@ -311,40 +387,13 @@ function MapboxMap({ farms, selectedId, onSelect, userLocation, radius, dark, ma
     map.flyTo({ center:[userLocation.lng, userLocation.lat], zoom:9.5, duration:1500 });
   }, [userLocation, radius]);
 
-  // Fly to + popup při výběru farmy
+  // Fly to při výběru farmy ze sidebaru
   useEffect(() => {
     const map = mapInstance.current;
     if (!map || !selectedId || !window.mapboxgl) return;
     const farm = farms.find(f => f.id === selectedId);
     if (!farm) return;
-    map.flyTo({ center:[farm.lng, farm.lat], zoom:13, duration:1200 });
-    const color = COLORS[farm.type] || '#5F8050';
-    new window.mapboxgl.Popup({ offset:46, closeButton:true, maxWidth:'270px' })
-      .setLngLat([farm.lng, farm.lat])
-      .setHTML(`
-        <div style="font-family:'DM Sans',sans-serif">
-          <div style="padding:14px 16px 10px;background:linear-gradient(135deg,${color}ee,${color}88);color:white">
-            <div style="font-size:26px">${farm.emoji}</div>
-            <div style="font-family:'Playfair Display',serif;font-size:15px;font-weight:700;margin-top:3px">${farm.name}</div>
-            <div style="font-size:11px;opacity:.85;margin-top:2px">📍 ${farm.loc}</div>
-            <div style="margin-top:5px;display:flex;gap:4px;flex-wrap:wrap">
-              <span style="font-size:10px;font-weight:700;background:rgba(255,255,255,.22);border-radius:50px;padding:1px 7px">${farm.open?'✓ Otevřeno':'✗ Zavřeno'}</span>
-              ${farm.bio?'<span style="font-size:10px;font-weight:700;background:rgba(255,255,255,.22);border-radius:50px;padding:1px 7px">🌱 BIO</span>':''}
-              <span style="font-size:10px;font-weight:700;background:rgba(255,255,255,.22);border-radius:50px;padding:1px 7px">⭐ ${farm.rating}</span>
-            </div>
-          </div>
-          <div style="padding:10px 14px;background:white">
-            <div style="font-size:11px;color:#555;margin-bottom:8px">🕐 ${farm.hours}</div>
-            <div style="display:flex;flex-wrap:wrap;gap:4px;margin-bottom:10px">
-              ${(farm.products||[]).slice(0,3).map(p=>`<span style="font-size:10px;background:#EDE5D0;padding:2px 6px;border-radius:5px">${p}</span>`).join('')}
-            </div>
-            <button onclick="window.__goToFarm('${farm.id}')"
-              style="width:100%;padding:8px;background:${color};color:white;border:none;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;font-family:'DM Sans',sans-serif">
-              📋 Detail farmy
-            </button>
-          </div>
-        </div>`)
-      .addTo(map);
+    map.flyTo({ center:[farm.lng, farm.lat], zoom: Math.max(map.getZoom(), 13), duration:1000 });
   }, [selectedId]);
 
   useEffect(() => {
@@ -402,7 +451,7 @@ export default function MapPage() {
   const [showRadiusPanel, setShowRadiusPanel] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   const [dark, setDark] = useState(() => localStorage.getItem('mf-dark') === '1');
-  const [mapStyle, setMapStyle] = useState(() => localStorage.getItem('mf-style') || 'light');
+  const [mapStyle, setMapStyle] = useState(() => localStorage.getItem('mf-style') || 'outdoors');
   const [stylePickerOpen, setStylePickerOpen] = useState(false);
 
   const MAP_STYLES = [
