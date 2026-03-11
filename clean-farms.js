@@ -1,59 +1,40 @@
+// clean-farms.js — odstraní nereálné záznamy z farms.json
+// node clean-farms.js
 const fs = require('fs');
 
-// Načti farmy
-const farms = JSON.parse(fs.readFileSync('real-farms.json', 'utf8'));
-console.log('Celkem před čištěním:', farms.length);
+const farms = JSON.parse(fs.readFileSync('frontend/src/data/farms.json', 'utf8'));
+console.log('Před čištěním:', farms.length);
 
-// Přísné hranice ČR (polygon aproximace)
-function isStrictlyCzechia(lat, lng) {
-  // Základní bbox
-  if (lat < 48.55 || lat > 51.06) return false;
-  if (lng < 12.09 || lng > 18.87) return false;
-  
-  // Odfiltruj Německo na západ-jihozápad
-  if (lng < 13.2 && lat < 50.5) return false;
-  if (lng < 12.8) return false;
-  
-  // Odfiltruj Rakousko na jihu
-  if (lat < 48.68 && lng < 15.5) return false;
-  if (lat < 48.58) return false;
-  
-  // Odfiltruj Polsko na severu (tam jsou jen piny poblíž hranic)
-  if (lat > 50.9 && lng > 18.0) return false;
-  
-  return true;
+const BAD_EXACT = ['pila','vepřín','veprin','jzd','zd','koně','kone','drubežárna','jatka','sklep','sklad','stodola','louka','pole'];
+const BAD_CONTAINS = ['jzd ','nakielska','tarnowskie','görlitz','bautzen'];
+
+function isBad(f) {
+  const name = (f.name || '').toLowerCase().trim();
+  const loc = (f.loc || '').toLowerCase();
+
+  if (name.length < 4) return true;
+  if (BAD_EXACT.includes(name)) return true;
+  if (BAD_CONTAINS.some(b => name.includes(b) || loc.includes(b))) return true;
+  if (/[ßÄÖÜäöü]/.test(f.name)) return true;
+  if (f.phone && (f.phone.startsWith('+49') || f.phone.startsWith('0049'))) return true;
+
+  if (f.lat && f.lng) {
+    if (f.lat < 48.55 || f.lat > 51.06) return true;
+    if (f.lng < 12.2 || f.lng > 18.87) return true;
+    if (f.lng < 13.2 && f.lat < 50.5) return true;
+    if (f.lat > 50.8 && f.lng > 18.3) return true;
+    if (f.lat < 48.65 && f.lng < 15.0) return true;
+  }
+
+  return false;
 }
 
-// Filtruj německé/rakouské znaky v názvu
-function hasGermanChars(name) {
-  return /[ßÄÖÜäöü]/.test(name);
-}
+const cleaned = farms.filter(f => !isBad(f));
+const removed = farms.filter(f => isBad(f));
 
-// Filtruj německé telefony
-function hasGermanPhone(phone) {
-  return phone && (phone.startsWith('+49') || phone.startsWith('0049'));
-}
+console.log('\nOdstraněno (' + removed.length + 'x):');
+removed.forEach(f => console.log(` - "${f.name}" | ${f.loc}`));
 
-// Filtruj německé/rakouské adresy
-function hasGermanAddress(loc) {
-  const germanWords = ['straße', 'strasse', 'platz', 'berg', 'dorf', 'hausen', 'burg', 'bach', 'feld', 'tal', 'stein', 'bruck', 'gasse'];
-  const l = (loc || '').toLowerCase();
-  return germanWords.some(w => l.includes(w));
-}
-
-const cleaned = farms.filter(f => {
-  if (!isStrictlyCzechia(f.lat, f.lng)) return false;
-  if (hasGermanChars(f.name)) return false;
-  if (hasGermanPhone(f.phone)) return false;
-  if (hasGermanAddress(f.loc)) return false;
-  return true;
-});
-
-// Přečísluj ID
 cleaned.forEach((f, i) => { f.id = i + 1; });
-
-fs.writeFileSync('real-farms-clean.json', JSON.stringify(cleaned, null, 2), 'utf8');
-console.log('Po čištění:', cleaned.length);
-console.log('Odstraněno:', farms.length - cleaned.length);
-console.log('Ukázka:');
-cleaned.slice(0,5).forEach(f => console.log(` - ${f.name} | ${f.loc} | ${f.lat}, ${f.lng}`));
+fs.writeFileSync('frontend/src/data/farms.json', JSON.stringify(cleaned, null, 2), 'utf8');
+console.log('\n✅ Po čištění:', cleaned.length, 'farem');
