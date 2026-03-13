@@ -26,6 +26,7 @@ export default function App() {
         <Route path="/mapa" element={<MapPage />} />
         <Route path="/farma/:id" element={<FarmDetailPage />} />
         <Route path="/prihlaseni" element={<LoginPage />} />
+        <Route path="/login" element={<Navigate to="/prihlaseni" replace />} />
         <Route path="/registrace" element={<RegisterPage />} />
         <Route path="/pridat-farmu" element={<RegisterFarmPage />} />
         <Route path="/profil" element={<ProfilePage />} />
