@@ -3,7 +3,7 @@ import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { ArrowLeft, Heart, ShoppingCart, Star, MapPin, Clock, Phone, Globe, Truck, Store, ExternalLink } from 'lucide-react';
 import toast from 'react-hot-toast';
-import { useAuthStore, useCartStore } from '../store/index.js';
+import { useAuthStore, useCartStore, useFavoritesStore } from '../store/index.js';
 import FARMS_DATA from '../data/farms.json';
 
 const COLORS = { bio:'#C99B30', veggie:'#3A5728', meat:'#9B2226', dairy:'#2980B9', honey:'#D4A017', wine:'#7D3C98', herbs:'#5F8050', market:'#5D4037' };
@@ -13,8 +13,8 @@ export default function FarmDetailPage() {
   const navigate = useNavigate();
   const { user } = useAuthStore();
   const { addItem, farmId: cartFarm } = useCartStore();
+  const { toggle: toggleFavorite, has: isFavorited } = useFavoritesStore();
   const [tab, setTab] = useState('products');
-  const [favorited, setFavorited] = useState(false);
   const [reviewText, setReviewText] = useState('');
   const [reviewRating, setReviewRating] = useState(5);
 
@@ -35,14 +35,18 @@ export default function FarmDetailPage() {
 
   const color = COLORS[farm.type] || '#5F8050';
 
-  // Demo products from farm type
+  // Deterministic hash so prices never change between renders / page visits
+  const hash = (s) => String(s).split('').reduce((a, c) => (a * 31 + c.charCodeAt(0)) & 0xffff, 0);
+  const basePrices = { bio:85, veggie:45, meat:180, dairy:55, honey:120, wine:250, herbs:65, market:40 };
+  const basePrice = basePrices[farm.type] || 60;
+
   const demoProducts = farm.products?.map((p, i) => ({
     id: `${farm.id}-prod-${i}`,
     name: p.replace(/[^\w\sáčďéěíňóřšťúůýžÁČĎÉĚÍŇÓŘŠŤÚŮÝŽ]/gu, '').trim(),
     emoji: p.match(/\p{Emoji}/u)?.[0] || '🌿',
-    price: Math.round((20 + Math.random()*200) * 10) / 10,
+    price: Math.round(basePrice * (0.5 + (hash(String(farm.id) + i) % 100) / 100)),
     unit: ['kg','l','ks','balení'][i % 4],
-    stock: Math.floor(Math.random()*50),
+    stock: 5 + (hash(String(farm.id) + i + 'stock') % 45),
     farmId: String(farm.id),
   }));
 
@@ -60,15 +64,16 @@ export default function FarmDetailPage() {
   const avgRating = (demoReviews.reduce((s, r) => s + r.rating, 0) / demoReviews.length).toFixed(1);
 
   const handleAddToCart = (product) => {
-    if (!user) { toast.error('Pro objednání se přihlaste'); navigate('/login'); return; }
+    if (!user) { toast.error('Pro objednání se přihlaste'); navigate('/prihlaseni'); return; }
     addItem(product, String(farm.id));
     toast.success(`${product.emoji} ${product.name} přidáno do košíku`);
   };
 
   const handleFavorite = () => {
-    if (!user) { toast.error('Pro ukládání se přihlaste'); navigate('/login'); return; }
-    setFavorited(v => !v);
-    toast.success(favorited ? 'Odebráno z oblíbených' : '❤️ Přidáno do oblíbených');
+    if (!user) { toast.error('Pro ukládání se přihlaste'); navigate('/prihlaseni'); return; }
+    const wasFav = isFavorited(farm.id);
+    toggleFavorite(farm.id);
+    toast.success(wasFav ? 'Odebráno z oblíbených' : '❤️ Přidáno do oblíbených');
   };
 
   const handleReview = (e) => {
@@ -93,8 +98,8 @@ export default function FarmDetailPage() {
             <ArrowLeft size={14} /> Zpět
           </button>
           <div style={{ display:'flex', gap:8 }}>
-            <button onClick={handleFavorite} style={{ background: favorited ? '#C0392B' : 'rgba(255,255,255,0.2)', border:'none', borderRadius:50, padding:'7px 12px', color:'white', cursor:'pointer', fontSize:14 }}>
-              {favorited ? '❤️' : '🤍'}
+            <button onClick={handleFavorite} style={{ background: isFavorited(farm.id) ? '#C0392B' : 'rgba(255,255,255,0.2)', border:'none', borderRadius:50, padding:'7px 12px', color:'white', cursor:'pointer', fontSize:14 }}>
+              {isFavorited(farm.id) ? '❤️' : '🤍'}
             </button>
             <button onClick={() => window.open(`https://maps.google.com/?q=${encodeURIComponent(farm.name+' '+farm.loc)}`, '_blank')}
               style={{ background:'rgba(255,255,255,0.2)', border:'none', borderRadius:50, padding:'7px 12px', color:'white', cursor:'pointer', fontSize:14 }}>

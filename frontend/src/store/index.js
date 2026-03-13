@@ -1,67 +1,58 @@
 // frontend/src/store/index.js
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import api from '../utils/api.js';
+import { supabase } from '../supabase.js';
+
+// Map Supabase user → app user shape { name, email, role }
+function mapUser(u) {
+  if (!u) return null;
+  return {
+    name: u.user_metadata?.name || u.email?.split('@')[0] || 'Uživatel',
+    email: u.email,
+    role: u.user_metadata?.role || 'CUSTOMER',
+  };
+}
 
 // ── AUTH STORE ─────────────────────────────────────────────────────────────
-export const useAuthStore = create(
-  persist(
-    (set, get) => ({
-      user: null,
-      token: null,
-      loading: false,
+export const useAuthStore = create((set) => ({
+  user: null,
+  loading: false,
 
-      login: async (email, password) => {
-        set({ loading: true });
-        try {
-          const { data } = await api.post('/auth/login', { email, password });
-          api.defaults.headers.common['Authorization'] = `Bearer ${data.token}`;
-          set({ user: data.user, token: data.token, loading: false });
-          return { ok: true };
-        } catch (err) {
-          set({ loading: false });
-          return { ok: false, error: err.response?.data?.error || 'Chyba přihlášení' };
-        }
-      },
+  // Call once on app mount — syncs Supabase session to store
+  init: () => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      set({ user: mapUser(session?.user ?? null) });
+    });
+    supabase.auth.onAuthStateChange((_event, session) => {
+      set({ user: mapUser(session?.user ?? null) });
+    });
+  },
 
-      register: async (name, email, password, role = 'CUSTOMER') => {
-        set({ loading: true });
-        try {
-          const { data } = await api.post('/auth/register', { name, email, password, role });
-          api.defaults.headers.common['Authorization'] = `Bearer ${data.token}`;
-          set({ user: data.user, token: data.token, loading: false });
-          return { ok: true };
-        } catch (err) {
-          set({ loading: false });
-          return { ok: false, error: err.response?.data?.error || 'Chyba registrace' };
-        }
-      },
+  login: async (email, password) => {
+    set({ loading: true });
+    const { error } = await supabase.auth.signInWithPassword({ email, password });
+    set({ loading: false });
+    if (error) return { ok: false, error: error.message === 'Invalid login credentials' ? 'Špatný email nebo heslo.' : error.message };
+    return { ok: true };
+  },
 
-      logout: () => {
-        delete api.defaults.headers.common['Authorization'];
-        set({ user: null, token: null });
-      },
+  register: async (name, email, password, role = 'CUSTOMER') => {
+    set({ loading: true });
+    const { error } = await supabase.auth.signUp({
+      email,
+      password,
+      options: { data: { name, role } },
+    });
+    set({ loading: false });
+    if (error) return { ok: false, error: error.message === 'User already registered' ? 'Tento email je již registrován.' : error.message };
+    return { ok: true, needsConfirm: true };
+  },
 
-      fetchMe: async () => {
-        try {
-          const { data } = await api.get('/auth/me');
-          set({ user: data });
-        } catch {
-          get().logout();
-        }
-      },
-
-      setToken: (token) => {
-        api.defaults.headers.common['Authorization'] = `Bearer ${token}`;
-        set({ token });
-      },
-    }),
-    {
-      name: 'zemeplocha-auth',
-      partialize: (s) => ({ token: s.token }),
-    }
-  )
-);
+  logout: async () => {
+    await supabase.auth.signOut();
+    set({ user: null });
+  },
+}));
 
 // ── MAP / FILTER STORE ─────────────────────────────────────────────────────
 export const useMapStore = create((set) => ({
@@ -125,20 +116,48 @@ export const useCartStore = create(
   )
 );
 
+// ── FAVORITES STORE ────────────────────────────────────────────────────────
+export const useFavoritesStore = create(
+  persist(
+    (set, get) => ({
+      ids: [], // array of farm id strings
+
+      toggle: (farmId) => {
+        const id = String(farmId);
+        const ids = get().ids;
+        set({ ids: ids.includes(id) ? ids.filter(x => x !== id) : [...ids, id] });
+      },
+
+      has: (farmId) => get().ids.includes(String(farmId)),
+    }),
+    { name: 'zemeplocha-favorites' }
+  )
+);
+
+// ── ORDERS STORE ───────────────────────────────────────────────────────────
+export const useOrdersStore = create(
+  persist(
+    (set, get) => ({
+      orders: [],
+
+      addOrder: (order) => {
+        set({ orders: [order, ...get().orders] });
+      },
+    }),
+    { name: 'zemeplocha-orders' }
+  )
+);
+
 // ── NOTIFICATIONS STORE ────────────────────────────────────────────────────
 export const useNotificationStore = create((set, get) => ({
   notifications: [],
   unreadCount: 0,
 
   fetch: async () => {
-    try {
-      const { data } = await api.get('/notifications');
-      set({ notifications: data.notifications, unreadCount: data.unreadCount });
-    } catch {}
+    // No backend — notifications not available
   },
 
   markRead: async (id) => {
-    await api.patch(`/notifications/${id}/read`);
     set(s => ({
       notifications: s.notifications.map(n => n.id === id ? { ...n, read: true } : n),
       unreadCount: Math.max(0, s.unreadCount - 1),
@@ -146,7 +165,6 @@ export const useNotificationStore = create((set, get) => ({
   },
 
   markAllRead: async () => {
-    await api.patch('/notifications/read-all');
     set(s => ({
       notifications: s.notifications.map(n => ({ ...n, read: true })),
       unreadCount: 0,

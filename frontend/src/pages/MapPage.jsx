@@ -706,7 +706,7 @@ export default function MapPage() {
 
           {/* Sezónní banner */}
           <div style={{ position:'absolute', top:10, left:'50%', transform:'translateX(-50%)', background:'#C99B30', color:'#1E120A', padding:'5px 16px', borderRadius:50, fontSize:12, fontWeight:700, boxShadow:'0 2px 10px rgba(0,0,0,.15)', zIndex:500, whiteSpace:'nowrap', pointerEvents:'none' }}>
-            🌱 Jaro 2026 — sezóna: jahody, chřest, špenát
+            {(() => { const m = new Date().getMonth()+1; return m>=3&&m<=5?'🌱 Jaro — sezóna: jahody, chřest, špenát':m>=6&&m<=8?'☀️ Léto — sezóna: rajčata, okurky, borůvky':m>=9&&m<=11?'🍂 Podzim — sezóna: dýně, jablka, brambory':'❄️ Zima — sezóna: zelí, kořenová zelenina, med'; })()}
           </div>
 
           {/* Přepínač stylů mapy */}

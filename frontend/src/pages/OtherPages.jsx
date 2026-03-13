@@ -1,7 +1,11 @@
-// frontend/src/pages/DashboardPage.jsx
+// frontend/src/pages/OtherPages.jsx
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useAuthStore } from '../store/index.js';
+import toast from 'react-hot-toast';
+import { useAuthStore, useCartStore, useFavoritesStore, useOrdersStore } from '../store/index.js';
+import FARMS_DATA from '../data/farms.json';
 
+// ── DASHBOARD ──────────────────────────────────────────────────────────────
 export default function DashboardPage() {
   const navigate = useNavigate();
   const { user } = useAuthStore();
@@ -16,7 +20,7 @@ export default function DashboardPage() {
     <PageShell title="Dashboard farmáře" onBack={() => navigate('/')}>
       <div style={{ marginBottom:24 }}>
         <h2 style={{ fontFamily:"'Playfair Display',serif", fontSize:20, fontWeight:700, marginBottom:4 }}>
-          Vítejte, {user?.name} 👋
+          Vítejte, {user?.name || 'Farmáři'} 👋
         </h2>
         <p style={{ color:'#888', fontSize:14 }}>Přehled vaší farmy za posledních 30 dní</p>
       </div>
@@ -34,8 +38,13 @@ export default function DashboardPage() {
       <div style={{ background:'white', borderRadius:12, padding:'18px 20px', boxShadow:'0 2px 8px rgba(0,0,0,0.06)', marginBottom:16 }}>
         <div style={{ fontFamily:"'Playfair Display',serif", fontSize:18, fontWeight:700, marginBottom:14 }}>Rychlé akce</div>
         <div style={{ display:'flex', gap:10, flexWrap:'wrap' }}>
-          {[['🌿 Přidat produkt','#3A5728'],['📅 Sezónní nabídka','#C99B30'],['📦 Zobrazit objednávky','#2980B9'],['✏️ Upravit profil farmy','#5F8050']].map(([label, color]) => (
-            <button key={label} style={{ padding:'9px 18px', background:color, color:'white', border:'none', borderRadius:50, fontFamily:"'DM Sans',sans-serif", fontWeight:700, fontSize:13, cursor:'pointer' }}>
+          {[
+            ['🌿 Přidat produkt', '#3A5728', () => navigate('/pridat-farmu')],
+            ['📅 Sezónní nabídka', '#C99B30', () => toast.success('Funkce bude brzy dostupná 🌱')],
+            ['📦 Zobrazit objednávky', '#2980B9', () => navigate('/objednavky')],
+            ['✏️ Upravit profil farmy', '#5F8050', () => navigate('/pridat-farmu')],
+          ].map(([label, color, onClick]) => (
+            <button key={label} onClick={onClick} style={{ padding:'9px 18px', background:color, color:'white', border:'none', borderRadius:50, fontFamily:"'DM Sans',sans-serif", fontWeight:700, fontSize:13, cursor:'pointer' }}>
               {label}
             </button>
           ))}
@@ -68,16 +77,29 @@ export default function DashboardPage() {
 // ── CHECKOUT ──────────────────────────────────────────────────────────────
 export function CheckoutPage() {
   const navigate = useNavigate();
-  const { items, total, removeItem, updateQty, clearCart, farmId } = require('../store/index.js').useCartStore();
+  const { items, total, removeItem, updateQty, clearCart, farmId } = useCartStore();
   const { user } = useAuthStore();
+  const { addOrder } = useOrdersStore();
   const [delivery, setDelivery] = useState('pickup');
   const [address, setAddress] = useState('');
   const [note, setNote] = useState('');
 
   const handleOrder = async () => {
-    if (!user) { navigate('/login'); return; }
-    alert('✅ Objednávka odeslána!\n\nV produkční verzi by bylo zpracování přes Stripe.\nFarmář bude notifikován.');
+    if (!user) { navigate('/prihlaseni'); return; }
+    const farm = FARMS_DATA.find(f => String(f.id) === String(farmId));
+    const orderId = '#' + Math.floor(1000 + Math.random() * 9000);
+    addOrder({
+      id: orderId,
+      farm: farm?.name || 'Farma',
+      farmId: String(farmId),
+      total: (total + (delivery === 'delivery' ? 79 : 0)).toFixed(0) + ' Kč',
+      status: 'PENDING',
+      date: new Date().toISOString().slice(0, 10),
+      deliveryType: delivery,
+      items: items.map(i => i.product.emoji + ' ' + i.product.name),
+    });
     clearCart();
+    toast.success('✅ Objednávka odeslána! Farmář bude brzy kontaktovat.');
     navigate('/objednavky');
   };
 
@@ -150,7 +172,7 @@ export function CheckoutPage() {
           <button onClick={handleOrder} style={{ width:'100%', marginTop:16, padding:'12px', background:'#3A5728', color:'white', border:'none', borderRadius:10, fontFamily:"'DM Sans',sans-serif", fontWeight:700, fontSize:15, cursor:'pointer' }}>
             ✓ Odeslat objednávku
           </button>
-          <p style={{ fontSize:11, color:'#aaa', textAlign:'center', marginTop:10, lineHeight:1.5 }}>Platba je zpracována přes Stripe. Farmář bude ihned notifikován.</p>
+          <p style={{ fontSize:11, color:'#aaa', textAlign:'center', marginTop:10, lineHeight:1.5 }}>Farmář bude ihned kontaktován o vaší objednávce.</p>
         </div>
       </div>
     </PageShell>
@@ -160,13 +182,44 @@ export function CheckoutPage() {
 // ── FAVORITES ─────────────────────────────────────────────────────────────
 export function FavoritesPage() {
   const navigate = useNavigate();
-  return (
+  const { ids } = useFavoritesStore();
+  const favorites = FARMS_DATA.filter(f => ids.includes(String(f.id)));
+
+  if (favorites.length === 0) return (
     <PageShell title="❤️ Oblíbené farmy" onBack={() => navigate('/')}>
       <div style={{ textAlign:'center', padding:'60px 20px', color:'#888' }}>
         <div style={{ fontSize:48, marginBottom:12 }}>❤️</div>
         <div style={{ fontFamily:"'Playfair Display',serif", fontSize:20, color:'#1E120A', marginBottom:6 }}>Žádné oblíbené farmy</div>
         <p style={{ fontSize:14, marginBottom:20 }}>Přidejte farmy do oblíbených kliknutím na srdíčko na detailu farmy</p>
-        <button onClick={() => navigate('/')} style={{ padding:'10px 24px', background:'#3A5728', color:'white', border:'none', borderRadius:50, fontFamily:"'DM Sans',sans-serif", fontWeight:700, cursor:'pointer' }}>Prozkoumat farmy</button>
+        <button onClick={() => navigate('/mapa')} style={{ padding:'10px 24px', background:'#3A5728', color:'white', border:'none', borderRadius:50, fontFamily:"'DM Sans',sans-serif", fontWeight:700, cursor:'pointer' }}>Prozkoumat farmy</button>
+      </div>
+    </PageShell>
+  );
+
+  return (
+    <PageShell title="❤️ Oblíbené farmy" onBack={() => navigate('/')}>
+      <div style={{ display:'flex', flexDirection:'column', gap:12 }}>
+        {favorites.map(farm => (
+          <div key={farm.id} onClick={() => navigate(`/farma/${farm.id}`)}
+            style={{ background:'white', borderRadius:12, padding:'16px 18px', boxShadow:'0 2px 8px rgba(0,0,0,0.06)', cursor:'pointer', display:'flex', gap:14, alignItems:'center', transition:'transform 0.15s' }}
+            onMouseEnter={e => e.currentTarget.style.transform='translateY(-2px)'}
+            onMouseLeave={e => e.currentTarget.style.transform=''}>
+            <div style={{ fontSize:40, flexShrink:0 }}>{farm.emoji}</div>
+            <div style={{ flex:1 }}>
+              <div style={{ fontWeight:700, fontSize:15, marginBottom:2 }}>{farm.name}</div>
+              <div style={{ fontSize:13, color:'#888' }}>📍 {farm.loc}</div>
+              <div style={{ display:'flex', gap:8, marginTop:6, flexWrap:'wrap' }}>
+                {farm.bio && <span style={{ fontSize:11, background:'#FFF3CD', color:'#856404', borderRadius:50, padding:'2px 8px', fontWeight:600 }}>🌱 BIO</span>}
+                {farm.delivery && <span style={{ fontSize:11, background:'#E3F2FD', color:'#1565C0', borderRadius:50, padding:'2px 8px', fontWeight:600 }}>🚚 Dovoz</span>}
+                {farm.eshop && <span style={{ fontSize:11, background:'#E8F0E4', color:'#3A5728', borderRadius:50, padding:'2px 8px', fontWeight:600 }}>🛒 E-shop</span>}
+              </div>
+            </div>
+            <div style={{ textAlign:'right', flexShrink:0 }}>
+              <div style={{ color:'#E6A817', fontSize:14 }}>{'★'.repeat(Math.round(farm.rating))}</div>
+              <div style={{ fontSize:12, color:'#888', marginTop:2 }}>{farm.rating}</div>
+            </div>
+          </div>
+        ))}
       </div>
     </PageShell>
   );
@@ -175,15 +228,23 @@ export function FavoritesPage() {
 // ── ORDERS ────────────────────────────────────────────────────────────────
 export function OrdersPage() {
   const navigate = useNavigate();
-  const demoOrders = [
-    { id:'#1022', farm:'Biofarma Šimánek', total:'320 Kč', status:'DELIVERED', date:'2026-02-20', items:['🥕 Mrkev', '🥛 Mléko'] },
-    { id:'#1015', farm:'Včelí farma Kratochvíl', total:'280 Kč', status:'DELIVERED', date:'2026-01-15', items:['🍯 Med 500g'] },
-  ];
+  const { orders } = useOrdersStore();
+
+  if (orders.length === 0) return (
+    <PageShell title="📦 Moje objednávky" onBack={() => navigate('/')}>
+      <div style={{ textAlign:'center', padding:'60px 20px', color:'#888' }}>
+        <div style={{ fontSize:48, marginBottom:12 }}>📦</div>
+        <div style={{ fontFamily:"'Playfair Display',serif", fontSize:20, color:'#1E120A', marginBottom:6 }}>Žádné objednávky</div>
+        <p style={{ fontSize:14, marginBottom:20 }}>Vaše objednávky se zobrazí zde</p>
+        <button onClick={() => navigate('/mapa')} style={{ padding:'10px 24px', background:'#3A5728', color:'white', border:'none', borderRadius:50, fontFamily:"'DM Sans',sans-serif", fontWeight:700, cursor:'pointer' }}>Prozkoumat farmy</button>
+      </div>
+    </PageShell>
+  );
 
   return (
     <PageShell title="📦 Moje objednávky" onBack={() => navigate('/')}>
       <div style={{ display:'flex', flexDirection:'column', gap:12 }}>
-        {demoOrders.map(o => (
+        {orders.map(o => (
           <div key={o.id} style={{ background:'white', borderRadius:12, padding:'16px 18px', boxShadow:'0 2px 8px rgba(0,0,0,0.06)' }}>
             <div style={{ display:'flex', justifyContent:'space-between', marginBottom:8 }}>
               <div>
@@ -205,31 +266,21 @@ export function OrdersPage() {
   );
 }
 
-// ── REGISTER FARM ─────────────────────────────────────────────────────────
-export function RegisterFarmPage() {
-  const navigate = useNavigate();
-  return (
-    <PageShell title="🌾 Registrovat farmu" onBack={() => navigate('/')}>
-      <div style={{ background:'white', borderRadius:12, padding:'24px', boxShadow:'0 2px 8px rgba(0,0,0,0.06)' }}>
-        <p style={{ color:'#888', fontSize:14, marginBottom:20 }}>Zaregistrujte svou farmu a začněte prodávat přímo zákazníkům.</p>
-        {[['Název farmy','text','Např. Biofarma Novák'],['Adresa','text','Ulice, město, PSČ'],['Telefon','tel','+420 xxx xxx xxx'],['E-mail farmy','email','farma@email.cz'],['Webové stránky','url','https://mojefarma.cz']].map(([label, type, ph]) => (
-          <div key={label} style={{ marginBottom:14 }}>
-            <label style={{ display:'block', fontSize:12, fontWeight:700, color:'#555', marginBottom:5, textTransform:'uppercase', letterSpacing:.5 }}>{label}</label>
-            <input type={type} placeholder={ph} style={{ width:'100%', padding:'10px 14px', borderRadius:9, border:'1.5px solid #EDE5D0', fontFamily:"'DM Sans',sans-serif", fontSize:14, outline:'none' }} />
-          </div>
-        ))}
-        <button style={{ width:'100%', padding:'12px', background:'#3A5728', color:'white', border:'none', borderRadius:10, fontFamily:"'DM Sans',sans-serif", fontWeight:700, fontSize:15, cursor:'pointer', marginTop:8 }}>
-          Registrovat farmu
-        </button>
-      </div>
-    </PageShell>
-  );
-}
-
 // ── PROFILE ───────────────────────────────────────────────────────────────
 export function ProfilePage() {
   const navigate = useNavigate();
   const { user, logout } = useAuthStore();
+
+  if (!user) return (
+    <PageShell title="👤 Profil" onBack={() => navigate('/')}>
+      <div style={{ textAlign:'center', padding:'60px 20px', color:'#888' }}>
+        <div style={{ fontSize:48, marginBottom:12 }}>👤</div>
+        <div style={{ fontFamily:"'Playfair Display',serif", fontSize:20, color:'#1E120A', marginBottom:6 }}>Nejste přihlášeni</div>
+        <button onClick={() => navigate('/prihlaseni')} style={{ padding:'10px 24px', background:'#3A5728', color:'white', border:'none', borderRadius:50, fontFamily:"'DM Sans',sans-serif", fontWeight:700, cursor:'pointer' }}>Přihlásit se</button>
+      </div>
+    </PageShell>
+  );
+
   return (
     <PageShell title="👤 Profil" onBack={() => navigate('/')}>
       <div style={{ background:'white', borderRadius:12, padding:'24px', boxShadow:'0 2px 8px rgba(0,0,0,0.06)', marginBottom:16 }}>
@@ -245,7 +296,7 @@ export function ProfilePage() {
             </div>
           </div>
         </div>
-        <button onClick={() => { logout(); navigate('/'); }} style={{ padding:'9px 20px', background:'#F8D7DA', color:'#721C24', border:'none', borderRadius:8, fontFamily:"'DM Sans',sans-serif", fontWeight:700, fontSize:13, cursor:'pointer' }}>
+        <button onClick={async () => { await logout(); navigate('/'); }} style={{ padding:'9px 20px', background:'#F8D7DA', color:'#721C24', border:'none', borderRadius:8, fontFamily:"'DM Sans',sans-serif", fontWeight:700, fontSize:13, cursor:'pointer' }}>
           🚪 Odhlásit se
         </button>
       </div>
@@ -270,7 +321,6 @@ export function NotFoundPage() {
 }
 
 // ── SHARED HELPERS ─────────────────────────────────────────────────────────
-
 
 function PageShell({ title, children, onBack }) {
   return (

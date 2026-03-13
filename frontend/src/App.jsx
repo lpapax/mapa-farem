@@ -1,5 +1,6 @@
 // frontend/src/App.jsx
 // Přidána routa / → LandingPage, mapa přesunuta na /mapa
+import { useEffect } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import LandingPage from './pages/LandingPage';
 import MapPage from './pages/MapPage';
@@ -13,8 +14,11 @@ import CheckoutPage from './pages/CheckoutPage';
 import OrdersPage from './pages/OrdersPage';
 import DashboardPage from './pages/DashboardPage';
 import { NotFoundPage } from './pages/OtherPages';
+import { useAuthStore } from './store/index.js';
 
 export default function App() {
+  useEffect(() => { useAuthStore.getState().init(); }, []);
+
   return (
     <BrowserRouter>
       <Routes>
