@@ -8,8 +8,6 @@ import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../supabase';
 
-const ADMIN_EMAIL = import.meta.env.VITE_ADMIN_EMAIL;
-
 const STATUS_COLORS = {
   pending:  { bg: '#FFF3CD', color: '#856404', label: '⏳ Čeká' },
   approved: { bg: '#D4EDDA', color: '#155724', label: '✅ Schválena' },
@@ -24,6 +22,7 @@ const TYPE_LABELS = {
 export default function AdminPage() {
   const navigate = useNavigate();
   const [user, setUser] = useState(null);
+  const [isAdmin, setIsAdmin] = useState(false);
   const [farms, setFarms] = useState([]);
   const [tab, setTab] = useState('pending');
   const [loading, setLoading] = useState(true);
@@ -33,7 +32,17 @@ export default function AdminPage() {
   const [selectedFarm, setSelectedFarm] = useState(null);
 
   useEffect(() => {
-    supabase.auth.getUser().then(({ data }) => setUser(data.user));
+    supabase.auth.getUser().then(async ({ data }) => {
+      setUser(data.user);
+      if (data.user) {
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('role')
+          .eq('id', data.user.id)
+          .single();
+        setIsAdmin(profile?.role === 'admin');
+      }
+    });
   }, []);
 
   const loadFarms = useCallback(async () => {
@@ -70,7 +79,6 @@ export default function AdminPage() {
     setActionLoading(null);
   }
 
-  const isAdmin = user && (user.email === ADMIN_EMAIL || user.app_metadata?.role === 'admin');
   const filtered = farms
     .filter(f => f.status === tab)
     .filter(f => !search || f.name?.toLowerCase().includes(search.toLowerCase()) || f.loc?.toLowerCase().includes(search.toLowerCase()));
