@@ -1,7 +1,122 @@
 // frontend/src/pages/LandingPage.jsx
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import FARMS_DATA from '../data/farms.json';
+
+// Project lat/lng to SVG coords (viewBox 0 0 600 320)
+const toSVG = (lat, lng) => ({
+  x: (lng - 12.0) / 7.0 * 580 + 10,
+  y: (51.1 - lat) / 2.6 * 300 + 10,
+});
+
+const TYPE_COLOR = {
+  veggie:'#3A5728', meat:'#9B2226', dairy:'#2980B9',
+  honey:'#C99B30', wine:'#7D3C98', bio:'#27AE60',
+  herbs:'#5D8A52', market:'#E67E22',
+};
+
+// Top farms for map pins — limit to well-rated with coords
+const MAP_PINS = FARMS_DATA
+  .filter(f => f.lat && f.lng && f.rating >= 4.5 && f.lat > 48.5 && f.lat < 51.1 && f.lng > 12.0 && f.lng < 19.0)
+  .sort((a,b) => b.rating - a.rating)
+  .slice(0, 60);
+
+function CZMap({ onPinClick, navigate }) {
+  const [hovered, setHovered] = useState(null);
+  const [tooltip, setTooltip] = useState(null);
+
+  const handlePin = useCallback((e, farm) => {
+    e.stopPropagation();
+    const rect = e.currentTarget.closest('svg').getBoundingClientRect();
+    const px = e.clientX - rect.left;
+    const py = e.clientY - rect.top;
+    setTooltip({ farm, px, py });
+    setHovered(farm.id);
+  }, []);
+
+  return (
+    <div style={{ position:'relative', width:'100%' }}>
+      <svg
+        viewBox="0 0 600 320"
+        style={{ width:'100%', height:'auto', cursor:'pointer' }}
+        onClick={() => { setTooltip(null); setHovered(null); }}
+      >
+        {/* CZ outline — Čechy (west) */}
+        <path
+          d="M 18,130 L 28,108 L 45,88 L 72,62 L 100,48 L 132,32 L 155,18 L 178,14 L 198,22 L 218,18 L 248,12 L 272,20 L 295,30 L 315,38 L 338,50 L 358,58 L 380,58 L 405,65 L 428,70 L 452,78 L 478,82 L 505,92 L 530,105 L 555,122 L 568,138 L 560,158 L 548,175 L 535,192 L 518,210 L 502,228 L 485,248 L 468,262 L 448,274 L 422,282 L 398,290 L 372,296 L 345,300 L 318,298 L 290,294 L 265,292 L 238,290 L 210,288 L 182,286 L 158,282 L 135,274 L 112,262 L 90,248 L 70,232 L 50,212 L 32,192 L 18,168 Z"
+          fill="#c8dab2"
+          stroke="#3A5728"
+          strokeWidth="2"
+          strokeLinejoin="round"
+        />
+        {/* Moravia/Silesia division line */}
+        <line x1="378" y1="58" x2="390" y2="300" stroke="#3A5728" strokeWidth="1" strokeDasharray="4,3" opacity="0.3"/>
+        {/* Bohemia region label */}
+        <text x="190" y="175" textAnchor="middle" fontSize="11" fill="#3A5728" fontWeight="600" opacity="0.5" fontFamily="DM Sans, sans-serif">Čechy</text>
+        {/* Moravia region label */}
+        <text x="468" y="195" textAnchor="middle" fontSize="11" fill="#3A5728" fontWeight="600" opacity="0.5" fontFamily="DM Sans, sans-serif">Morava</text>
+
+        {/* Farm pins */}
+        {MAP_PINS.map(farm => {
+          const { x, y } = toSVG(farm.lat, farm.lng);
+          if (x < 5 || x > 595 || y < 5 || y > 315) return null;
+          const color = TYPE_COLOR[farm.type] || '#5F8050';
+          const isHov = hovered === farm.id;
+          return (
+            <g key={farm.id} onClick={e => handlePin(e, farm)} style={{ cursor:'pointer' }}>
+              <circle cx={x} cy={y} r={isHov ? 7 : 4.5} fill={color} stroke="white" strokeWidth={isHov ? 2 : 1.5} opacity={isHov ? 1 : 0.8}
+                style={{ transition:'r .15s,opacity .15s' }}
+                onMouseEnter={e => handlePin(e, farm)}
+              />
+            </g>
+          );
+        })}
+      </svg>
+
+      {/* Tooltip */}
+      {tooltip && (
+        <div style={{
+          position:'absolute',
+          left: Math.min(tooltip.px, 320),
+          top: tooltip.py - 10,
+          transform: 'translate(-50%, -100%)',
+          background:'white', borderRadius:12, padding:'12px 16px',
+          boxShadow:'0 8px 28px rgba(44,24,16,.18)',
+          minWidth:160, maxWidth:220, zIndex:10,
+          border:'1px solid rgba(58,87,40,.12)',
+          pointerEvents:'none',
+        }}>
+          <div style={{ fontSize:16, marginBottom:4 }}>{tooltip.farm.emoji}</div>
+          <div style={{ fontWeight:700, fontSize:13, color:'#2C1810', marginBottom:2 }}>{tooltip.farm.name}</div>
+          <div style={{ fontSize:11, color:'#888', marginBottom:8 }}>📍 {tooltip.farm.loc} · ⭐ {tooltip.farm.rating}</div>
+          <div onClick={() => navigate(`/farma/${tooltip.farm.id}`)}
+            style={{ background:'#3A5728', color:'white', borderRadius:6, padding:'4px 10px', fontSize:11, textAlign:'center', fontWeight:700, cursor:'pointer' }}>
+            Profil místa →
+          </div>
+          {/* Arrow */}
+          <div style={{ position:'absolute', bottom:-7, left:'50%', transform:'translateX(-50%)', width:14, height:7, overflow:'hidden' }}>
+            <div style={{ width:14, height:14, background:'white', border:'1px solid rgba(58,87,40,.12)', transform:'rotate(45deg)', transformOrigin:'0 0', marginLeft:0, marginTop:-7 }}/>
+          </div>
+        </div>
+      )}
+
+      {/* Stats overlay bottom */}
+      <div style={{
+        position:'absolute', bottom:4, left:'50%', transform:'translateX(-50%)',
+        background:'rgba(44,24,16,.82)', backdropFilter:'blur(8px)',
+        borderRadius:10, padding:'8px 20px',
+        display:'flex', gap:24,
+      }}>
+        {[[MAP_PINS.length+'+','zobrazeno'],['14','krajů'],['4.7★','průměr']].map(([n,l]) => (
+          <div key={l} style={{ textAlign:'center' }}>
+            <div style={{ fontWeight:800, fontSize:13, color:'#A8C97A' }}>{n}</div>
+            <div style={{ fontSize:9, color:'rgba(255,255,255,.5)' }}>{l}</div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
 
 const TOP_FARMS = FARMS_DATA
   .filter(f => f.rating >= 4.8 && f.reviews >= 20 && f.lat && f.lng)
@@ -162,34 +277,46 @@ export default function LandingPage() {
               </div>
             </div>
 
-            {/* RIGHT — hero image */}
+            {/* RIGHT — CZ mapa */}
             <div className="hero-img" style={{ position:'relative' }}>
-              {/* Main image */}
-              <div style={{ borderRadius:'40% 60% 55% 45% / 45% 40% 60% 55%',overflow:'hidden',boxShadow:`0 24px 60px rgba(44,24,16,.2)`,animation:'float 6s ease-in-out infinite' }}>
-                <img src="https://images.unsplash.com/photo-1605000797499-95a51c5269ae?w=600&q=85&fit=crop&crop=center" alt="Farmářka s čerstvou zeleninou" style={{ width:'100%',height:420,objectFit:'cover',display:'block' }}/>
+              {/* Map card */}
+              <div style={{
+                background:'white', borderRadius:24,
+                padding:'20px 20px 8px',
+                boxShadow:'0 20px 60px rgba(44,24,16,.15), 0 0 0 1px rgba(58,87,40,.08)',
+                position:'relative',
+              }}>
+                <div style={{ fontSize:11,fontWeight:700,letterSpacing:2,color:C.terra,textTransform:'uppercase',marginBottom:10,paddingLeft:4 }}>
+                  🗺️ Farmy v České republice
+                </div>
+                <CZMap navigate={navigate} />
               </div>
 
-              {/* Floating card — stats */}
-              <div style={{ position:'absolute',bottom:-16,left:-24,background:'white',borderRadius:16,padding:'14px 20px',boxShadow:'0 8px 28px rgba(44,24,16,.12)',minWidth:160 }}>
-                <div style={{ fontSize:11,color:'#aaa',marginBottom:4,textTransform:'uppercase',letterSpacing:1 }}>Dnes aktivní</div>
-                <div style={{ fontFamily:"'Playfair Display',serif",fontSize:28,fontWeight:900,color:C.green }}>{FARMS_DATA.filter(f=>f.eshop).length}</div>
-                <div style={{ fontSize:12,color:'#666' }}>farem s e-shopem</div>
-              </div>
-
-              {/* Floating card — rating */}
-              <div style={{ position:'absolute',top:20,right:-20,background:C.terra,borderRadius:14,padding:'12px 16px',boxShadow:'0 6px 20px rgba(191,91,61,.3)',color:'white' }}>
-                <div style={{ fontSize:22,fontWeight:900 }}>4.7 ⭐</div>
-                <div style={{ fontSize:11,opacity:.85 }}>průměrné hodnocení</div>
+              {/* Floating farmer card */}
+              <div style={{ position:'absolute',top:16,right:-20,background:'white',borderRadius:14,padding:'12px 16px',boxShadow:'0 8px 24px rgba(44,24,16,.14)',minWidth:170,border:`1px solid rgba(58,87,40,.1)` }}>
+                <div style={{ fontSize:11,color:'#aaa',marginBottom:6,textTransform:'uppercase',letterSpacing:1 }}>Nejbližší farma</div>
+                <div style={{ display:'flex',alignItems:'center',gap:10 }}>
+                  <div style={{ width:36,height:36,borderRadius:'50%',background:'#E8F0E4',display:'flex',alignItems:'center',justifyContent:'center',fontSize:20 }}>
+                    {TOP_FARMS[0]?.emoji || '🥕'}
+                  </div>
+                  <div>
+                    <div style={{ fontWeight:700,fontSize:13,color:C.brown,lineHeight:1.2 }}>{TOP_FARMS[0]?.name?.slice(0,18) || 'Farma Novákových'}</div>
+                    <div style={{ fontSize:11,color:'#888' }}>⭐ {TOP_FARMS[0]?.rating || '4.9'}</div>
+                  </div>
+                </div>
+                <button onClick={() => navigate('/mapa')} style={{ width:'100%',marginTop:10,padding:'6px',background:C.green,color:'white',border:'none',borderRadius:7,fontSize:11,fontWeight:700,cursor:'pointer',fontFamily:"'DM Sans',sans-serif" }}>
+                  Přihlásit se →
+                </button>
               </div>
 
               {/* Terracotta circle */}
-              <div style={{ position:'absolute',top:-30,right:30,width:80,height:80,borderRadius:'50%',background:`${C.terra}22`,animation:'spin-slow 20s linear infinite',border:`2px solid ${C.terra}44` }}/>
+              <div style={{ position:'absolute',top:-20,left:-20,width:64,height:64,borderRadius:'50%',background:`${C.terra}18`,border:`2px solid ${C.terra}35`,animation:'spin-slow 22s linear infinite' }}/>
 
-              {/* Dots pattern */}
-              <div style={{ position:'absolute',bottom:40,right:-20 }}>
-                {[0,1,2,3].map(r=>(
-                  <div key={r} style={{ display:'flex',gap:6,marginBottom:6 }}>
-                    {[0,1,2,3].map(c=><div key={c} style={{ width:5,height:5,borderRadius:'50%',background:C.terra,opacity:.3 }}/>)}
+              {/* Dots */}
+              <div style={{ position:'absolute',bottom:-10,left:-16,display:'flex',flexDirection:'column',gap:5 }}>
+                {[0,1,2].map(r=>(
+                  <div key={r} style={{ display:'flex',gap:5 }}>
+                    {[0,1,2].map(c=><div key={c} style={{ width:4,height:4,borderRadius:'50%',background:C.terra,opacity:.25 }}/>)}
                   </div>
                 ))}
               </div>
