@@ -1,6 +1,7 @@
 // frontend/src/pages/LandingPage.jsx
 import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import FARMS_DATA from '../data/farms.json';
 
 export default function LandingPage() {
   const navigate = useNavigate();
@@ -158,7 +159,7 @@ export default function LandingPage() {
             <div>
               <div className="hero-badge" style={{ opacity: 0, animation: 'none', transition: 'opacity 0.6s 0.1s', ...(true ? { opacity: 1 } : {}) }}>
                 <span />
-                1 005 farem po celé ČR
+                {FARMS_DATA.length} farem po celé ČR
               </div>
 
               <h1 className="hero-title" style={{
@@ -306,7 +307,7 @@ export default function LandingPage() {
                   display:'flex', justifyContent:'space-between',
                   color:'white',
                 }}>
-                  {[['1 005', 'farem'], ['14', 'krajů'], ['200', 'v okolí']].map(([n, l]) => (
+                  {[[FARMS_DATA.length, 'farem'], ['14', 'krajů'], ['200+', 'obcí']].map(([n, l]) => (
                     <div key={l} style={{ textAlign:'center' }}>
                       <div style={{ fontWeight:700, fontSize:16, color:'#7DB05A' }}>{n}</div>
                       <div style={{ fontSize:10, opacity:0.7 }}>{l}</div>

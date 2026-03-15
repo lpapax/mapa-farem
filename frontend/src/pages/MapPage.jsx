@@ -757,7 +757,7 @@ export default function MapPage() {
           <div style={{ position:'absolute', bottom:32, right:10, background:T.statsBg, color:T.statsColor, borderRadius:14, padding:'10px 16px', display:'flex', gap:16, zIndex:500, boxShadow:'0 4px 20px rgba(0,0,0,.2)', pointerEvents:'none' }}>
             {[
               [filtered.length, nearbyMode?`do ${radius} km`:'zobrazeno'],
-              [200,'celkem v ČR'],
+              [FARMS_DATA.length,'celkem v ČR'],
               ['14','krajů'],
             ].map(([n,l]) => (
               <div key={l} style={{ textAlign:'center' }}>
