@@ -444,6 +444,7 @@ export default function MapPage() {
   const { count: cartCount } = useCartStore();
   const { unreadCount, fetch: fetchNotifs } = useNotificationStore();
 
+  const [regionFilter, setRegionFilter] = useState('all');
   const [userLocation, setUserLocation] = useState(null);
   const [gpsLoading, setGpsLoading] = useState(false);
   const [radius, setRadius] = useState(25);
@@ -512,8 +513,16 @@ export default function MapPage() {
     );
   }, [nearbyMode]);
 
+  const REGIONS = useMemo(() => {
+    const seen = new Set();
+    const list = [];
+    FARMS_DATA.forEach(f => { if (f.loc && !seen.has(f.loc)) { seen.add(f.loc); list.push(f.loc); } });
+    return list.sort();
+  }, []);
+
   const filtered = useMemo(() => {
     let data = FARMS_DATA;
+    if (regionFilter !== 'all') data = data.filter(f => f.loc === regionFilter);
     if (nearbyMode && userLocation) {
       data = data
         .map(f => ({ ...f, _dist: getDistance(userLocation.lat, userLocation.lng, f.lat, f.lng) }))
@@ -632,6 +641,15 @@ export default function MapPage() {
 
       {/* FILTRY */}
       <div style={{ display:'flex', alignItems:'center', gap:6, padding:'7px 14px', background:T.filterBg, overflowX:'auto', flexShrink:0, scrollbarWidth:'none' }}>
+        <select value={regionFilter} onChange={e => setRegionFilter(e.target.value)} style={{
+          padding:'5px 10px', borderRadius:50, border:'1.5px solid rgba(255,255,255,.2)',
+          background:'rgba(255,255,255,.1)', color:'rgba(255,255,255,.85)',
+          fontFamily:"'DM Sans',sans-serif", fontSize:12, fontWeight:500, cursor:'pointer',
+          outline:'none', flexShrink:0,
+        }}>
+          <option value="all" style={{ background:'#3A2210' }}>🗺️ Všechny kraje</option>
+          {REGIONS.map(r => <option key={r} value={r} style={{ background:'#3A2210' }}>{r}</option>)}
+        </select>
         {nearbyMode && (
           <div style={{ display:'flex', alignItems:'center', gap:6, background:'rgba(41,128,185,.2)', border:'1px solid #2980B9', borderRadius:50, padding:'4px 12px', flexShrink:0 }}>
             <span style={{ fontSize:11, color:'#89CFF0', fontWeight:700 }}>📍 {filtered.length} farem do {radius} km</span>

@@ -21,7 +21,11 @@ export default function FarmDetailPage() {
   // Find farm in local data (in production this would be API call)
   const farm = FARMS_DATA.find(f => String(f.id) === String(id));
 
-  useEffect(() => { window.scrollTo(0, 0); }, [id]);
+  useEffect(() => {
+    window.scrollTo(0, 0);
+    if (farm) document.title = `${farm.name} — MapaFarem.cz`;
+    return () => { document.title = 'MapaFarem.cz — Lokální farmy v České republice'; };
+  }, [id, farm]);
 
   if (!farm) return (
     <div style={{ display:'grid', placeItems:'center', height:'100vh', fontFamily:"'DM Sans',sans-serif" }}>
@@ -297,12 +301,16 @@ export default function FarmDetailPage() {
                   ['📍 Adresa', farm.loc],
                   ['🕐 Otevírací doba', farm.hours],
                   ['📞 Telefon', farm.phone],
+                  farm.website && ['🌐 Web', farm.website],
                   farm.founded && ['📅 Rok založení', farm.founded],
                   farm.hectares && ['🌾 Rozloha', farm.hectares + ' ha'],
                 ].filter(Boolean).map(([label, val]) => (
                   <div key={label} style={{ display:'flex', gap:8 }}>
                     <span style={{ fontSize:13, color:'#888', minWidth:120 }}>{label}:</span>
-                    <span style={{ fontSize:13, color:'#333', fontWeight:500 }}>{val}</span>
+                    {label === '🌐 Web'
+                      ? <a href={val} target="_blank" rel="noreferrer" style={{ fontSize:13, color:'#3A5728', fontWeight:500, wordBreak:'break-all' }}>{val}</a>
+                      : <span style={{ fontSize:13, color:'#333', fontWeight:500 }}>{val}</span>
+                    }
                   </div>
                 ))}
               </div>
