@@ -379,13 +379,37 @@ export function ProfilePage() {
 export function NotFoundPage() {
   const navigate = useNavigate();
   return (
-    <div style={{ minHeight:'100vh', display:'grid', placeItems:'center', fontFamily:"'DM Sans',sans-serif", background:'#F4EDD8' }}>
-      <style>{`@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=DM+Sans:wght@400;500;600&display=swap');`}</style>
-      <div style={{ textAlign:'center' }}>
-        <div style={{ fontSize:64 }}>🌾</div>
-        <h1 style={{ fontFamily:"'Playfair Display',serif", fontSize:32, fontWeight:900, marginTop:16 }}>404 — Stránka nenalezena</h1>
-        <p style={{ color:'#888', marginTop:8, marginBottom:24 }}>Tato stránka zřejmě utekla na pole.</p>
-        <button onClick={() => navigate('/')} style={{ padding:'11px 28px', background:'#3A5728', color:'white', border:'none', borderRadius:50, fontFamily:"'DM Sans',sans-serif", fontWeight:700, fontSize:15, cursor:'pointer' }}>Zpět na mapu</button>
+    <div style={{ minHeight:'100vh', fontFamily:"'DM Sans',sans-serif", background:'linear-gradient(150deg,#1E2D15 0%,#2d4420 50%,#3A5728 100%)', display:'flex', alignItems:'center', justifyContent:'center', padding:24, position:'relative', overflow:'hidden' }}>
+      <style>{`@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=DM+Sans:wght@400;500;700&display=swap');
+        @keyframes float404{0%,100%{transform:translateY(0)}50%{transform:translateY(-14px)}}
+      `}</style>
+      <div style={{ position:'absolute',top:-100,right:-100,width:400,height:400,borderRadius:'50%',border:'1px solid rgba(125,176,90,.12)',pointerEvents:'none' }} />
+      <div style={{ position:'absolute',bottom:-60,left:-60,width:280,height:280,borderRadius:'50%',border:'1px solid rgba(201,155,48,.1)',pointerEvents:'none' }} />
+      <div style={{ textAlign:'center', maxWidth:500, position:'relative' }}>
+        <div style={{ animation:'float404 3.5s ease-in-out infinite', marginBottom:24 }}>
+          <div style={{ fontFamily:"'Playfair Display',serif", fontSize:140, fontWeight:900, color:'rgba(255,255,255,.06)', lineHeight:1, letterSpacing:-4 }}>404</div>
+          <div style={{ fontSize:72, marginTop:-60 }}>🌾</div>
+        </div>
+        <h1 style={{ fontFamily:"'Playfair Display',serif", fontSize:32, fontWeight:700, color:'white', marginBottom:12 }}>
+          Tato stránka utekla na pole
+        </h1>
+        <p style={{ color:'rgba(255,255,255,.6)', fontSize:15, lineHeight:1.7, marginBottom:36 }}>
+          Stránka neexistuje nebo byla přesunuta.<br/>Ale farmy na mapě tě čekají!
+        </p>
+        <div style={{ display:'flex', gap:12, justifyContent:'center', flexWrap:'wrap' }}>
+          <button onClick={() => navigate('/')}
+            style={{ padding:'13px 26px', background:'rgba(255,255,255,.1)', color:'white', border:'1px solid rgba(255,255,255,.25)', borderRadius:11, fontWeight:700, cursor:'pointer', fontSize:14 }}
+            onMouseEnter={e=>e.currentTarget.style.background='rgba(255,255,255,.2)'}
+            onMouseLeave={e=>e.currentTarget.style.background='rgba(255,255,255,.1)'}>
+            ← Domů
+          </button>
+          <button onClick={() => navigate('/mapa')}
+            style={{ padding:'13px 26px', background:'#7DB05A', color:'white', border:'none', borderRadius:11, fontWeight:700, cursor:'pointer', fontSize:14, boxShadow:'0 4px 16px rgba(125,176,90,.35)' }}
+            onMouseEnter={e=>e.currentTarget.style.background='#6a9e4c'}
+            onMouseLeave={e=>e.currentTarget.style.background='#7DB05A'}>
+            🗺️ Otevřít mapu
+          </button>
+        </div>
       </div>
     </div>
   );
