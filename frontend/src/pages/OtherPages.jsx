@@ -2,77 +2,17 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
+import { loadStripe } from '@stripe/stripe-js';
+import { Elements, PaymentElement, useStripe, useElements } from '@stripe/react-stripe-js';
 import { useAuthStore, useCartStore, useFavoritesStore, useOrdersStore } from '../store/index.js';
 import FARMS_DATA from '../data/farms.json';
 
-// ── DASHBOARD ──────────────────────────────────────────────────────────────
-export default function DashboardPage() {
-  const navigate = useNavigate();
-  const { user } = useAuthStore();
-  const stats = [
-    { label:'Celkem objednávek', value:28, icon:'📦', color:'#2980B9' },
-    { label:'Čeká na potvrzení', value:3, icon:'⏳', color:'#C99B30' },
-    { label:'Celkové tržby', value:'14 850 Kč', icon:'💰', color:'#3A5728' },
-    { label:'Oblíbení zákazníci', value:47, icon:'❤️', color:'#C0392B' },
-  ];
+const stripePromise = import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY
+  ? loadStripe(import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY)
+  : null;
 
-  return (
-    <PageShell title="Dashboard farmáře" onBack={() => navigate('/')}>
-      <div style={{ marginBottom:24 }}>
-        <h2 style={{ fontFamily:"'Playfair Display',serif", fontSize:20, fontWeight:700, marginBottom:4 }}>
-          Vítejte, {user?.name || 'Farmáři'} 👋
-        </h2>
-        <p style={{ color:'#888', fontSize:14 }}>Přehled vaší farmy za posledních 30 dní</p>
-      </div>
-
-      <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill,minmax(200px,1fr))', gap:14, marginBottom:28 }}>
-        {stats.map(s => (
-          <div key={s.label} style={{ background:'white', borderRadius:12, padding:'18px 20px', boxShadow:'0 2px 8px rgba(0,0,0,0.06)' }}>
-            <div style={{ fontSize:28, marginBottom:8 }}>{s.icon}</div>
-            <div style={{ fontFamily:"'Playfair Display',serif", fontSize:26, fontWeight:700, color:s.color }}>{s.value}</div>
-            <div style={{ fontSize:13, color:'#888', marginTop:4 }}>{s.label}</div>
-          </div>
-        ))}
-      </div>
-
-      <div style={{ background:'white', borderRadius:12, padding:'18px 20px', boxShadow:'0 2px 8px rgba(0,0,0,0.06)', marginBottom:16 }}>
-        <div style={{ fontFamily:"'Playfair Display',serif", fontSize:18, fontWeight:700, marginBottom:14 }}>Rychlé akce</div>
-        <div style={{ display:'flex', gap:10, flexWrap:'wrap' }}>
-          {[
-            ['🌿 Přidat produkt', '#3A5728', () => navigate('/pridat-farmu')],
-            ['📅 Sezónní nabídka', '#C99B30', () => toast.success('Funkce bude brzy dostupná 🌱')],
-            ['📦 Zobrazit objednávky', '#2980B9', () => navigate('/objednavky')],
-            ['✏️ Upravit profil farmy', '#5F8050', () => navigate('/pridat-farmu')],
-          ].map(([label, color, onClick]) => (
-            <button key={label} onClick={onClick} style={{ padding:'9px 18px', background:color, color:'white', border:'none', borderRadius:50, fontFamily:"'DM Sans',sans-serif", fontWeight:700, fontSize:13, cursor:'pointer' }}>
-              {label}
-            </button>
-          ))}
-        </div>
-      </div>
-
-      <div style={{ background:'white', borderRadius:12, padding:'18px 20px', boxShadow:'0 2px 8px rgba(0,0,0,0.06)' }}>
-        <div style={{ fontFamily:"'Playfair Display',serif", fontSize:18, fontWeight:700, marginBottom:14 }}>Poslední objednávky</div>
-        {[
-          { id:'#1024', customer:'Jana N.', total:'320 Kč', status:'PENDING', items:'Mléko, Máslo' },
-          { id:'#1023', customer:'Pavel D.', total:'850 Kč', status:'CONFIRMED', items:'Hovězí 2kg' },
-          { id:'#1022', customer:'Kateřina S.', total:'125 Kč', status:'DELIVERED', items:'Med 500g' },
-        ].map(o => (
-          <div key={o.id} style={{ display:'flex', justifyContent:'space-between', alignItems:'center', padding:'10px 0', borderBottom:'1px solid #EDE5D0' }}>
-            <div>
-              <div style={{ fontWeight:700, fontSize:14 }}>{o.id} — {o.customer}</div>
-              <div style={{ fontSize:12, color:'#888' }}>{o.items}</div>
-            </div>
-            <div style={{ textAlign:'right' }}>
-              <div style={{ fontWeight:700 }}>{o.total}</div>
-              <StatusBadge status={o.status} />
-            </div>
-          </div>
-        ))}
-      </div>
-    </PageShell>
-  );
-}
+// ── DASHBOARD (re-exports real DashboardPage) ───────────────────────────────
+export { default } from './DashboardPage.jsx';
 
 // ── CHECKOUT ──────────────────────────────────────────────────────────────
 export function CheckoutPage() {
@@ -83,24 +23,40 @@ export function CheckoutPage() {
   const [delivery, setDelivery] = useState('pickup');
   const [address, setAddress] = useState('');
   const [note, setNote] = useState('');
+  const [payStep, setPayStep] = useState('summary'); // 'summary' | 'stripe'
+  const [clientSecret, setClientSecret] = useState(null);
+  const [stripeLoading, setStripeLoading] = useState(false);
 
-  const handleOrder = async () => {
+  const farm = FARMS_DATA.find(f => String(f.id) === String(farmId));
+  const finalTotal = total + (delivery === 'delivery' ? 79 : 0);
+
+  // Fallback — confirm order without payment (used if Stripe not configured)
+  const confirmOrderFallback = () => {
     if (!user) { navigate('/prihlaseni'); return; }
-    const farm = FARMS_DATA.find(f => String(f.id) === String(farmId));
     const orderId = '#' + Math.floor(1000 + Math.random() * 9000);
-    addOrder({
-      id: orderId,
-      farm: farm?.name || 'Farma',
-      farmId: String(farmId),
-      total: (total + (delivery === 'delivery' ? 79 : 0)).toFixed(0) + ' Kč',
-      status: 'PENDING',
-      date: new Date().toISOString().slice(0, 10),
-      deliveryType: delivery,
-      items: items.map(i => i.product.emoji + ' ' + i.product.name),
-    });
+    addOrder({ id: orderId, farm: farm?.name || 'Farma', farmId: String(farmId), total: finalTotal.toFixed(0) + ' Kč', status: 'PENDING', date: new Date().toISOString().slice(0, 10), deliveryType: delivery, items: items.map(i => i.product.emoji + ' ' + i.product.name) });
     clearCart();
-    toast.success('✅ Objednávka odeslána! Farmář bude brzy kontaktovat.');
+    toast.success('✅ Objednávka odeslána!');
     navigate('/objednavky');
+  };
+
+  // Init Stripe Payment Intent via Supabase Edge Function
+  const initStripePayment = async () => {
+    if (!user) { navigate('/prihlaseni'); return; }
+    const fnUrl = import.meta.env.VITE_SUPABASE_FUNCTIONS_URL;
+    if (!fnUrl || !stripePromise) { confirmOrderFallback(); return; }
+    setStripeLoading(true);
+    try {
+      const res = await fetch(`${fnUrl}/create-payment-intent`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ amount: finalTotal, farmName: farm?.name, orderId: '#' + Math.floor(1000 + Math.random() * 9000) }),
+      });
+      const data = await res.json();
+      if (data.clientSecret) { setClientSecret(data.clientSecret); setPayStep('stripe'); }
+      else { toast.error('Platba není dostupná. Objednávka odeslána bez platby.'); confirmOrderFallback(); }
+    } catch { confirmOrderFallback(); }
+    setStripeLoading(false);
   };
 
   if (items.length === 0) return (
@@ -111,6 +67,24 @@ export function CheckoutPage() {
         <p style={{ color:'#888', fontSize:14, marginBottom:20 }}>Přidejte produkty z vaší oblíbené farmy</p>
         <button onClick={() => navigate('/')} style={{ padding:'10px 24px', background:'#3A5728', color:'white', border:'none', borderRadius:50, fontFamily:"'DM Sans',sans-serif", fontWeight:700, cursor:'pointer' }}>Prozkoumat farmy</button>
       </div>
+    </PageShell>
+  );
+
+  // Stripe payment step
+  if (payStep === 'stripe' && clientSecret && stripePromise) return (
+    <PageShell title="Platba kartou" onBack={() => setPayStep('summary')}>
+      <Elements stripe={stripePromise} options={{ clientSecret, appearance: { theme: 'stripe', variables: { colorPrimary: '#3A5728' } } }}>
+        <StripePaymentForm
+          total={finalTotal}
+          farm={farm}
+          delivery={delivery}
+          items={items}
+          farmId={farmId}
+          addOrder={addOrder}
+          clearCart={clearCart}
+          navigate={navigate}
+        />
+      </Elements>
     </PageShell>
   );
 
@@ -166,16 +140,72 @@ export function CheckoutPage() {
             <span>Produkty</span><span>{total.toFixed(0)} Kč</span>
           </div>
           {delivery === 'delivery' && <div style={{ display:'flex', justifyContent:'space-between', marginBottom:8, fontSize:14 }}><span>Doprava</span><span>79 Kč</span></div>}
-          <div style={{ borderTop:'2px solid #EDE5D0', marginTop:12, paddingTop:12, display:'flex', justifyContent:'space-between', fontWeight:700, fontSize:16 }}>
-            <span>Celkem</span><span style={{ color:'#3A5728' }}>{(total + (delivery==='delivery' ? 79 : 0)).toFixed(0)} Kč</span>
+          <div style={{ borderTop:'2px solid #EDE5D0', marginTop:12, paddingTop:12, display:'flex', justifyContent:'space-between', fontWeight:700, fontSize:16, marginBottom:16 }}>
+            <span>Celkem</span><span style={{ color:'#3A5728' }}>{finalTotal.toFixed(0)} Kč</span>
           </div>
-          <button onClick={handleOrder} style={{ width:'100%', marginTop:16, padding:'12px', background:'#3A5728', color:'white', border:'none', borderRadius:10, fontFamily:"'DM Sans',sans-serif", fontWeight:700, fontSize:15, cursor:'pointer' }}>
-            ✓ Odeslat objednávku
+          {/* Pay with card (Stripe) */}
+          <button onClick={initStripePayment} disabled={stripeLoading} style={{ width:'100%', padding:'13px', background:'#1E120A', color:'white', border:'none', borderRadius:10, fontFamily:"'DM Sans',sans-serif", fontWeight:700, fontSize:15, cursor:'pointer', marginBottom:10, display:'flex', alignItems:'center', justifyContent:'center', gap:8 }}>
+            {stripeLoading ? '⏳ Načítám...' : '💳 Zaplatit kartou'}
           </button>
-          <p style={{ fontSize:11, color:'#aaa', textAlign:'center', marginTop:10, lineHeight:1.5 }}>Farmář bude ihned kontaktován o vaší objednávce.</p>
+          {/* Fallback — order without payment */}
+          <button onClick={confirmOrderFallback} style={{ width:'100%', padding:'11px', background:'#3A5728', color:'white', border:'none', borderRadius:10, fontFamily:"'DM Sans',sans-serif", fontWeight:700, fontSize:14, cursor:'pointer' }}>
+            ✓ Objednat (platba při převzetí)
+          </button>
+          <p style={{ fontSize:11, color:'#aaa', textAlign:'center', marginTop:10, lineHeight:1.5 }}>Farmář bude ihned informován o objednávce.</p>
         </div>
       </div>
     </PageShell>
+  );
+}
+
+// Stripe payment form component
+function StripePaymentForm({ total, farm, delivery, items, farmId, addOrder, clearCart, navigate }) {
+  const stripe = useStripe();
+  const elements = useElements();
+  const [paying, setPaying] = useState(false);
+  const [error, setError] = useState('');
+
+  const handlePay = async (e) => {
+    e.preventDefault();
+    if (!stripe || !elements) return;
+    setPaying(true);
+    setError('');
+    const { error: stripeError, paymentIntent } = await stripe.confirmPayment({
+      elements,
+      redirect: 'if_required',
+    });
+    if (stripeError) {
+      setError(stripeError.message);
+      setPaying(false);
+      return;
+    }
+    if (paymentIntent?.status === 'succeeded') {
+      const orderId = '#' + Math.floor(1000 + Math.random() * 9000);
+      addOrder({ id: orderId, farm: farm?.name || 'Farma', farmId: String(farmId), total: total.toFixed(0) + ' Kč', status: 'CONFIRMED', date: new Date().toISOString().slice(0, 10), deliveryType: delivery, items: items.map(i => i.product.emoji + ' ' + i.product.name), stripePaymentId: paymentIntent.id });
+      clearCart();
+      toast.success('✅ Platba proběhla úspěšně!');
+      navigate('/objednavky');
+    }
+    setPaying(false);
+  };
+
+  return (
+    <form onSubmit={handlePay} style={{ maxWidth: 520, margin: '0 auto' }}>
+      <div style={{ background: 'white', borderRadius: 14, padding: 24, boxShadow: '0 2px 8px rgba(0,0,0,.06)', marginBottom: 16 }}>
+        <div style={{ fontFamily: "'Playfair Display',serif", fontSize: 18, fontWeight: 700, marginBottom: 16 }}>Platební údaje</div>
+        <PaymentElement />
+        {error && <div style={{ marginTop: 12, padding: '10px 14px', background: '#FEE2E2', color: '#991B1B', borderRadius: 8, fontSize: 13 }}>{error}</div>}
+      </div>
+      <div style={{ background: 'white', borderRadius: 14, padding: 20, boxShadow: '0 2px 8px rgba(0,0,0,.06)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <div>
+          <div style={{ fontSize: 13, color: '#888' }}>Celková částka</div>
+          <div style={{ fontFamily: "'Playfair Display',serif", fontSize: 22, fontWeight: 700, color: '#3A5728' }}>{total.toFixed(0)} Kč</div>
+        </div>
+        <button type="submit" disabled={paying || !stripe} style={{ padding: '13px 28px', background: '#3A5728', color: 'white', border: 'none', borderRadius: 12, fontFamily: "'DM Sans',sans-serif", fontWeight: 700, fontSize: 15, cursor: 'pointer' }}>
+          {paying ? '⏳ Zpracovávám...' : '✅ Zaplatit'}
+        </button>
+      </div>
+    </form>
   );
 }
 
