@@ -457,6 +457,8 @@ export default function MapPage() {
   const [dark, setDark] = useState(() => localStorage.getItem('mf-dark') === '1');
   const [mapStyle, setMapStyle] = useState(() => localStorage.getItem('mf-style') || 'outdoors');
   const [stylePickerOpen, setStylePickerOpen] = useState(false);
+  const [suggestions, setSuggestions] = useState([]);
+  const [showSug, setShowSug] = useState(false);
 
   const MAP_STYLES = [
     { id:'light',    label:'Světlá',    emoji:'☀️', url:'mapbox://styles/mapbox/light-v11' },
@@ -517,10 +519,9 @@ export default function MapPage() {
   }, [nearbyMode]);
 
   const REGIONS = useMemo(() => {
-    const seen = new Set();
-    const list = [];
-    FARMS_DATA.forEach(f => { if (f.loc && !seen.has(f.loc)) { seen.add(f.loc); list.push(f.loc); } });
-    return list.sort();
+    const counts = {};
+    FARMS_DATA.forEach(f => { if (f.loc) counts[f.loc] = (counts[f.loc] || 0) + 1; });
+    return Object.entries(counts).sort(([a], [b]) => a.localeCompare(b, 'cs'));
   }, []);
 
   const filtered = useMemo(() => {
@@ -559,6 +560,14 @@ export default function MapPage() {
         ::-webkit-scrollbar { width:4px; }
         ::-webkit-scrollbar-thumb { background:#B8A882; border-radius:2px; }
         @keyframes spin { to { transform:rotate(360deg) } }
+        .hide-mobile { display:flex; }
+        .show-mobile { display:none; }
+        @media (max-width:640px) {
+          .hide-mobile { display:none !important; }
+          .show-mobile { display:flex !important; }
+          .header-search { max-width:100% !important; }
+          .filter-scroll { gap:4px !important; padding:6px 10px !important; }
+        }
       `}</style>
 
       {/* HEADER */}
@@ -570,10 +579,43 @@ export default function MapPage() {
           Mapa<span style={{ color:'#7DB05A' }}>Farem</span>.cz
         </div>
 
-        <div style={{ flex:1, maxWidth:360, position:'relative' }}>
-          <Search size={14} style={{ position:'absolute', left:11, top:'50%', transform:'translateY(-50%)', color:'#B8A882' }}/>
-          <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Hledat farmu, produkt, obec…"
+        <div className="header-search" style={{ flex:1, maxWidth:360, position:'relative' }}>
+          <Search size={14} style={{ position:'absolute', left:11, top:'50%', transform:'translateY(-50%)', color:'#B8A882', zIndex:1 }}/>
+          <input value={search}
+            onChange={e => {
+              const val = e.target.value;
+              setSearch(val);
+              if (val.length >= 2) {
+                const q = val.toLowerCase();
+                const hits = FARMS_DATA.filter(f =>
+                  f.name.toLowerCase().includes(q) || f.loc.toLowerCase().includes(q)
+                ).slice(0, 6);
+                setSuggestions(hits);
+                setShowSug(hits.length > 0);
+              } else {
+                setShowSug(false);
+              }
+            }}
+            onBlur={() => setTimeout(() => setShowSug(false), 150)}
+            onFocus={() => search.length >= 2 && suggestions.length > 0 && setShowSug(true)}
+            placeholder="Hledat farmu, produkt, obec…"
             style={{ width:'100%', padding:'8px 14px 8px 34px', borderRadius:50, border:'1.5px solid rgba(255,255,255,.12)', background:'rgba(255,255,255,.08)', color:'#F4EDD8', fontFamily:"'DM Sans',sans-serif", fontSize:13, outline:'none' }}/>
+          {showSug && (
+            <div style={{ position:'absolute', top:'calc(100% + 6px)', left:0, right:0, background:'white', borderRadius:12, boxShadow:'0 8px 32px rgba(0,0,0,.2)', overflow:'hidden', zIndex:2000 }}>
+              {suggestions.map(f => (
+                <div key={f.id} onMouseDown={() => { navigate(`/farma/${f.id}`); setShowSug(false); }}
+                  style={{ padding:'9px 14px', cursor:'pointer', display:'flex', alignItems:'center', gap:10, borderBottom:'1px solid #f0ebe0' }}
+                  onMouseEnter={e => e.currentTarget.style.background='#F4EDD8'}
+                  onMouseLeave={e => e.currentTarget.style.background='white'}>
+                  <span style={{ fontSize:20, flexShrink:0 }}>{f.emoji}</span>
+                  <div>
+                    <div style={{ fontSize:13, fontWeight:700, color:'#1E120A' }}>{f.name}</div>
+                    <div style={{ fontSize:11, color:'#888' }}>📍 {f.loc}</div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
 
         {/* GPS tlačítko */}
@@ -592,7 +634,7 @@ export default function MapPage() {
         </button>
 
         {/* Dark mode přepínač */}
-        <button onClick={toggleDark} title={dark ? 'Světlý režim' : 'Tmavý režim'} style={{
+        <button className="hide-mobile" onClick={toggleDark} title={dark ? 'Světlý režim' : 'Tmavý režim'} style={{
           display:'flex', alignItems:'center', justifyContent:'center',
           width:34, height:34, borderRadius:'50%',
           background: dark ? 'rgba(255,255,255,.12)' : 'rgba(255,255,255,.08)',
@@ -640,14 +682,14 @@ export default function MapPage() {
               Přihlásit se
             </button>
           )}
-          <button onClick={() => navigate('/registrace')} style={{ padding:'7px 14px', background:'#3A5728', color:'white', border:'none', borderRadius:50, fontFamily:"'DM Sans',sans-serif", fontWeight:700, fontSize:13, cursor:'pointer', display:'flex', alignItems:'center', gap:5 }}>
+          <button className="hide-mobile" onClick={() => navigate('/registrace')} style={{ padding:'7px 14px', background:'#3A5728', color:'white', border:'none', borderRadius:50, fontFamily:"'DM Sans',sans-serif", fontWeight:700, fontSize:13, cursor:'pointer', display:'flex', alignItems:'center', gap:5 }}>
             <Plus size={13}/> Přidat farmu
           </button>
         </div>
       </header>
 
       {/* FILTRY */}
-      <div style={{ display:'flex', alignItems:'center', gap:6, padding:'7px 14px', background:T.filterBg, overflowX:'auto', flexShrink:0, scrollbarWidth:'none' }}>
+      <div className="filter-scroll" style={{ display:'flex', alignItems:'center', gap:6, padding:'7px 14px', background:T.filterBg, overflowX:'auto', flexShrink:0, scrollbarWidth:'none' }}>
         <select value={regionFilter} onChange={e => setRegionFilter(e.target.value)} style={{
           padding:'5px 10px', borderRadius:50, border:'1.5px solid rgba(255,255,255,.2)',
           background:'rgba(255,255,255,.1)', color:'rgba(255,255,255,.85)',
@@ -655,7 +697,7 @@ export default function MapPage() {
           outline:'none', flexShrink:0,
         }}>
           <option value="all" style={{ background:'#3A2210' }}>🗺️ Všechny kraje</option>
-          {REGIONS.map(r => <option key={r} value={r} style={{ background:'#3A2210' }}>{r}</option>)}
+          {REGIONS.map(([r, count]) => <option key={r} value={r} style={{ background:'#3A2210' }}>{r} ({count})</option>)}
         </select>
         {/* Tag filters */}
         <div style={{ display:'flex', gap:4, flexShrink:0 }}>
@@ -808,6 +850,25 @@ export default function MapPage() {
           </div>
         </div>
       </div>
+
+      {/* Mobile bottom nav */}
+      <nav className="show-mobile" style={{ position:'fixed', bottom:0, left:0, right:0, zIndex:2000, background:'#1E120A', borderTop:'1px solid rgba(255,255,255,.1)', padding:'6px 0 max(6px, env(safe-area-inset-bottom))', display:'none' }}>
+        {[
+          { icon:'🗺️', label:'Mapa', path:'/mapa', active: true },
+          { icon:'🌱', label:'Sezóna', path:'/sezona' },
+          { icon:'❤️', label:'Oblíbené', path:'/oblibene' },
+          { icon:'👤', label:'Profil', path: user ? '/profil' : '/prihlaseni' },
+        ].map(item => (
+          <button key={item.path} onClick={() => navigate(item.path)} style={{
+            flex:1, background:'none', border:'none', cursor:'pointer',
+            display:'flex', flexDirection:'column', alignItems:'center', gap:2,
+            padding:'4px 0',
+          }}>
+            <span style={{ fontSize:20 }}>{item.icon}</span>
+            <span style={{ fontSize:10, fontWeight:600, color: item.active ? '#7DB05A' : 'rgba(255,255,255,.5)' }}>{item.label}</span>
+          </button>
+        ))}
+      </nav>
     </div>
   );
 }
