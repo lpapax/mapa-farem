@@ -92,6 +92,7 @@ function MapboxMap({ farms, selectedId, onSelect, userLocation, radius, dark, ma
   const mapInstance = useRef(null);
   const markersRef = useRef({});
   const userMarkerRef = useRef(null);
+  const popupRef = useRef(null);
   const navigate = useNavigate();
 
   // Načti Mapbox GL JS
@@ -186,6 +187,11 @@ function MapboxMap({ farms, selectedId, onSelect, userLocation, radius, dark, ma
         map.on('mouseenter', 'clusters', () => map.getCanvas().style.cursor = 'pointer');
         map.on('mouseleave', 'clusters', () => map.getCanvas().style.cursor = '');
       });
+
+      // Zavři popup při pohybu mapy — registruj jen jednou při init
+      map.on('dragstart', () => {
+        if (popupRef.current) { popupRef.current.remove(); popupRef.current = null; }
+      });
     });
 
     return () => {
@@ -244,8 +250,6 @@ function MapboxMap({ farms, selectedId, onSelect, userLocation, radius, dark, ma
   }, [mapStyleUrl]);
 
   // Markery farem — clustering + lazy piny + popup na klik
-  const popupRef = useRef(null);
-
   useEffect(() => {
     const buildMarkers = (map) => {
       // Aktualizuj GeoJSON source pro clustering
@@ -352,9 +356,6 @@ function MapboxMap({ farms, selectedId, onSelect, userLocation, radius, dark, ma
 
       map.on('moveend', updateMarkers);
       map.on('zoomend', updateMarkers);
-      map.on('movestart', () => {
-        if (popupRef.current) { popupRef.current.remove(); popupRef.current = null; }
-      });
       updateMarkers();
     };
 
