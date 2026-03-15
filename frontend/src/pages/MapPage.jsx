@@ -20,13 +20,14 @@ const COLORS = {
   bio:'#C99B30', veggie:'#3A5728', meat:'#9B2226',
   dairy:'#2980B9', honey:'#D4A017', wine:'#7D3C98',
   herbs:'#5F8050', market:'#5D4037',
-  zerowaste:'#27AE60', bezobaly:'#16A085', agroturistika:'#E67E22',
+  zerowaste:'#27AE60', bezobaly:'#16A085',
+  carnivore:'#6D1A1A',
 };
 const LABELS = {
-  all:'Vše', bio:'BIO', veggie:'Zelenina & ovoce', meat:'Maso & uzeniny',
-  dairy:'Mléčné výrobky', honey:'Med & včelí', wine:'Víno & nápoje',
-  herbs:'Bylinky & kosmetika', market:'Farmářský trh',
-  zerowaste:'♻️ Zero-waste', bezobaly:'🫙 Bezobalové', agroturistika:'🏡 Agroturistika',
+  all:'Vše', veggie:'Zelenina & ovoce', market:'Farmářský trh',
+  wine:'Víno & nápoje', meat:'Maso & uzeniny', honey:'Med & včelí',
+  bio:'BIO', dairy:'Mléčné výrobky', herbs:'Bylinky & kosmetika',
+  zerowaste:'♻️ Zero-waste', bezobaly:'🫙 Bezobalové',
 };
 
 // ── VZDÁLENOST (Haversine) ─────────────────────────────────────────────────
@@ -446,6 +447,8 @@ export default function MapPage() {
   const { count: cartCount } = useCartStore();
   const { unreadCount, fetch: fetchNotifs } = useNotificationStore();
 
+  const filterScrollRef = useRef(null);
+  const filterDragRef = useRef({ dragging: false, startX: 0, scrollLeft: 0 });
   const [regionFilter, setRegionFilter] = useState('all');
   const [tagFilter, setTagFilter] = useState('all'); // bio, eshop, delivery, open
   const [userLocation, setUserLocation] = useState(null);
@@ -531,6 +534,9 @@ export default function MapPage() {
     if (tagFilter === 'eshop') data = data.filter(f => f.eshop);
     if (tagFilter === 'delivery') data = data.filter(f => f.delivery);
     if (tagFilter === 'open') data = data.filter(f => f.open);
+    if (tagFilter === 'carnivore') data = data.filter(f =>
+      ['meat','dairy','honey'].includes(f.type) && (f.google_rating || f.rating || 0) >= 4.3
+    );
     if (nearbyMode && userLocation) {
       data = data
         .map(f => ({ ...f, _dist: getDistance(userLocation.lat, userLocation.lng, f.lat, f.lng) }))
@@ -689,7 +695,15 @@ export default function MapPage() {
       </header>
 
       {/* FILTRY */}
-      <div className="filter-scroll" style={{ display:'flex', alignItems:'center', gap:6, padding:'7px 14px', background:T.filterBg, overflowX:'auto', flexShrink:0, scrollbarWidth:'none' }}>
+      <div
+        ref={filterScrollRef}
+        className="filter-scroll"
+        style={{ display:'flex', alignItems:'center', gap:6, padding:'7px 14px', background:T.filterBg, overflowX:'auto', flexShrink:0, scrollbarWidth:'none', cursor:'grab', userSelect:'none' }}
+        onMouseDown={e => { const d = filterDragRef.current; d.dragging=true; d.startX=e.pageX-filterScrollRef.current.offsetLeft; d.scrollLeft=filterScrollRef.current.scrollLeft; filterScrollRef.current.style.cursor='grabbing'; }}
+        onMouseMove={e => { const d = filterDragRef.current; if (!d.dragging) return; e.preventDefault(); filterScrollRef.current.scrollLeft = d.scrollLeft-(e.pageX-filterScrollRef.current.offsetLeft-d.startX); }}
+        onMouseUp={() => { filterDragRef.current.dragging=false; filterScrollRef.current.style.cursor='grab'; }}
+        onMouseLeave={() => { filterDragRef.current.dragging=false; filterScrollRef.current.style.cursor='grab'; }}
+      >
         <select value={regionFilter} onChange={e => setRegionFilter(e.target.value)} style={{
           padding:'5px 10px', borderRadius:50, border:'1.5px solid rgba(255,255,255,.2)',
           background:'rgba(255,255,255,.1)', color:'rgba(255,255,255,.85)',
@@ -701,11 +715,11 @@ export default function MapPage() {
         </select>
         {/* Tag filters */}
         <div style={{ display:'flex', gap:4, flexShrink:0 }}>
-          {[['all','Vše'],['bio','🌱 BIO'],['eshop','🛒 E-shop'],['delivery','🚚 Rozvoz'],['open','✓ Otevřeno']].map(([k,l]) => (
+          {[['all','Vše'],['bio','🌱 BIO'],['eshop','🛒 E-shop'],['delivery','🚚 Rozvoz'],['open','✓ Otevřeno'],['carnivore','🥩 Carnivore']].map(([k,l]) => (
             <button key={k} onClick={() => setTagFilter(k)} style={{
               padding:'5px 10px', borderRadius:50, border:'none', cursor:'pointer',
-              background: tagFilter===k ? '#C99B30' : 'rgba(255,255,255,.12)',
-              color: tagFilter===k ? '#1E120A' : 'rgba(255,255,255,.7)',
+              background: tagFilter===k ? (k==='carnivore' ? '#6D1A1A' : '#C99B30') : 'rgba(255,255,255,.12)',
+              color: tagFilter===k ? 'white' : 'rgba(255,255,255,.7)',
               fontFamily:"'DM Sans',sans-serif", fontSize:11, fontWeight: tagFilter===k?700:500,
               whiteSpace:'nowrap', transition:'all .15s',
             }}>{l}</button>
