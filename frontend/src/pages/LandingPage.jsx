@@ -443,7 +443,7 @@ export default function LandingPage() {
         </div>
         <p style={{ fontSize:13, marginBottom:16 }}>Mapa lokálních farem a přírodních produktů v ČR</p>
         <div style={{ display:'flex', gap:24, justifyContent:'center', flexWrap:'wrap' }}>
-          {[['🗺️ Otevřít mapu', '/mapa'], ['+ Přidat farmu', '/pridat-farmu']].map(([l, h]) => (
+          {[['🗺️ Otevřít mapu', '/mapa'], ['🌱 Co je v sezóně', '/sezona'], ['+ Přidat farmu', '/pridat-farmu']].map(([l, h]) => (
             <span key={l} onClick={() => navigate(h)}
               style={{ color:'rgba(255,255,255,0.6)', cursor:'pointer', fontSize:13,
                 transition:'color 0.15s' }}

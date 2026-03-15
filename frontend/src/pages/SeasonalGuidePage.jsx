@@ -1,5 +1,5 @@
 // frontend/src/pages/SeasonalGuidePage.jsx
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 
 const SEASONS = {
   jaro: {
@@ -55,7 +55,9 @@ const currentSeason = month >= 3 && month <= 5 ? 'jaro'
 
 export default function SeasonalGuidePage() {
   const navigate = useNavigate();
-  const season = SEASONS[currentSeason];
+  const { season: seasonParam } = useParams();
+  const activeSeason = SEASONS[seasonParam] ? seasonParam : currentSeason;
+  const season = SEASONS[activeSeason];
 
   return (
     <div style={{ minHeight:'100vh', background:'#FAFAF7', fontFamily:"'DM Sans',sans-serif" }}>
@@ -92,7 +94,7 @@ export default function SeasonalGuidePage() {
           Ostatní sezóny
         </div>
         <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill,minmax(160px,1fr))', gap:12, marginBottom:40 }}>
-          {Object.entries(SEASONS).filter(([k]) => k !== currentSeason).map(([key, s]) => (
+          {Object.entries(SEASONS).filter(([k]) => k !== activeSeason).map(([key, s]) => (
             <div key={key} onClick={() => navigate(`/sezona/${key}`)}
               style={{ background:'white', borderRadius:12, padding:'16px', cursor:'pointer', border:`2px solid ${s.color}33`,
                 transition:'all .15s', boxShadow:'0 2px 8px rgba(0,0,0,.04)' }}

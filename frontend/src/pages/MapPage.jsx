@@ -70,6 +70,7 @@ function FarmCard({ farm, selected, onClick, userLocation, dark }) {
           ? <span style={{ fontSize:10, fontWeight:700, padding:'2px 7px', borderRadius:50, background:'#D4EDDA', color:'#155724' }}>Otevřeno</span>
           : <span style={{ fontSize:10, fontWeight:700, padding:'2px 7px', borderRadius:50, background:'#F8D7DA', color:'#721C24' }}>Zavřeno</span>}
         {farm.eshop && <span style={{ fontSize:10, fontWeight:700, padding:'2px 7px', borderRadius:50, background:'#E8F0E4', color:'#3A5728' }}>🛒 E-shop</span>}
+        {farm.delivery && <span style={{ fontSize:10, fontWeight:700, padding:'2px 7px', borderRadius:50, background:'#E8F0FE', color:'#1A5276' }}>🚚 Rozvoz</span>}
       </div>
       <div style={{ display:'flex', justifyContent:'space-between', fontSize:11, fontWeight:600 }}>
         {realDist
@@ -542,7 +543,7 @@ export default function MapPage() {
       (f.products||[]).some(p => p.toLowerCase().includes(q))
     );
     return data;
-  }, [filter, search, nearbyMode, userLocation, radius]);
+  }, [filter, search, nearbyMode, userLocation, radius, regionFilter, tagFilter]);
 
   const handleSelect = useCallback(farm => {
     selectFarm(farm.id);
