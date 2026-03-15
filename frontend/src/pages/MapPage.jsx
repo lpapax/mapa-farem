@@ -445,6 +445,7 @@ export default function MapPage() {
   const { unreadCount, fetch: fetchNotifs } = useNotificationStore();
 
   const [regionFilter, setRegionFilter] = useState('all');
+  const [tagFilter, setTagFilter] = useState('all'); // bio, eshop, delivery, open
   const [userLocation, setUserLocation] = useState(null);
   const [gpsLoading, setGpsLoading] = useState(false);
   const [radius, setRadius] = useState(25);
@@ -523,6 +524,10 @@ export default function MapPage() {
   const filtered = useMemo(() => {
     let data = FARMS_DATA;
     if (regionFilter !== 'all') data = data.filter(f => f.loc === regionFilter);
+    if (tagFilter === 'bio') data = data.filter(f => f.bio);
+    if (tagFilter === 'eshop') data = data.filter(f => f.eshop);
+    if (tagFilter === 'delivery') data = data.filter(f => f.delivery);
+    if (tagFilter === 'open') data = data.filter(f => f.open);
     if (nearbyMode && userLocation) {
       data = data
         .map(f => ({ ...f, _dist: getDistance(userLocation.lat, userLocation.lng, f.lat, f.lng) }))
@@ -650,6 +655,19 @@ export default function MapPage() {
           <option value="all" style={{ background:'#3A2210' }}>🗺️ Všechny kraje</option>
           {REGIONS.map(r => <option key={r} value={r} style={{ background:'#3A2210' }}>{r}</option>)}
         </select>
+        {/* Tag filters */}
+        <div style={{ display:'flex', gap:4, flexShrink:0 }}>
+          {[['all','Vše'],['bio','🌱 BIO'],['eshop','🛒 E-shop'],['delivery','🚚 Rozvoz'],['open','✓ Otevřeno']].map(([k,l]) => (
+            <button key={k} onClick={() => setTagFilter(k)} style={{
+              padding:'5px 10px', borderRadius:50, border:'none', cursor:'pointer',
+              background: tagFilter===k ? '#C99B30' : 'rgba(255,255,255,.12)',
+              color: tagFilter===k ? '#1E120A' : 'rgba(255,255,255,.7)',
+              fontFamily:"'DM Sans',sans-serif", fontSize:11, fontWeight: tagFilter===k?700:500,
+              whiteSpace:'nowrap', transition:'all .15s',
+            }}>{l}</button>
+          ))}
+        </div>
+        <div style={{ width:1, height:18, background:'rgba(255,255,255,.15)', flexShrink:0 }} />
         {nearbyMode && (
           <div style={{ display:'flex', alignItems:'center', gap:6, background:'rgba(41,128,185,.2)', border:'1px solid #2980B9', borderRadius:50, padding:'4px 12px', flexShrink:0 }}>
             <span style={{ fontSize:11, color:'#89CFF0', fontWeight:700 }}>📍 {filtered.length} farem do {radius} km</span>
@@ -723,8 +741,10 @@ export default function MapPage() {
           )}
 
           {/* Sezónní banner */}
-          <div style={{ position:'absolute', top:10, left:'50%', transform:'translateX(-50%)', background:'#C99B30', color:'#1E120A', padding:'5px 16px', borderRadius:50, fontSize:12, fontWeight:700, boxShadow:'0 2px 10px rgba(0,0,0,.15)', zIndex:500, whiteSpace:'nowrap', pointerEvents:'none' }}>
-            {(() => { const m = new Date().getMonth()+1; return m>=3&&m<=5?'🌱 Jaro — sezóna: jahody, chřest, špenát':m>=6&&m<=8?'☀️ Léto — sezóna: rajčata, okurky, borůvky':m>=9&&m<=11?'🍂 Podzim — sezóna: dýně, jablka, brambory':'❄️ Zima — sezóna: zelí, kořenová zelenina, med'; })()}
+          <div onClick={() => navigate('/sezona')} style={{ position:'absolute', top:10, left:'50%', transform:'translateX(-50%)', background:'#C99B30', color:'#1E120A', padding:'5px 16px', borderRadius:50, fontSize:12, fontWeight:700, boxShadow:'0 2px 10px rgba(0,0,0,.15)', zIndex:500, whiteSpace:'nowrap', cursor:'pointer', transition:'transform .15s' }}
+            onMouseEnter={e => e.currentTarget.style.transform='translateX(-50%) scale(1.04)'}
+            onMouseLeave={e => e.currentTarget.style.transform='translateX(-50%) scale(1)'}>
+            {(() => { const m = new Date().getMonth()+1; return m>=3&&m<=5?'🌱 Jaro — co je teď v sezóně? →':m>=6&&m<=8?'☀️ Léto — co je teď v sezóně? →':m>=9&&m<=11?'🍂 Podzim — co je teď v sezóně? →':'❄️ Zima — co je teď v sezóně? →'; })()}
           </div>
 
           {/* Přepínač stylů mapy */}
