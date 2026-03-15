@@ -535,10 +535,20 @@ export default function FarmDetailPage() {
 
       {/* Podobné farmy */}
       {(() => {
-        const similar = FARMS_DATA
-          .filter(f => String(f.id) !== String(farm.id) && (f.type === farm.type || f.loc === farm.loc))
-          .sort((a, b) => (b.type === farm.type ? 1 : 0) - (a.type === farm.type ? 1 : 0))
-          .slice(0, 4);
+        const haversine = (lat1, lng1, lat2, lng2) => {
+          const R = 6371;
+          const dLat = (lat2 - lat1) * Math.PI / 180;
+          const dLng = (lng2 - lng1) * Math.PI / 180;
+          const a = Math.sin(dLat/2)**2 + Math.cos(lat1*Math.PI/180) * Math.cos(lat2*Math.PI/180) * Math.sin(dLng/2)**2;
+          return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+        };
+        const similar = farm.lat && farm.lng
+          ? FARMS_DATA
+              .filter(f => String(f.id) !== String(farm.id) && f.lat && f.lng)
+              .map(f => ({ ...f, _dist: haversine(farm.lat, farm.lng, f.lat, f.lng) }))
+              .sort((a, b) => a._dist - b._dist)
+              .slice(0, 4)
+          : FARMS_DATA.filter(f => String(f.id) !== String(farm.id) && f.loc === farm.loc).slice(0, 4);
         if (similar.length === 0) return null;
         return (
           <div style={{ maxWidth:900, margin:'0 auto', padding:'0 20px 32px' }}>
