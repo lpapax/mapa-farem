@@ -137,14 +137,6 @@ const CAT_PHOTOS = [
     img:'https://images.unsplash.com/photo-1529692236671-f1f6cf9683ba?w=600&q=80&fit=crop' },
 ];
 
-const BEDYNKY = [
-  { name:'Základní',  sub:'Curated & more',   price:'od 350 Kč / týden',
-    img:'https://images.unsplash.com/photo-1610348725531-843dff563e2c?w=500&q=80&fit=crop' },
-  { name:'Rodinná',   sub:'Curated & more',   price:'od 650 Kč / týden',
-    img:'https://images.unsplash.com/photo-1540420773420-3366772f4999?w=500&q=80&fit=crop' },
-  { name:'Gourmet',   sub:'Handmade & more',  price:'od 990 Kč / týden',
-    img:'https://images.unsplash.com/photo-1498579809087-ef1e558fd1da?w=500&q=80&fit=crop' },
-];
 
 /* ═══════════════════════════════════════════════════════ */
 export default function LandingPage() {
@@ -161,14 +153,10 @@ export default function LandingPage() {
         .cat-card:hover{transform:translateY(-6px);box-shadow:0 18px 44px rgba(44,24,16,.18);}
         .cat-card img{width:100%;height:220px;object-fit:cover;display:block;transition:transform .4s;}
         .cat-card:hover img{transform:scale(1.06);}
-        .bed-card{border-radius:20px;overflow:hidden;background:white;cursor:pointer;transition:transform .22s,box-shadow .22s;}
-        .bed-card:hover{transform:translateY(-5px);box-shadow:0 14px 36px rgba(44,24,16,.15);}
-        .bed-card img{width:100%;height:190px;object-fit:cover;display:block;}
         @media(max-width:900px){
           .hero-grid{grid-template-columns:1fr!important;}
           .hero-img{display:none!important;}
           .cat-grid{grid-template-columns:1fr!important;}
-          .bed-grid{grid-template-columns:1fr!important;}
         }
         @media(max-width:600px){.nav-links{display:none!important;}}
       `}</style>
@@ -328,34 +316,6 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* ── SEZÓNNÍ BEDÝNKY ── */}
-      <section style={{ padding:'80px 40px',background:'white' }}>
-        <div style={{ maxWidth:1100,margin:'0 auto' }}>
-          <div style={{ textAlign:'center',marginBottom:48 }}>
-            <div style={{ fontSize:12,fontWeight:700,letterSpacing:3,color:C.terra,textTransform:'uppercase',marginBottom:10 }}>Sezónní výběr</div>
-            <h2 style={{ fontFamily:"'Playfair Display',serif",fontSize:36,fontWeight:700,color:C.brown }}>Sezónní Bedýnky</h2>
-            <p style={{ fontSize:15,color:'#6B4F3A',marginTop:10 }}>Čerstvé farmářské produkty přímo k tobě domů každý týden</p>
-          </div>
-
-          <div className="bed-grid" style={{ display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:22 }}>
-            {BEDYNKY.map((b) => (
-              <div key={b.name} className="bed-card">
-                <img src={b.img} alt={b.name}/>
-                <div style={{ padding:'20px 24px 24px' }}>
-                  <div style={{ fontFamily:"'Playfair Display',serif",fontSize:22,fontWeight:700,color:C.brown,marginBottom:4 }}>{b.name}</div>
-                  <div style={{ fontSize:12,color:'#999',marginBottom:14 }}>{b.sub}</div>
-                  <div style={{ fontSize:15,fontWeight:700,color:C.green,marginBottom:16 }}>{b.price}</div>
-                  <button onClick={() => navigate('/mapa')} style={{ width:'100%',padding:'11px',background:C.green,color:'white',border:'none',borderRadius:10,fontWeight:700,fontSize:14,cursor:'pointer',fontFamily:"'DM Sans',sans-serif",transition:'all .2s' }}
-                    onMouseEnter={e=>{e.currentTarget.style.background='#2d4420';}}
-                    onMouseLeave={e=>{e.currentTarget.style.background=C.green;}}>
-                    Vybrat farmu →
-                  </button>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
 
       {/* ── JAK TO FUNGUJE ── */}
       <section style={{ padding:'72px 40px',background:C.cream }}>
