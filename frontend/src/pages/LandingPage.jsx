@@ -143,29 +143,28 @@ export default function LandingPage() {
 
       {/* HERO */}
       <section style={{
-        minHeight: '100vh',
-        background: 'linear-gradient(150deg, #1E2D15 0%, #2d4420 40%, #3A5728 100%)',
+        minHeight: '92vh',
+        background: '#F4EDD8',
         display: 'flex', alignItems: 'center',
-        padding: '80px 32px 60px',
+        padding: '80px 32px 56px',
         position: 'relative', overflow: 'hidden',
       }}>
-        {/* BG texture */}
-        <div style={{ position: 'absolute', inset: 0, backgroundImage: `radial-gradient(circle at 20% 50%, rgba(125,176,90,.15) 0%, transparent 50%), radial-gradient(circle at 80% 20%, rgba(201,155,48,.1) 0%, transparent 40%)`, pointerEvents: 'none' }} />
-        <div style={{ position: 'absolute', top: 80, right: -60, width: 420, height: 420, borderRadius: '50%', border: '1px solid rgba(125,176,90,.15)', pointerEvents: 'none' }} />
-        <div style={{ position: 'absolute', top: 130, right: -10, width: 280, height: 280, borderRadius: '50%', border: '1px solid rgba(125,176,90,.1)', pointerEvents: 'none' }} />
+        {/* Subtle BG blobs */}
+        <div style={{ position:'absolute', top:-120, right:-80, width:500, height:500, borderRadius:'50%', background:'radial-gradient(circle, rgba(125,176,90,.12), transparent 70%)', pointerEvents:'none' }} />
+        <div style={{ position:'absolute', bottom:-60, left:-60, width:360, height:360, borderRadius:'50%', background:'radial-gradient(circle, rgba(201,155,48,.08), transparent 70%)', pointerEvents:'none' }} />
 
         <div style={{ maxWidth: 1100, margin: '0 auto', width: '100%' }}>
-          <div className="hero-grid" style={{ display: 'grid', gridTemplateColumns: '1.1fr 0.9fr', gap: 70, alignItems: 'center' }}>
+          <div className="hero-grid" style={{ display: 'grid', gridTemplateColumns: '1.1fr 0.9fr', gap: 64, alignItems: 'center' }}>
 
             {/* LEFT */}
             <div>
               {/* Badge */}
               <div style={{
                 display: 'inline-flex', alignItems: 'center', gap: 8,
-                background: 'rgba(125,176,90,.15)', border: '1px solid rgba(125,176,90,.3)',
+                background: 'rgba(58,87,40,.08)', border: '1px solid rgba(58,87,40,.2)',
                 padding: '6px 14px', borderRadius: 50,
-                fontSize: 12, fontWeight: 600, color: '#A8C97A',
-                marginBottom: 24,
+                fontSize: 12, fontWeight: 600, color: '#3A5728',
+                marginBottom: 22,
                 opacity: heroVisible ? 1 : 0, transform: heroVisible ? 'none' : 'translateY(12px)',
                 transition: 'opacity 0.6s 0.1s, transform 0.6s 0.1s',
               }}>
@@ -175,18 +174,18 @@ export default function LandingPage() {
 
               <h1 className="hero-title" style={{
                 fontFamily: "'Playfair Display',serif",
-                fontSize: 58, fontWeight: 900, lineHeight: 1.1,
-                color: 'white', marginBottom: 22,
+                fontSize: 60, fontWeight: 900, lineHeight: 1.08,
+                color: '#1E120A', marginBottom: 20,
                 opacity: heroVisible ? 1 : 0, transform: heroVisible ? 'none' : 'translateY(20px)',
                 transition: 'opacity 0.7s 0.2s, transform 0.7s 0.2s',
               }}>
                 Lokální farmáři<br />
-                <em style={{ color: '#A8C97A', fontStyle: 'italic' }}>přímo u tebe</em>
+                <em style={{ color: '#3A5728', fontStyle: 'italic' }}>přímo u tebe</em>
               </h1>
 
               <p style={{
-                fontSize: 17, color: 'rgba(255,255,255,.7)', lineHeight: 1.75,
-                marginBottom: 36, maxWidth: 460,
+                fontSize: 17, color: '#666', lineHeight: 1.75,
+                marginBottom: 32, maxWidth: 460,
                 opacity: heroVisible ? 1 : 0, transform: heroVisible ? 'none' : 'translateY(16px)',
                 transition: 'opacity 0.7s 0.35s, transform 0.7s 0.35s',
               }}>
@@ -196,34 +195,33 @@ export default function LandingPage() {
 
               {/* Search bar */}
               <form onSubmit={handleSearch} style={{
-                display: 'flex', gap: 0, marginBottom: 28, maxWidth: 480,
+                display: 'flex', marginBottom: 24, maxWidth: 480,
+                boxShadow: '0 4px 20px rgba(0,0,0,.1)', borderRadius: 13,
                 opacity: heroVisible ? 1 : 0, transform: heroVisible ? 'none' : 'translateY(16px)',
                 transition: 'opacity 0.7s 0.45s, transform 0.7s 0.45s',
               }}>
                 <input
                   value={search}
                   onChange={e => setSearch(e.target.value)}
-                  placeholder="Hledat obec, kraj, produkt..."
+                  placeholder="🔍  Hledat obec, kraj, produkt..."
                   style={{
                     flex: 1, padding: '14px 18px',
-                    borderRadius: '12px 0 0 12px', border: 'none',
-                    fontSize: 15, outline: 'none',
-                    background: 'rgba(255,255,255,.12)', color: 'white',
-                    backdropFilter: 'blur(8px)',
+                    borderRadius: '13px 0 0 13px',
+                    border: '1.5px solid rgba(58,87,40,.2)', borderRight: 'none',
+                    fontSize: 15, outline: 'none', background: 'white', color: '#1E120A',
                   }}
                 />
                 <button type="submit" className="lp-btn lp-btn-green" style={{
-                  borderRadius: '0 12px 12px 0', padding: '14px 22px', fontSize: 14,
+                  borderRadius: '0 13px 13px 0', padding: '14px 22px', fontSize: 14,
                 }}>
-                  🔍 Hledat
+                  Hledat
                 </button>
               </form>
 
               {/* Quick links */}
               <div style={{
-                display: 'flex', gap: 10, flexWrap: 'wrap',
-                opacity: heroVisible ? 1 : 0,
-                transition: 'opacity 0.7s 0.6s',
+                display: 'flex', gap: 8, flexWrap: 'wrap',
+                opacity: heroVisible ? 1 : 0, transition: 'opacity 0.7s 0.6s',
               }}>
                 {[
                   { label: '📍 Kolem mě', action: () => navigate('/mapa') },
@@ -231,47 +229,47 @@ export default function LandingPage() {
                   { label: '🛒 Farmářské trhy', action: () => goMap('market') },
                 ].map(({ label, action }) => (
                   <button key={label} onClick={action} style={{
-                    background: 'rgba(255,255,255,.1)', border: '1px solid rgba(255,255,255,.2)',
-                    color: 'rgba(255,255,255,.85)', padding: '7px 14px',
-                    borderRadius: 50, fontSize: 12, fontWeight: 500, cursor: 'pointer',
+                    background: 'white', border: '1.5px solid rgba(58,87,40,.2)',
+                    color: '#3A5728', padding: '7px 14px',
+                    borderRadius: 50, fontSize: 12, fontWeight: 600, cursor: 'pointer',
                     transition: 'all 0.15s',
                   }}
-                  onMouseEnter={e => { e.currentTarget.style.background = 'rgba(255,255,255,.2)'; e.currentTarget.style.color = 'white'; }}
-                  onMouseLeave={e => { e.currentTarget.style.background = 'rgba(255,255,255,.1)'; e.currentTarget.style.color = 'rgba(255,255,255,.85)'; }}>
+                  onMouseEnter={e => { e.currentTarget.style.background = '#3A5728'; e.currentTarget.style.color = 'white'; e.currentTarget.style.borderColor = '#3A5728'; }}
+                  onMouseLeave={e => { e.currentTarget.style.background = 'white'; e.currentTarget.style.color = '#3A5728'; e.currentTarget.style.borderColor = 'rgba(58,87,40,.2)'; }}>
                     {label}
                   </button>
                 ))}
               </div>
             </div>
 
-            {/* RIGHT — vizuální mapa mockup */}
+            {/* RIGHT — mapa mockup */}
             <div style={{
               opacity: heroVisible ? 1 : 0, transform: heroVisible ? 'none' : 'translateX(30px)',
               transition: 'opacity 0.8s 0.4s, transform 0.8s 0.4s',
               position: 'relative',
             }}>
               <div style={{
-                background: 'linear-gradient(135deg, #2d4a1e, #4a6e30)',
+                background: 'linear-gradient(135deg, #c8dbb8, #e0ecd4)',
                 borderRadius: 24, overflow: 'hidden',
                 aspectRatio: '4/3', position: 'relative',
-                boxShadow: '0 32px 80px rgba(0,0,0,.4), 0 0 0 1px rgba(255,255,255,.08)',
+                boxShadow: '0 24px 64px rgba(58,87,40,.18), 0 0 0 1px rgba(58,87,40,.1)',
               }}>
                 {/* mapa grid */}
-                <div style={{ position: 'absolute', inset: 0, opacity: 0.25,
-                  backgroundImage: `repeating-linear-gradient(0deg,transparent,transparent 38px,rgba(255,255,255,.15) 39px),repeating-linear-gradient(90deg,transparent,transparent 38px,rgba(255,255,255,.15) 39px)` }} />
-                <div style={{ position: 'absolute', inset: 0, background: 'radial-gradient(ellipse at 55% 40%, rgba(168,201,122,.2), transparent 65%)' }} />
+                <div style={{ position:'absolute', inset:0, opacity:0.35,
+                  backgroundImage:`repeating-linear-gradient(0deg,transparent,transparent 38px,rgba(58,87,40,.12) 39px),repeating-linear-gradient(90deg,transparent,transparent 38px,rgba(58,87,40,.12) 39px)` }} />
+                <div style={{ position:'absolute', inset:0, background:'radial-gradient(ellipse at 55% 45%, rgba(58,87,40,.08), transparent 65%)' }} />
 
                 {/* Piny */}
                 {[
-                  { top:'22%', left:'42%', color:'#7DB05A', emoji:'🥕', delay:0 },
+                  { top:'22%', left:'42%', color:'#3A5728', emoji:'🥕', delay:0 },
                   { top:'38%', left:'62%', color:'#C99B30', emoji:'🌱', delay:.3 },
                   { top:'55%', left:'30%', color:'#C0392B', emoji:'🥩', delay:.6 },
-                  { top:'28%', left:'22%', color:'#5DADE2', emoji:'🥛', delay:.9 },
+                  { top:'28%', left:'22%', color:'#2980B9', emoji:'🥛', delay:.9 },
                   { top:'60%', left:'65%', color:'#D4A017', emoji:'🍯', delay:.2 },
                   { top:'45%', left:'50%', color:'#8E44AD', emoji:'🍷', delay:.7 },
                   { top:'18%', left:'68%', color:'#27AE60', emoji:'🌿', delay:.4 },
                 ].map((p, i) => (
-                  <div key={i} style={{ position:'absolute', top:p.top, left:p.left, animation:`float 3.5s ease-in-out ${p.delay}s infinite`, filter:'drop-shadow(0 4px 8px rgba(0,0,0,.35))' }}>
+                  <div key={i} style={{ position:'absolute', top:p.top, left:p.left, animation:`float 3.5s ease-in-out ${p.delay}s infinite`, filter:'drop-shadow(0 3px 6px rgba(0,0,0,.2))' }}>
                     <svg width="30" height="40" viewBox="0 0 52 68" fill="none">
                       <path d="M26 2C14.95 2 6 10.95 6 22C6 36.5 26 66 26 66C26 66 46 36.5 46 22C46 10.95 37.05 2 26 2Z" fill={p.color} stroke="white" strokeWidth="3.5"/>
                       <text x="26" y="29" textAnchor="middle" fontSize="17" dominantBaseline="middle">{p.emoji}</text>
@@ -283,28 +281,25 @@ export default function LandingPage() {
                 <div style={{
                   position:'absolute', top:'12%', left:'44%',
                   background:'white', borderRadius:12, padding:'10px 14px',
-                  boxShadow:'0 8px 28px rgba(0,0,0,.25)', fontSize:11, minWidth:130,
+                  boxShadow:'0 8px 24px rgba(0,0,0,.15)', fontSize:11, minWidth:130,
                   animation:'float 4.5s ease-in-out .5s infinite',
                 }}>
                   <div style={{ fontSize:16, marginBottom:2 }}>🥕</div>
                   <div style={{ fontWeight:700, fontSize:12, color:'#1E120A' }}>Farma Novákových</div>
                   <div style={{ color:'#888', fontSize:10, marginBottom:4 }}>📍 Vysočina · ⭐ 4.9</div>
-                  <div style={{ background:'#3A5728', color:'white', borderRadius:6, padding:'2px 8px', fontSize:9, textAlign:'center', fontWeight:700 }}>
-                    Detail →
-                  </div>
+                  <div style={{ background:'#3A5728', color:'white', borderRadius:6, padding:'2px 8px', fontSize:9, textAlign:'center', fontWeight:700 }}>Detail →</div>
                 </div>
 
                 {/* Stats bar */}
                 <div style={{
                   position:'absolute', bottom:0, left:0, right:0,
-                  background:'rgba(15,25,10,.88)', backdropFilter:'blur(10px)',
-                  padding:'12px 20px',
-                  display:'flex', justifyContent:'space-around',
+                  background:'rgba(30,18,10,.82)', backdropFilter:'blur(10px)',
+                  padding:'12px 20px', display:'flex', justifyContent:'space-around',
                 }}>
-                  {[[FARMS_DATA.length.toLocaleString('cs-CZ'), 'farem'], ['14', 'krajů'], ['4.7★', 'průměr']].map(([n,l]) => (
+                  {[[FARMS_DATA.length.toLocaleString('cs-CZ'),'farem'],['14','krajů'],['4.7★','průměr']].map(([n,l]) => (
                     <div key={l} style={{ textAlign:'center' }}>
                       <div style={{ fontWeight:800, fontSize:15, color:'#A8C97A' }}>{n}</div>
-                      <div style={{ fontSize:10, color:'rgba(255,255,255,.55)' }}>{l}</div>
+                      <div style={{ fontSize:10, color:'rgba(255,255,255,.5)' }}>{l}</div>
                     </div>
                   ))}
                 </div>
@@ -314,7 +309,7 @@ export default function LandingPage() {
               <div style={{
                 position:'absolute', bottom:-16, left:-16,
                 background:'white', borderRadius:12, padding:'10px 16px',
-                boxShadow:'0 8px 24px rgba(0,0,0,.15)',
+                boxShadow:'0 6px 20px rgba(0,0,0,.1)',
                 fontSize:12, fontWeight:700, color:'#3A5728',
                 border:'1px solid rgba(58,87,40,.12)',
               }}>
