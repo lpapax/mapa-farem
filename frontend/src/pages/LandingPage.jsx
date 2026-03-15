@@ -1,118 +1,13 @@
 // frontend/src/pages/LandingPage.jsx
-import { useState, useCallback } from 'react';
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import FARMS_DATA from '../data/farms.json';
 
-/* ─── SVG map helpers ─── */
-const toSVG = (lat, lng) => ({
-  x: (lng - 12.0) / 7.0 * 580 + 10,
-  y: (51.1 - lat) / 2.6 * 300 + 10,
-});
-const MAP_PINS = FARMS_DATA
-  .filter(f => f.lat && f.lng && f.rating >= 4.5 && f.lat > 48.5 && f.lat < 51.1 && f.lng > 12.0 && f.lng < 19.0)
+/* ─── Top farms for showcase ─── */
+const TOP_SHOWCASE = FARMS_DATA
+  .filter(f => f.rating >= 4.8 && f.reviews >= 15)
   .sort((a, b) => b.rating - a.rating)
-  .slice(0, 55);
-
-const PIN_COLOR = {
-  veggie:'#C5A028', meat:'#BF5B3D', dairy:'#7B9A5A',
-  honey:'#C5A028', wine:'#9B6B8A', bio:'#5D8A52',
-  herbs:'#7B9A5A', market:'#C5A028',
-};
-
-function CZMap({ navigate }) {
-  const [tooltip, setTooltip] = useState(null);
-  const [hov, setHov] = useState(null);
-
-  const show = useCallback((e, farm) => {
-    e.stopPropagation();
-    const r = e.currentTarget.closest('svg').getBoundingClientRect();
-    setTooltip({ farm, px: e.clientX - r.left, py: e.clientY - r.top });
-    setHov(farm.id);
-  }, []);
-
-  return (
-    <div style={{ position:'relative', width:'100%' }}>
-      <svg viewBox="0 0 600 320" style={{ width:'100%', height:'auto', cursor:'pointer' }}
-        onClick={() => { setTooltip(null); setHov(null); }}>
-        <defs>
-          <filter id="mapShadow" x="-5%" y="-5%" width="110%" height="110%">
-            <feDropShadow dx="0" dy="3" stdDeviation="4" floodColor="#3A5728" floodOpacity="0.2"/>
-          </filter>
-        </defs>
-        {/* CZ outline */}
-        <path
-          d="M 18,130 L 28,108 L 45,88 L 72,62 L 100,48 L 132,32 L 155,18 L 178,14 L 198,22 L 218,18 L 248,12 L 272,20 L 295,30 L 315,38 L 338,50 L 358,58 L 380,58 L 405,65 L 428,70 L 452,78 L 478,82 L 505,92 L 530,105 L 555,122 L 568,138 L 560,158 L 548,175 L 535,192 L 518,210 L 502,228 L 485,248 L 468,262 L 448,274 L 422,282 L 398,290 L 372,296 L 345,300 L 318,298 L 290,294 L 265,292 L 238,290 L 210,288 L 182,286 L 158,282 L 135,274 L 112,262 L 90,248 L 70,232 L 50,212 L 32,192 L 18,168 Z"
-          fill="#9AAD6E" stroke="#6B8040" strokeWidth="2" strokeLinejoin="round" filter="url(#mapShadow)"
-        />
-        {/* Region divider */}
-        <line x1="378" y1="58" x2="390" y2="300" stroke="#6B8040" strokeWidth="1" strokeDasharray="4,3" opacity="0.4"/>
-        <text x="185" y="175" textAnchor="middle" fontSize="12" fill="white" fontWeight="700" opacity="0.55" fontFamily="DM Sans,sans-serif">Čechy</text>
-        <text x="470" y="195" textAnchor="middle" fontSize="12" fill="white" fontWeight="700" opacity="0.55" fontFamily="DM Sans,sans-serif">Morava</text>
-        {/* Šumava label */}
-        <text x="72" y="230" textAnchor="middle" fontSize="10" fill="white" opacity="0.5" fontFamily="DM Sans,sans-serif">Šumava</text>
-
-        {/* Pins */}
-        {MAP_PINS.map(farm => {
-          const { x, y } = toSVG(farm.lat, farm.lng);
-          if (x < 8 || x > 592 || y < 8 || y > 312) return null;
-          const col = PIN_COLOR[farm.type] || '#C5A028';
-          const isH = hov === farm.id;
-          return (
-            <g key={farm.id} onClick={e => show(e, farm)} style={{ cursor:'pointer' }}>
-              <circle cx={x} cy={y} r={isH ? 8 : 5} fill={col} stroke="white" strokeWidth={isH ? 2 : 1.5} opacity={isH ? 1 : 0.85}
-                onMouseEnter={e => show(e, farm)}
-                style={{ transition:'r .15s' }}
-              />
-            </g>
-          );
-        })}
-      </svg>
-
-      {/* Tooltip */}
-      {tooltip && (
-        <div style={{
-          position:'absolute',
-          left: Math.min(Math.max(tooltip.px, 80), 520),
-          top: tooltip.py - 12,
-          transform:'translate(-50%,-100%)',
-          background:'white', borderRadius:14, padding:'14px 18px',
-          boxShadow:'0 10px 32px rgba(44,24,16,.2)',
-          minWidth:180, maxWidth:230, zIndex:20, pointerEvents:'none',
-          border:'1px solid rgba(107,128,64,.15)',
-        }}>
-          <div style={{ display:'flex', alignItems:'center', gap:10, marginBottom:8 }}>
-            <div style={{ width:36, height:36, borderRadius:'50%', background:'#F5EDE0', display:'flex', alignItems:'center', justifyContent:'center', fontSize:18 }}>
-              {tooltip.farm.emoji}
-            </div>
-            <div>
-              <div style={{ fontWeight:700, fontSize:13, color:'#2C1810', lineHeight:1.2 }}>{tooltip.farm.name}</div>
-              <div style={{ fontSize:11, color:'#888' }}>📍 {tooltip.farm.loc}</div>
-            </div>
-          </div>
-          <div style={{ fontSize:12, color:'#C5A028', fontWeight:700, marginBottom:8 }}>⭐ {tooltip.farm.rating}</div>
-          <div onClick={() => navigate(`/farma/${tooltip.farm.id}`)}
-            style={{ background:'#3A5728', color:'white', borderRadius:7, padding:'5px 12px', fontSize:11, textAlign:'center', fontWeight:700, cursor:'pointer' }}>
-            Zobrazit farmu →
-          </div>
-        </div>
-      )}
-
-      {/* Stats */}
-      <div style={{
-        position:'absolute', bottom:8, left:'50%', transform:'translateX(-50%)',
-        background:'rgba(44,24,16,.8)', backdropFilter:'blur(8px)',
-        borderRadius:10, padding:'8px 22px', display:'flex', gap:24,
-      }}>
-        {[[MAP_PINS.length+'+','zobrazeno'],['14','krajů'],['4.7★','průměr']].map(([n,l]) => (
-          <div key={l} style={{ textAlign:'center' }}>
-            <div style={{ fontWeight:800, fontSize:13, color:'#C5A028' }}>{n}</div>
-            <div style={{ fontSize:9, color:'rgba(255,255,255,.5)' }}>{l}</div>
-          </div>
-        ))}
-      </div>
-    </div>
-  );
-}
+  .slice(0, 4);
 
 /* ─── Decorations ─── */
 const Leaf = ({ style }) => (
@@ -290,14 +185,13 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* ── FARMÁŘI — CZ mapa ── */}
+      {/* ── FARMÁŘI — foto sekce ── */}
       <section style={{ padding:'80px 40px',background:C.cream,position:'relative',overflow:'hidden' }}>
         <Leaf style={{ position:'absolute',top:40,right:60,width:64,color:C.green,opacity:.18,transform:'rotate(-35deg)' }}/>
         <Leaf style={{ position:'absolute',bottom:60,left:30,width:52,color:C.green,opacity:.15,transform:'rotate(30deg)' }}/>
         <Blob style={{ position:'absolute',top:-60,right:-80,width:280,color:C.terra,opacity:.07 }}/>
 
         <div style={{ maxWidth:1100,margin:'0 auto' }}>
-          {/* Wheat deco */}
           <div style={{ textAlign:'center',marginBottom:12 }}>
             <span style={{ fontSize:28,opacity:.5 }}>🌾</span>
           </div>
@@ -305,20 +199,71 @@ export default function LandingPage() {
             <div style={{ fontSize:12,fontWeight:700,letterSpacing:3,color:C.terra,textTransform:'uppercase',marginBottom:10 }}>Představujeme</div>
             <h2 style={{ fontFamily:"'Playfair Display',serif",fontSize:36,fontWeight:700,color:C.brown }}>Představujeme naše farmáře</h2>
             <p style={{ fontSize:15,color:'#6B4F3A',marginTop:10,maxWidth:480,margin:'10px auto 0' }}>
-              Interaktivní mapa lokálních farem napříč celou Českou republikou
+              Stovky ověřených farmářů napříč celou Českou republikou
             </p>
           </div>
 
-          {/* Map card */}
-          <div style={{ background:'white',borderRadius:28,padding:'28px 28px 18px',boxShadow:'0 16px 56px rgba(44,24,16,.12)',position:'relative',overflow:'hidden' }}>
-            <div style={{ fontSize:13,fontWeight:700,color:C.terra,letterSpacing:2,textTransform:'uppercase',marginBottom:14,paddingLeft:4 }}>
-              🗺️ Farmy v České republice
+          {/* Hero landscape photo */}
+          <div style={{ borderRadius:28,overflow:'hidden',position:'relative',height:420,boxShadow:'0 20px 60px rgba(44,24,16,.15)',marginBottom:32 }}>
+            <img
+              src="https://images.unsplash.com/photo-1500382017468-9049fed747ef?w=1400&q=85&fit=crop"
+              alt="Česká krajina"
+              style={{ width:'100%',height:'100%',objectFit:'cover',objectPosition:'center 60%' }}
+            />
+            <div style={{ position:'absolute',inset:0,background:'linear-gradient(to right, rgba(44,24,16,.55) 0%, rgba(44,24,16,.15) 60%, transparent 100%)' }}/>
+
+            {/* Stats overlay */}
+            <div style={{ position:'absolute',top:'50%',left:48,transform:'translateY(-50%)' }}>
+              <div style={{ fontFamily:"'Playfair Display',serif",fontSize:42,fontWeight:900,color:'white',lineHeight:1.1,marginBottom:16 }}>
+                {FARMS_DATA.length}<br/>
+                <span style={{ fontSize:20,fontWeight:400,color:'rgba(255,255,255,.75)' }}>ověřených farem</span>
+              </div>
+              <div style={{ display:'flex',gap:28 }}>
+                {[['14','krajů ČR'],['4.7★','průměrné hodnocení'],['BIO','certifikované farmy']].map(([n,l]) => (
+                  <div key={l}>
+                    <div style={{ fontFamily:"'Playfair Display',serif",fontSize:22,fontWeight:700,color:'#C5A028' }}>{n}</div>
+                    <div style={{ fontSize:12,color:'rgba(255,255,255,.6)',marginTop:2 }}>{l}</div>
+                  </div>
+                ))}
+              </div>
             </div>
-            <CZMap navigate={navigate} />
+
+            {/* Floating farm card */}
+            {TOP_SHOWCASE[0] && (
+              <div style={{ position:'absolute',top:24,right:28,background:'white',borderRadius:16,padding:'14px 18px',boxShadow:'0 8px 24px rgba(44,24,16,.2)',minWidth:200 }}>
+                <div style={{ fontSize:11,color:'#aaa',marginBottom:6,textTransform:'uppercase',letterSpacing:1 }}>Nejlépe hodnocená</div>
+                <div style={{ display:'flex',alignItems:'center',gap:10,marginBottom:10 }}>
+                  <div style={{ width:38,height:38,borderRadius:'50%',background:'#F5EDE0',display:'flex',alignItems:'center',justifyContent:'center',fontSize:20,flexShrink:0 }}>
+                    {TOP_SHOWCASE[0].emoji}
+                  </div>
+                  <div>
+                    <div style={{ fontWeight:700,fontSize:13,color:'#2C1810',lineHeight:1.2 }}>{TOP_SHOWCASE[0].name?.slice(0,22)}</div>
+                    <div style={{ fontSize:11,color:'#888' }}>📍 {TOP_SHOWCASE[0].loc}</div>
+                  </div>
+                </div>
+                <div style={{ fontSize:12,color:'#C5A028',fontWeight:700,marginBottom:10 }}>⭐ {TOP_SHOWCASE[0].rating} · {TOP_SHOWCASE[0].reviews} hodnocení</div>
+                <button onClick={() => navigate(`/farma/${TOP_SHOWCASE[0].id}`)} style={{ width:'100%',padding:'7px',background:'#3A5728',color:'white',border:'none',borderRadius:8,fontSize:12,fontWeight:700,cursor:'pointer',fontFamily:"'DM Sans',sans-serif" }}>
+                  Zobrazit farmu →
+                </button>
+              </div>
+            )}
           </div>
 
-          {/* Farmer CTA */}
-          <div style={{ textAlign:'center',marginTop:44 }}>
+          {/* Top farm cards row */}
+          <div style={{ display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:16,marginBottom:40 }}>
+            {TOP_SHOWCASE.map(f => (
+              <div key={f.id} onClick={() => navigate(`/farma/${f.id}`)} style={{ background:'white',borderRadius:16,padding:'16px',cursor:'pointer',boxShadow:'0 4px 16px rgba(44,24,16,.07)',border:'1px solid rgba(58,87,40,.08)',transition:'all .2s' }}
+                onMouseEnter={e=>{e.currentTarget.style.transform='translateY(-3px)';e.currentTarget.style.boxShadow='0 10px 28px rgba(44,24,16,.13)';}}
+                onMouseLeave={e=>{e.currentTarget.style.transform='none';e.currentTarget.style.boxShadow='0 4px 16px rgba(44,24,16,.07)';}}>
+                <div style={{ fontSize:28,marginBottom:8 }}>{f.emoji}</div>
+                <div style={{ fontWeight:700,fontSize:13,color:'#2C1810',marginBottom:4,lineHeight:1.3 }}>{f.name?.slice(0,28)}</div>
+                <div style={{ fontSize:11,color:'#aaa',marginBottom:6 }}>📍 {f.loc}</div>
+                <div style={{ fontSize:12,color:'#C5A028',fontWeight:700 }}>⭐ {f.rating}</div>
+              </div>
+            ))}
+          </div>
+
+          <div style={{ textAlign:'center' }}>
             <button onClick={() => navigate('/pridat-farmu')} style={{ padding:'14px 38px',background:C.terra,color:'white',border:'none',borderRadius:50,fontWeight:700,fontSize:15,cursor:'pointer',fontFamily:"'DM Sans',sans-serif",boxShadow:'0 5px 22px rgba(191,91,61,.3)',transition:'all .2s' }}
               onMouseEnter={e=>{e.currentTarget.style.transform='translateY(-2px)';}}
               onMouseLeave={e=>{e.currentTarget.style.transform='none';}}>
