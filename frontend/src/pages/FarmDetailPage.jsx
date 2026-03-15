@@ -90,8 +90,22 @@ export default function FarmDetailPage() {
   const TABS = ['products','seasonal','reviews','info'];
   const TAB_LABELS = { products:'Produkty', seasonal:'Sezónní nabídka', reviews:'Recenze', info:'O farmě' };
 
+  const jsonLd = {
+    "@context": "https://schema.org",
+    "@type": "LocalBusiness",
+    "name": farm.name,
+    "description": farm.description || `Lokální farma ${farm.name} v regionu ${farm.loc}.`,
+    "address": { "@type": "PostalAddress", "addressRegion": farm.loc, "addressCountry": "CZ" },
+    "geo": { "@type": "GeoCoordinates", "latitude": farm.lat, "longitude": farm.lng },
+    ...(farm.phone && { "telephone": farm.phone }),
+    ...(farm.website && { "url": farm.website }),
+    ...(farm.hours && { "openingHours": farm.hours }),
+    "aggregateRating": { "@type": "AggregateRating", "ratingValue": farm.rating, "reviewCount": 3 },
+  };
+
   return (
     <div style={{ minHeight:'100vh', background:'#F4EDD8', fontFamily:"'DM Sans',sans-serif" }}>
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
       <style>{`@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=DM+Sans:wght@400;500;600;700&display=swap');*{box-sizing:border-box;margin:0;padding:0}`}</style>
 
       {/* Hero */}
