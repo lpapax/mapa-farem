@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Search, Plus, ShoppingCart, Menu, X, Navigation, Moon, Sun } from 'lucide-react';
-import { useAuthStore, useMapStore, useCartStore, useNotificationStore } from '../store/index.js';
+import { useAuthStore, useMapStore, useCartStore, useNotificationStore, useFavoritesStore } from '../store/index.js';
 import FARMS_DATA from '../data/farms.json';
 
 // ── PWA Service Worker ─────────────────────────────────────────────────────
@@ -141,8 +141,8 @@ function MapboxMap({ farms, selectedId, onSelect, userLocation, radius, dark, ma
           type: 'geojson',
           data: { type:'FeatureCollection', features:[] },
           cluster: true,
-          clusterMaxZoom: 11,
-          clusterRadius: 50,
+          clusterMaxZoom: 9,
+          clusterRadius: 40,
         });
 
         // Cluster bublina
@@ -209,8 +209,8 @@ function MapboxMap({ farms, selectedId, onSelect, userLocation, radius, dark, ma
             properties: { id: f.id, type: f.type, name: f.name, emoji: f.emoji },
           }))},
           cluster: true,
-          clusterMaxZoom: 11,
-          clusterRadius: 50,
+          clusterMaxZoom: 9,
+          clusterRadius: 40,
         });
         map.addLayer({
           id: 'clusters', type: 'circle', source: 'farms-cluster',
@@ -268,11 +268,17 @@ function MapboxMap({ farms, selectedId, onSelect, userLocation, radius, dark, ma
       function showPopup(farm) {
         if (popupRef.current) { popupRef.current.remove(); popupRef.current = null; }
         const color = COLORS[farm.type] || '#5F8050';
+        const isFav = window.__isFav ? window.__isFav(farm.id) : false;
         popupRef.current = new window.mapboxgl.Popup({ offset:50, closeButton:true, maxWidth:'280px', className:'farm-popup' })
           .setLngLat([farm.lng, farm.lat])
           .setHTML(`
             <div style="font-family:'DM Sans',sans-serif;border-radius:12px;overflow:hidden">
-              <div style="padding:14px 16px 10px;background:linear-gradient(135deg,${color},${color}bb);color:white">
+              <div style="padding:14px 16px 10px;background:linear-gradient(135deg,${color},${color}bb);color:white;position:relative">
+                <button id="fav-btn-${farm.id}" onclick="window.__toggleFavorite('${farm.id}')"
+                  title="${isFav ? 'Odebrat z oblíbených' : 'Přidat do oblíbených'}"
+                  style="position:absolute;top:10px;right:32px;background:rgba(255,255,255,.2);border:none;border-radius:50%;width:30px;height:30px;font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;line-height:1">
+                  ${isFav ? '❤️' : '🤍'}
+                </button>
                 <div style="font-size:28px;line-height:1">${farm.emoji}</div>
                 <div style="font-size:15px;font-weight:700;margin-top:4px;line-height:1.2">${farm.name}</div>
                 <div style="font-size:11px;opacity:.85;margin-top:3px">📍 ${farm.loc || 'Česká republika'}</div>
@@ -313,7 +319,7 @@ function MapboxMap({ farms, selectedId, onSelect, userLocation, radius, dark, ma
 
       function updateMarkers() {
         const zoom = map.getZoom();
-        if (zoom < 11) {
+        if (zoom < 9) {
           Object.values(markersRef.current).forEach(m => m.getElement().style.display = 'none');
           return;
         }
@@ -328,7 +334,15 @@ function MapboxMap({ farms, selectedId, onSelect, userLocation, radius, dark, ma
           }
           if (!markersRef.current[farm.id]) {
             const el = createPin(farm);
-            const marker = new window.mapboxgl.Marker({ element: el, anchor:'bottom' }).setLngLat([farm.lng, farm.lat]).addTo(map);
+            // Jitter pro farmy na stejnych souradnicich
+            const key = `${farm.lat.toFixed(4)}_${farm.lng.toFixed(4)}`;
+            const sameSpot = farms.filter(f => f.lat?.toFixed(4) === farm.lat?.toFixed(4) && f.lng?.toFixed(4) === farm.lng?.toFixed(4));
+            const idx = sameSpot.findIndex(f => f.id === farm.id);
+            const jitter = idx > 0 ? 0.0003 * idx : 0;
+            const angle = (idx / Math.max(sameSpot.length, 1)) * 2 * Math.PI;
+            const jLat = farm.lat + jitter * Math.sin(angle);
+            const jLng = farm.lng + jitter * Math.cos(angle);
+            const marker = new window.mapboxgl.Marker({ element: el, anchor:'bottom' }).setLngLat([jLng, jLat]).addTo(map);
             markersRef.current[farm.id] = marker;
           } else {
             markersRef.current[farm.id].getElement().style.display = 'block';
@@ -338,6 +352,9 @@ function MapboxMap({ farms, selectedId, onSelect, userLocation, radius, dark, ma
 
       map.on('moveend', updateMarkers);
       map.on('zoomend', updateMarkers);
+      map.on('movestart', () => {
+        if (popupRef.current) { popupRef.current.remove(); popupRef.current = null; }
+      });
       updateMarkers();
     };
 
@@ -403,6 +420,20 @@ function MapboxMap({ farms, selectedId, onSelect, userLocation, radius, dark, ma
     window.__goToFarm = (id) => navigate(`/farma/${id}`);
     return () => { delete window.__goToFarm; };
   }, [navigate]);
+
+  useEffect(() => {
+    window.__isFav = (id) => useFavoritesStore.getState().has(id);
+    window.__toggleFavorite = (id) => {
+      useFavoritesStore.getState().toggle(id);
+      const btn = document.getElementById('fav-btn-' + id);
+      if (btn) {
+        const isFav = useFavoritesStore.getState().has(id);
+        btn.textContent = isFav ? '❤️' : '🤍';
+        btn.title = isFav ? 'Odebrat z oblíbených' : 'Přidat do oblíbených';
+      }
+    };
+    return () => { delete window.__toggleFavorite; delete window.__isFav; };
+  }, []);
 
   if (!MAPBOX_TOKEN) {
     return (
