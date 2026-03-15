@@ -306,7 +306,7 @@ export default function FarmDetailPage() {
                   <span style={{ fontSize:24 }}>📍</span>
                   <div>
                     <div style={{ fontWeight:700, fontSize:14 }}>Navigovat</div>
-                    <div style={{ fontSize:13, color:'#555' }}>{farm.loc}</div>
+                    <div style={{ fontSize:13, color:'#555' }}>{farm.full_address || farm.loc}</div>
                   </div>
                 </a>
               </div>
