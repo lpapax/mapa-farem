@@ -23,7 +23,7 @@ export default function RegisterFarmPage() {
   const [error, setError] = useState('');
   const [form, setForm] = useState({
     name: '', type: 'veggie', loc: '', phone: '', email: '',
-    website: '', hours: '', description: '', bio: false, eshop: false,
+    website: '', hours: '', description: '', products: '', bio: false, eshop: false, delivery: false,
   });
 
   useEffect(() => {
@@ -61,6 +61,8 @@ export default function RegisterFarmPage() {
         description: form.description.trim() || null,
         bio: form.bio,
         eshop: form.eshop,
+        delivery: form.delivery,
+        products: form.products.trim() ? form.products.split(',').map(p => p.trim()).filter(Boolean) : null,
         lat, lng,
         status: 'pending',
       });
@@ -88,7 +90,7 @@ export default function RegisterFarmPage() {
           <button onClick={() => navigate('/mapa')} style={{ padding:'12px 24px', background:T.green, color:'white', border:'none', borderRadius:10, fontWeight:700, cursor:'pointer', fontSize:15 }}>
             🗺️ Zpět na mapu
           </button>
-          <button onClick={() => { setSuccess(false); setForm({ name:'', type:'veggie', loc:'', phone:'', email:'', website:'', hours:'', description:'', bio:false, eshop:false }); }}
+          <button onClick={() => { setSuccess(false); setForm({ name:'', type:'veggie', loc:'', phone:'', email:'', website:'', hours:'', description:'', products:'', bio:false, eshop:false, delivery:false }); }}
             style={{ padding:'12px 24px', background:'white', color:T.green, border:`2px solid ${T.green}`, borderRadius:10, fontWeight:700, cursor:'pointer', fontSize:15 }}>
             + Přidat další
           </button>
@@ -183,6 +185,14 @@ export default function RegisterFarmPage() {
               </div>
             </div>
 
+            {/* Produkty */}
+            <div className="fg">
+              <label className="fl">Produkty (oddělené čárkou)</label>
+              <input className="fi" type="text" placeholder="např. Rajčata, Okurky, Jahody, Domácí džem"
+                value={form.products} onChange={e => set('products', e.target.value)}/>
+              <span style={{ fontSize:11, color:T.sub }}>Co nabízíte — zobrazí se na detailu farmy</span>
+            </div>
+
             {/* Popis */}
             <div className="fg">
               <label className="fl">Popis farmy</label>
@@ -200,6 +210,10 @@ export default function RegisterFarmPage() {
               <label className="cb">
                 <input type="checkbox" checked={form.eshop} onChange={e => set('eshop', e.target.checked)}/>
                 🛒 Máme e-shop
+              </label>
+              <label className="cb">
+                <input type="checkbox" checked={form.delivery} onChange={e => set('delivery', e.target.checked)}/>
+                🚚 Nabízíme rozvoz
               </label>
             </div>
 

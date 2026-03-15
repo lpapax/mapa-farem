@@ -278,6 +278,7 @@ function MapboxMap({ farms, selectedId, onSelect, userLocation, radius, dark, ma
                 <div style="margin-top:6px;display:flex;gap:4px;flex-wrap:wrap">
                   ${farm.bio?'<span style="font-size:10px;font-weight:700;background:rgba(255,255,255,.25);border-radius:50px;padding:2px 8px">🌱 BIO</span>':''}
                   ${farm.eshop?'<span style="font-size:10px;font-weight:700;background:rgba(255,255,255,.25);border-radius:50px;padding:2px 8px">🛒 E-shop</span>':''}
+                  ${farm.delivery?'<span style="font-size:10px;font-weight:700;background:rgba(255,255,255,.25);border-radius:50px;padding:2px 8px">🚚 Rozvoz</span>':''}
                   <span style="font-size:10px;font-weight:700;background:rgba(255,255,255,.25);border-radius:50px;padding:2px 8px">⭐ ${farm.rating||4.0}</span>
                 </div>
               </div>
