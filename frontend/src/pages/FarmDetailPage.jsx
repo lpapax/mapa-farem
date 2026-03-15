@@ -1,9 +1,9 @@
 // frontend/src/pages/FarmDetailPage.jsx
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, ShoppingCart } from 'lucide-react';
+import { ArrowLeft } from 'lucide-react';
 import toast from 'react-hot-toast';
-import { useAuthStore, useCartStore, useFavoritesStore } from '../store/index.js';
+import { useAuthStore, useFavoritesStore } from '../store/index.js';
 import { supabase } from '../supabase';
 import FARMS_DATA from '../data/farms.json';
 
@@ -13,7 +13,6 @@ export default function FarmDetailPage() {
   const { id } = useParams();
   const navigate = useNavigate();
   const { user } = useAuthStore();
-  const { addItem } = useCartStore();
   const { toggle: toggleFavorite, has: isFavorited } = useFavoritesStore();
 
   const [tab, setTab] = useState('products');
@@ -72,30 +71,14 @@ export default function FarmDetailPage() {
 
   const color = COLORS[farm.type] || '#5F8050';
 
-  // Deterministic prices
-  const hash = (s) => String(s).split('').reduce((a, c) => (a * 31 + c.charCodeAt(0)) & 0xffff, 0);
-  const basePrices = { bio:85, veggie:45, meat:180, dairy:55, honey:120, wine:250, herbs:65, market:40 };
-  const basePrice = basePrices[farm.type] || 60;
-  const demoProducts = farm.products?.map((p, i) => ({
-    id: `${farm.id}-prod-${i}`,
-    name: p.replace(/[^\w\sáčďéěíňóřšťúůýžÁČĎÉĚÍŇÓŘŠŤÚŮÝŽ]/gu, '').trim(),
-    emoji: p.match(/\p{Emoji}/u)?.[0] || '🌿',
-    price: Math.round(basePrice * (0.5 + (hash(String(farm.id) + i) % 100) / 100)),
-    unit: ['kg','l','ks','balení'][i % 4],
-    stock: 5 + (hash(String(farm.id) + i + 'stock') % 45),
-    farmId: String(farm.id),
-  }));
-
   const avgRating = reviews.length > 0
     ? (reviews.reduce((s, r) => s + r.rating, 0) / reviews.length).toFixed(1)
     : (farm.rating || 4.5).toFixed(1);
   const reviewCount = reviews.length;
 
-  const handleAddToCart = (product) => {
-    if (!user) { toast.error('Pro objednání se přihlaste'); navigate('/prihlaseni'); return; }
-    addItem(product, String(farm.id));
-    toast.success(`${product.emoji} ${product.name} přidáno do košíku`);
-  };
+  const googleMapsUrl = farm.place_id
+    ? `https://www.google.com/maps/place/?q=place_id:${farm.place_id}`
+    : `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(farm.name + ' ' + farm.loc)}`;
 
   const handleFavorite = () => {
     if (!user) { toast.error('Pro ukládání se přihlaste'); navigate('/prihlaseni'); return; }
@@ -186,7 +169,7 @@ export default function FarmDetailPage() {
             <button onClick={handleFavorite} style={{ background: isFavorited(farm.id) ? '#C0392B' : 'rgba(255,255,255,0.2)', border:'none', borderRadius:50, padding:'7px 12px', color:'white', cursor:'pointer', fontSize:14 }}>
               {isFavorited(farm.id) ? '❤️' : '🤍'}
             </button>
-            <button onClick={() => window.open(`https://maps.google.com/?q=${encodeURIComponent(farm.name+' '+farm.loc)}`, '_blank')}
+            <button onClick={() => window.open(googleMapsUrl, '_blank')}
               style={{ background:'rgba(255,255,255,0.2)', border:'none', borderRadius:50, padding:'7px 12px', color:'white', cursor:'pointer', fontSize:14 }}>
               🗺
             </button>
@@ -264,36 +247,70 @@ export default function FarmDetailPage() {
         {/* PRODUCTS */}
         {tab === 'products' && (
           <div>
-            {demoProducts?.length > 0 ? (
-              <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill,minmax(200px,1fr))', gap:14 }}>
-                {demoProducts.map(p => (
-                  <div key={p.id} style={{ background:'white', borderRadius:12, overflow:'hidden', boxShadow:'0 2px 8px rgba(0,0,0,0.06)', transition:'transform 0.15s, box-shadow 0.15s' }}
-                    onMouseEnter={e => { e.currentTarget.style.transform='translateY(-2px)'; e.currentTarget.style.boxShadow='0 6px 20px rgba(0,0,0,0.1)'; }}
-                    onMouseLeave={e => { e.currentTarget.style.transform=''; e.currentTarget.style.boxShadow='0 2px 8px rgba(0,0,0,0.06)'; }}>
-                    <div style={{ height:90, background:`linear-gradient(135deg,${color}22,${color}11)`, display:'grid', placeItems:'center', fontSize:40 }}>{p.emoji}</div>
-                    <div style={{ padding:'12px 14px' }}>
-                      <div style={{ fontWeight:700, fontSize:14, marginBottom:2 }}>{p.name}</div>
-                      <div style={{ fontSize:12, color:'#888', marginBottom:10 }}>Skladem: {p.stock} {p.unit}</div>
-                      <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center' }}>
-                        <div>
-                          <span style={{ fontFamily:"'Playfair Display',serif", fontSize:18, fontWeight:700, color:color }}>{p.price.toFixed(0)}</span>
-                          <span style={{ fontSize:12, color:'#888' }}> Kč/{p.unit}</span>
-                        </div>
-                        <button onClick={() => handleAddToCart(p)} style={{ padding:'6px 12px', background:color, color:'white', border:'none', borderRadius:8, fontSize:12, fontWeight:700, cursor:'pointer', display:'flex', alignItems:'center', gap:4 }}>
-                          <ShoppingCart size={12} /> Přidat
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                ))}
+            {/* Product tags */}
+            {farm.products?.length > 0 ? (
+              <div style={{ background:'white', borderRadius:16, padding:'24px', boxShadow:'0 2px 8px rgba(0,0,0,0.06)', marginBottom:20 }}>
+                <div style={{ fontFamily:"'Playfair Display',serif", fontSize:18, fontWeight:700, marginBottom:16, color:'#1E120A' }}>
+                  Co farma nabízí
+                </div>
+                <div style={{ display:'flex', flexWrap:'wrap', gap:10 }}>
+                  {farm.products.map((p, i) => (
+                    <span key={i} style={{ padding:'8px 16px', background:`${color}15`, color, border:`1.5px solid ${color}33`, borderRadius:50, fontSize:14, fontWeight:600 }}>
+                      {p}
+                    </span>
+                  ))}
+                </div>
               </div>
             ) : (
-              <div style={{ textAlign:'center', padding:'40px 20px', color:'#888' }}>
-                <div style={{ fontSize:40, marginBottom:12 }}>📦</div>
-                <div style={{ fontFamily:"'Playfair Display',serif", fontSize:18, marginBottom:8 }}>Žádné produkty k zobrazení</div>
+              <div style={{ background:'white', borderRadius:16, padding:'24px', boxShadow:'0 2px 8px rgba(0,0,0,0.06)', marginBottom:20, textAlign:'center', color:'#888' }}>
+                <div style={{ fontSize:40, marginBottom:12 }}>🌾</div>
+                <div style={{ fontFamily:"'Playfair Display',serif", fontSize:18, marginBottom:8, color:'#1E120A' }}>Nabídka není upřesněna</div>
                 <p style={{ fontSize:13 }}>Kontaktujte farmu přímo pro aktuální nabídku.</p>
               </div>
             )}
+
+            {/* Contact CTA */}
+            <div style={{ background:'white', borderRadius:16, padding:'24px', boxShadow:'0 2px 8px rgba(0,0,0,0.06)' }}>
+              <div style={{ fontFamily:"'Playfair Display',serif", fontSize:18, fontWeight:700, marginBottom:16, color:'#1E120A' }}>
+                Jak nakoupit
+              </div>
+              <div style={{ display:'flex', flexDirection:'column', gap:12 }}>
+                {farm.phone && (
+                  <a href={`tel:${farm.phone}`} style={{ display:'flex', alignItems:'center', gap:12, padding:'12px 16px', background:'#F4EDD8', borderRadius:12, textDecoration:'none', color:'#1E120A' }}>
+                    <span style={{ fontSize:24 }}>📞</span>
+                    <div>
+                      <div style={{ fontWeight:700, fontSize:14 }}>Zavolat</div>
+                      <div style={{ fontSize:13, color:'#555' }}>{farm.phone}</div>
+                    </div>
+                  </a>
+                )}
+                {farm.email && (
+                  <a href={`mailto:${farm.email}`} style={{ display:'flex', alignItems:'center', gap:12, padding:'12px 16px', background:'#F4EDD8', borderRadius:12, textDecoration:'none', color:'#1E120A' }}>
+                    <span style={{ fontSize:24 }}>✉️</span>
+                    <div>
+                      <div style={{ fontWeight:700, fontSize:14 }}>Napsat email</div>
+                      <div style={{ fontSize:13, color:'#555' }}>{farm.email}</div>
+                    </div>
+                  </a>
+                )}
+                {farm.website && (
+                  <a href={farm.website} target="_blank" rel="noopener noreferrer" style={{ display:'flex', alignItems:'center', gap:12, padding:'12px 16px', background:'#F4EDD8', borderRadius:12, textDecoration:'none', color:'#1E120A' }}>
+                    <span style={{ fontSize:24 }}>🌐</span>
+                    <div>
+                      <div style={{ fontWeight:700, fontSize:14 }}>Web / e-shop</div>
+                      <div style={{ fontSize:13, color:'#555', wordBreak:'break-all' }}>{farm.website.replace(/^https?:\/\//, '')}</div>
+                    </div>
+                  </a>
+                )}
+                <a href={googleMapsUrl} target="_blank" rel="noopener noreferrer" style={{ display:'flex', alignItems:'center', gap:12, padding:'12px 16px', background:'#F4EDD8', borderRadius:12, textDecoration:'none', color:'#1E120A' }}>
+                  <span style={{ fontSize:24 }}>📍</span>
+                  <div>
+                    <div style={{ fontWeight:700, fontSize:14 }}>Navigovat</div>
+                    <div style={{ fontSize:13, color:'#555' }}>{farm.loc}</div>
+                  </div>
+                </a>
+              </div>
+            </div>
           </div>
         )}
 
@@ -406,6 +423,17 @@ export default function FarmDetailPage() {
                 </div>
               )}
             </div>
+
+            {/* Google reviews link */}
+            <a href={googleMapsUrl}
+              target="_blank" rel="noopener noreferrer"
+              style={{ display:'flex', alignItems:'center', justifyContent:'space-between', background:'white', borderRadius:12, padding:'12px 16px', marginBottom:16, boxShadow:'0 2px 8px rgba(0,0,0,0.06)', textDecoration:'none', color:'#1E120A', border:'1px solid rgba(0,0,0,0.06)' }}>
+              <div style={{ display:'flex', alignItems:'center', gap:10 }}>
+                <svg width="18" height="18" viewBox="0 0 48 48"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg>
+                <span style={{ fontSize:14, fontWeight:600 }}>Zobrazit Google recenze</span>
+              </div>
+              <span style={{ color:'#888', fontSize:16 }}>›</span>
+            </a>
 
             {/* Add review form */}
             <div style={{ background:'white', borderRadius:12, padding:'16px 18px', marginBottom:20, boxShadow:'0 2px 8px rgba(0,0,0,0.06)' }}>
@@ -538,17 +566,6 @@ export default function FarmDetailPage() {
         );
       })()}
 
-      {/* Sticky bottom CTA */}
-      {farm.eshop && tab === 'products' && (
-        <div style={{ position:'sticky', bottom:0, background:'white', padding:'12px 20px', boxShadow:'0 -4px 20px rgba(0,0,0,0.1)', display:'flex', gap:10, alignItems:'center', zIndex:100 }}>
-          <div style={{ flex:1, fontSize:13, color:'#888' }}>
-            <strong style={{ color:'#1E120A' }}>{demoProducts?.length || 0} produktů</strong> dostupných k objednání
-          </div>
-          <button onClick={() => navigate('/pokladna')} style={{ padding:'10px 24px', background:color, color:'white', border:'none', borderRadius:50, fontFamily:"'DM Sans',sans-serif", fontWeight:700, fontSize:14, cursor:'pointer', display:'flex', alignItems:'center', gap:6 }}>
-            <ShoppingCart size={16} /> Přejít do košíku
-          </button>
-        </div>
-      )}
     </div>
   );
 }
