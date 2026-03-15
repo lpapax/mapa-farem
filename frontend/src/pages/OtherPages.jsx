@@ -379,36 +379,51 @@ export function ProfilePage() {
 export function NotFoundPage() {
   const navigate = useNavigate();
   return (
-    <div style={{ minHeight:'100vh', fontFamily:"'DM Sans',sans-serif", background:'linear-gradient(150deg,#1E2D15 0%,#2d4420 50%,#3A5728 100%)', display:'flex', alignItems:'center', justifyContent:'center', padding:24, position:'relative', overflow:'hidden' }}>
-      <style>{`@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=DM+Sans:wght@400;500;700&display=swap');
-        @keyframes float404{0%,100%{transform:translateY(0)}50%{transform:translateY(-14px)}}
-      `}</style>
-      <div style={{ position:'absolute',top:-100,right:-100,width:400,height:400,borderRadius:'50%',border:'1px solid rgba(125,176,90,.12)',pointerEvents:'none' }} />
-      <div style={{ position:'absolute',bottom:-60,left:-60,width:280,height:280,borderRadius:'50%',border:'1px solid rgba(201,155,48,.1)',pointerEvents:'none' }} />
-      <div style={{ textAlign:'center', maxWidth:500, position:'relative' }}>
-        <div style={{ animation:'float404 3.5s ease-in-out infinite', marginBottom:24 }}>
-          <div style={{ fontFamily:"'Playfair Display',serif", fontSize:140, fontWeight:900, color:'rgba(255,255,255,.06)', lineHeight:1, letterSpacing:-4 }}>404</div>
-          <div style={{ fontSize:72, marginTop:-60 }}>🌾</div>
+    <div style={{ minHeight:'100vh', fontFamily:"'DM Sans',sans-serif", background:'#FAFAF7', display:'flex', flexDirection:'column' }}>
+      <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet"/>
+      <style>{`@keyframes bob{0%,100%{transform:translateY(0)}50%{transform:translateY(-12px)}}`}</style>
+
+      {/* Nav */}
+      <nav style={{ borderBottom:'1px solid rgba(58,87,40,.1)', padding:'0 32px', height:60, display:'flex', alignItems:'center', justifyContent:'space-between', background:'white' }}>
+        <div onClick={() => navigate('/')} style={{ fontFamily:"'Playfair Display',serif", fontSize:19, fontWeight:700, color:'#1E120A', cursor:'pointer' }}>
+          <span style={{ color:'#3A5728' }}>Mapa</span>Farem<span style={{ color:'#3A5728' }}>.cz</span>
         </div>
-        <h1 style={{ fontFamily:"'Playfair Display',serif", fontSize:32, fontWeight:700, color:'white', marginBottom:12 }}>
-          Tato stránka utekla na pole
-        </h1>
-        <p style={{ color:'rgba(255,255,255,.6)', fontSize:15, lineHeight:1.7, marginBottom:36 }}>
-          Stránka neexistuje nebo byla přesunuta.<br/>Ale farmy na mapě tě čekají!
-        </p>
-        <div style={{ display:'flex', gap:12, justifyContent:'center', flexWrap:'wrap' }}>
-          <button onClick={() => navigate('/')}
-            style={{ padding:'13px 26px', background:'rgba(255,255,255,.1)', color:'white', border:'1px solid rgba(255,255,255,.25)', borderRadius:11, fontWeight:700, cursor:'pointer', fontSize:14 }}
-            onMouseEnter={e=>e.currentTarget.style.background='rgba(255,255,255,.2)'}
-            onMouseLeave={e=>e.currentTarget.style.background='rgba(255,255,255,.1)'}>
-            ← Domů
-          </button>
-          <button onClick={() => navigate('/mapa')}
-            style={{ padding:'13px 26px', background:'#7DB05A', color:'white', border:'none', borderRadius:11, fontWeight:700, cursor:'pointer', fontSize:14, boxShadow:'0 4px 16px rgba(125,176,90,.35)' }}
-            onMouseEnter={e=>e.currentTarget.style.background='#6a9e4c'}
-            onMouseLeave={e=>e.currentTarget.style.background='#7DB05A'}>
-            🗺️ Otevřít mapu
-          </button>
+        <button onClick={() => navigate('/mapa')} style={{ padding:'8px 18px', background:'#3A5728', color:'white', border:'none', borderRadius:9, fontWeight:700, fontSize:13, cursor:'pointer' }}>
+          🗺️ Otevřít mapu
+        </button>
+      </nav>
+
+      {/* Content */}
+      <div style={{ flex:1, display:'flex', alignItems:'center', justifyContent:'center', padding:32 }}>
+        <div style={{ textAlign:'center', maxWidth:480 }}>
+          <div style={{ animation:'bob 3s ease-in-out infinite', fontSize:80, marginBottom:8 }}>🌾</div>
+          <div style={{ fontFamily:"'Playfair Display',serif", fontSize:100, fontWeight:900, color:'rgba(58,87,40,.08)', lineHeight:1, marginTop:-16, marginBottom:8 }}>404</div>
+          <h1 style={{ fontFamily:"'Playfair Display',serif", fontSize:30, fontWeight:700, color:'#1E120A', marginBottom:12 }}>
+            Tato stránka utekla na pole
+          </h1>
+          <p style={{ color:'#777', fontSize:15, lineHeight:1.75, marginBottom:36 }}>
+            Stránka, kterou hledáš, neexistuje nebo byla přesunuta.<br/>Zkus to z úvodní stránky nebo rovnou na mapě.
+          </p>
+          <div style={{ display:'flex', gap:12, justifyContent:'center', flexWrap:'wrap' }}>
+            <button onClick={() => navigate('/')}
+              style={{ padding:'12px 24px', background:'white', color:'#3A5728', border:'1.5px solid rgba(58,87,40,.25)', borderRadius:10, fontWeight:700, cursor:'pointer', fontSize:14 }}>
+              ← Domů
+            </button>
+            <button onClick={() => navigate('/mapa')}
+              style={{ padding:'12px 24px', background:'#3A5728', color:'white', border:'none', borderRadius:10, fontWeight:700, cursor:'pointer', fontSize:14, boxShadow:'0 4px 14px rgba(58,87,40,.25)' }}>
+              🗺️ Otevřít mapu
+            </button>
+          </div>
+
+          {/* Quick links */}
+          <div style={{ marginTop:40, display:'flex', gap:16, justifyContent:'center', flexWrap:'wrap' }}>
+            {[['🌿 Co je v sezóně','/sezona'],['+ Přidat farmu','/pridat-farmu'],['👤 Přihlásit se','/prihlaseni']].map(([l,h]) => (
+              <span key={h} onClick={() => navigate(h)} style={{ fontSize:13, color:'#aaa', cursor:'pointer', textDecoration:'underline', textUnderlineOffset:3 }}
+                onMouseEnter={e=>e.target.style.color='#3A5728'} onMouseLeave={e=>e.target.style.color='#aaa'}>
+                {l}
+              </span>
+            ))}
+          </div>
         </div>
       </div>
     </div>
