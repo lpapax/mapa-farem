@@ -270,6 +270,8 @@ export function OrdersPage() {
 export function ProfilePage() {
   const navigate = useNavigate();
   const { user, logout } = useAuthStore();
+  const { ids: favIds } = useFavoritesStore();
+  const { orders } = useOrdersStore();
 
   if (!user) return (
     <PageShell title="👤 Profil" onBack={() => navigate('/')}>
@@ -283,23 +285,62 @@ export function ProfilePage() {
 
   return (
     <PageShell title="👤 Profil" onBack={() => navigate('/')}>
-      <div style={{ background:'white', borderRadius:12, padding:'24px', boxShadow:'0 2px 8px rgba(0,0,0,0.06)', marginBottom:16 }}>
-        <div style={{ display:'flex', gap:16, alignItems:'center', marginBottom:20 }}>
-          <div style={{ width:60, height:60, borderRadius:'50%', background:'#3A5728', display:'grid', placeItems:'center', fontWeight:700, color:'white', fontSize:22 }}>
-            {user?.name?.[0]?.toUpperCase()}
-          </div>
-          <div>
-            <div style={{ fontFamily:"'Playfair Display',serif", fontSize:20, fontWeight:700 }}>{user?.name}</div>
-            <div style={{ fontSize:13, color:'#888' }}>{user?.email}</div>
-            <div style={{ fontSize:11, background:'#E8F0E4', color:'#3A5728', borderRadius:50, padding:'2px 8px', marginTop:4, display:'inline-block', fontWeight:700 }}>
-              {user?.role === 'FARMER' ? '🌾 Farmář' : '🛒 Zákazník'}
-            </div>
-          </div>
+      {/* Avatar + info */}
+      <div style={{ background:'white', borderRadius:16, padding:'24px', boxShadow:'0 2px 8px rgba(0,0,0,0.06)', marginBottom:16, display:'flex', gap:18, alignItems:'center', flexWrap:'wrap' }}>
+        <div style={{ width:64, height:64, borderRadius:'50%', background:'linear-gradient(135deg,#3A5728,#7DB05A)', display:'grid', placeItems:'center', fontWeight:700, color:'white', fontSize:24, flexShrink:0 }}>
+          {user?.name?.[0]?.toUpperCase() || '?'}
         </div>
-        <button onClick={async () => { await logout(); navigate('/'); }} style={{ padding:'9px 20px', background:'#F8D7DA', color:'#721C24', border:'none', borderRadius:8, fontFamily:"'DM Sans',sans-serif", fontWeight:700, fontSize:13, cursor:'pointer' }}>
-          🚪 Odhlásit se
-        </button>
+        <div style={{ flex:1 }}>
+          <div style={{ fontFamily:"'Playfair Display',serif", fontSize:22, fontWeight:700 }}>{user?.name || 'Uživatel'}</div>
+          <div style={{ fontSize:13, color:'#888', marginTop:2 }}>{user?.email}</div>
+          <span style={{ fontSize:11, background:'#E8F0E4', color:'#3A5728', borderRadius:50, padding:'3px 10px', marginTop:6, display:'inline-block', fontWeight:700 }}>
+            {user?.role === 'FARMER' ? '🌾 Farmář' : '🛒 Zákazník'}
+          </span>
+        </div>
       </div>
+
+      {/* Stats row */}
+      <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:12, marginBottom:16 }}>
+        <div onClick={() => navigate('/oblibene')} style={{ background:'white', borderRadius:12, padding:'18px', boxShadow:'0 2px 8px rgba(0,0,0,0.06)', cursor:'pointer', textAlign:'center', transition:'transform .15s' }}
+          onMouseEnter={e => e.currentTarget.style.transform='translateY(-2px)'}
+          onMouseLeave={e => e.currentTarget.style.transform=''}>
+          <div style={{ fontSize:32, marginBottom:4 }}>❤️</div>
+          <div style={{ fontFamily:"'Playfair Display',serif", fontSize:28, fontWeight:700, color:'#C0392B' }}>{favIds.length}</div>
+          <div style={{ fontSize:13, color:'#888' }}>Oblíbených farem</div>
+        </div>
+        <div onClick={() => navigate('/objednavky')} style={{ background:'white', borderRadius:12, padding:'18px', boxShadow:'0 2px 8px rgba(0,0,0,0.06)', cursor:'pointer', textAlign:'center', transition:'transform .15s' }}
+          onMouseEnter={e => e.currentTarget.style.transform='translateY(-2px)'}
+          onMouseLeave={e => e.currentTarget.style.transform=''}>
+          <div style={{ fontSize:32, marginBottom:4 }}>📦</div>
+          <div style={{ fontFamily:"'Playfair Display',serif", fontSize:28, fontWeight:700, color:'#2980B9' }}>{orders.length}</div>
+          <div style={{ fontSize:13, color:'#888' }}>Objednávek</div>
+        </div>
+      </div>
+
+      {/* Quick links */}
+      <div style={{ background:'white', borderRadius:12, padding:'8px', boxShadow:'0 2px 8px rgba(0,0,0,0.06)', marginBottom:16 }}>
+        {[
+          ['❤️ Oblíbené farmy', '/oblibene'],
+          ['📦 Moje objednávky', '/objednavky'],
+          ['🗺️ Otevřít mapu', '/mapa'],
+          ['+ Přidat farmu', '/pridat-farmu'],
+          ...(user?.role === 'FARMER' ? [['🌾 Dashboard farmáře', '/dashboard']] : []),
+        ].map(([label, path]) => (
+          <div key={path} onClick={() => navigate(path)}
+            style={{ padding:'13px 16px', cursor:'pointer', display:'flex', justifyContent:'space-between', alignItems:'center', fontSize:14, fontWeight:500, borderRadius:8, transition:'background .15s' }}
+            onMouseEnter={e => e.currentTarget.style.background='#F4EDD8'}
+            onMouseLeave={e => e.currentTarget.style.background='transparent'}>
+            {label}
+            <span style={{ color:'#aaa', fontSize:16 }}>›</span>
+          </div>
+        ))}
+      </div>
+
+      {/* Logout */}
+      <button onClick={async () => { await logout(); navigate('/'); }}
+        style={{ width:'100%', padding:'12px', background:'#FEE2E2', color:'#991B1B', border:'none', borderRadius:12, fontFamily:"'DM Sans',sans-serif", fontWeight:700, fontSize:14, cursor:'pointer' }}>
+        🚪 Odhlásit se
+      </button>
     </PageShell>
   );
 }
@@ -329,7 +370,7 @@ function PageShell({ title, children, onBack }) {
       <header style={{ background:'#1E120A', padding:'12px 20px', display:'flex', alignItems:'center', gap:14 }}>
         <button onClick={onBack} style={{ background:'none', border:'none', color:'#B8A882', cursor:'pointer', fontSize:20, padding:4, lineHeight:1 }}>←</button>
         <span style={{ fontFamily:"'Playfair Display',serif", fontSize:18, fontWeight:700, color:'#F4EDD8' }}>{title}</span>
-        <span style={{ fontFamily:"'Playfair Display',serif", fontSize:16, fontWeight:900, color:'#F4EDD8', marginLeft:'auto', cursor:'pointer' }}>Zem<span style={{ color:'#7DB05A' }}>ě</span>plocha</span>
+        <span onClick={() => window.location.href='/'} style={{ fontFamily:"'Playfair Display',serif", fontSize:16, fontWeight:900, color:'#F4EDD8', marginLeft:'auto', cursor:'pointer' }}><span style={{ color:'#7DB05A' }}>Mapa</span>Farem<span style={{ color:'#7DB05A' }}>.cz</span></span>
       </header>
       <div style={{ maxWidth:900, margin:'0 auto', padding:'24px 20px' }}>{children}</div>
     </div>

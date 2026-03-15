@@ -190,6 +190,16 @@ export default function FarmDetailPage() {
               style={{ background:'rgba(255,255,255,0.2)', border:'none', borderRadius:50, padding:'7px 12px', color:'white', cursor:'pointer', fontSize:14 }}>
               🗺
             </button>
+            <button onClick={() => {
+              const url = window.location.href;
+              if (navigator.share) {
+                navigator.share({ title: farm.name, text: `${farm.name} — lokální farma v ${farm.loc}`, url });
+              } else {
+                navigator.clipboard?.writeText(url).then(() => toast.success('🔗 Odkaz zkopírován!'));
+              }
+            }} style={{ background:'rgba(255,255,255,0.2)', border:'none', borderRadius:50, padding:'7px 12px', color:'white', cursor:'pointer', fontSize:14 }} title="Sdílet">
+              📤
+            </button>
           </div>
         </div>
 
@@ -494,6 +504,39 @@ export default function FarmDetailPage() {
           </div>
         )}
       </div>
+
+      {/* Podobné farmy */}
+      {(() => {
+        const similar = FARMS_DATA
+          .filter(f => String(f.id) !== String(farm.id) && (f.type === farm.type || f.loc === farm.loc))
+          .sort((a, b) => (b.type === farm.type ? 1 : 0) - (a.type === farm.type ? 1 : 0))
+          .slice(0, 4);
+        if (similar.length === 0) return null;
+        return (
+          <div style={{ maxWidth:900, margin:'0 auto', padding:'0 20px 32px' }}>
+            <div style={{ fontFamily:"'Playfair Display',serif", fontSize:20, fontWeight:700, marginBottom:16, color:'#1E120A' }}>
+              Podobné farmy v okolí
+            </div>
+            <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill,minmax(190px,1fr))', gap:12 }}>
+              {similar.map(f => (
+                <div key={f.id} onClick={() => navigate(`/farma/${f.id}`)}
+                  style={{ background:'white', borderRadius:12, padding:'14px', cursor:'pointer', boxShadow:'0 2px 8px rgba(0,0,0,0.06)', transition:'transform .15s' }}
+                  onMouseEnter={e => e.currentTarget.style.transform='translateY(-2px)'}
+                  onMouseLeave={e => e.currentTarget.style.transform=''}>
+                  <div style={{ fontSize:32, marginBottom:6 }}>{f.emoji}</div>
+                  <div style={{ fontWeight:700, fontSize:14, marginBottom:2, lineHeight:1.3 }}>{f.name}</div>
+                  <div style={{ fontSize:12, color:'#888', marginBottom:8 }}>📍 {f.loc}</div>
+                  <div style={{ display:'flex', gap:4, flexWrap:'wrap' }}>
+                    {f.bio && <span style={{ fontSize:10, background:'#FFF3CD', color:'#856404', borderRadius:50, padding:'2px 6px', fontWeight:600 }}>🌱 BIO</span>}
+                    {f.delivery && <span style={{ fontSize:10, background:'#E3F2FD', color:'#1565C0', borderRadius:50, padding:'2px 6px', fontWeight:600 }}>🚚</span>}
+                    {f.eshop && <span style={{ fontSize:10, background:'#E8F0E4', color:'#3A5728', borderRadius:50, padding:'2px 6px', fontWeight:600 }}>🛒</span>}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        );
+      })()}
 
       {/* Sticky bottom CTA */}
       {farm.eshop && tab === 'products' && (
