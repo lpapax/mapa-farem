@@ -12,9 +12,7 @@ const VALUES = [
 ];
 
 const TEAM = [
-  { name:'Michal', role:'Zakladatel & vývoj', emoji:'👨‍💻', desc:'Věří, že technologie může pomoci spojit lidi s přírodou.' },
-  { name:'Komunita', role:'1 695 farem', emoji:'🌾', desc:'Každý farmář, který přidal svou farmu, je součástí tohoto projektu.' },
-  { name:'Ty', role:'Zákazník & partner', emoji:'❤️', desc:'Každý nákup přímo od farmáře je hlasování pro lepší potravinový systém.' },
+  { name:'Michal', role:'Zakladatel & vývoj', emoji:'👨‍💻', desc:'Student ze Zlínského kraje, který věří, že technologie může pomoci spojit lidi s přírodou a lokálními farmáři.' },
 ];
 
 function Leaf({ style }) {
@@ -98,8 +96,8 @@ export default function AboutPage() {
                 {[
                   { n:FARMS_DATA.length.toLocaleString('cs-CZ'), l:'ověřených farem', icon:'🌾', color:C.green },
                   { n:'14', l:'krajů pokryto', icon:'📍', color:C.terra },
-                  { n:'4.7★', l:'průměrné hodnocení', icon:'⭐', color:'#C5A028' },
-                  { n:'100%', l:'lokální produkty', icon:'🇨🇿', color:C.mid },
+                  { n:'4.5★', l:'průměrné hodnocení', icon:'⭐', color:'#C5A028' },
+                  { n:'Zdarma', l:'přidání farmy', icon:'🤝', color:C.mid },
                 ].map(({ n, l, icon, color }) => (
                   <div key={l}>
                     <div style={{ fontSize:22,marginBottom:6 }}>{icon}</div>
@@ -121,7 +119,7 @@ export default function AboutPage() {
           <div style={{ display:'flex',flexDirection:'column',gap:20,textAlign:'left' }}>
             {[
               'Bylo to jednoduché: chtěli jsme koupit čerstvá rajčata od farmáře. Jenže kde? Google mapy ukázaly supermarkety, ne farmy. Žádná ucelená databáze neexistovala.',
-              'Tak jsme ji vytvořili. Začali jsme s pár desítkami farem v okolí Olomouce. Dnes máme přes 1 695 ověřených farem z celé České republiky — od malých zahrádkářů po velké BIO podniky.',
+              'Tak jsme ji vytvořili. Začali jsme s farmami ve Zlínském kraji. Dnes máme přes 1 695 ověřených farem z celé České republiky — od malých zahrádkářů po velké BIO podniky.',
               'MapaFarem.cz není jen mapa. Je to komunita lidí, kteří věří, že jídlo má mít příběh, adresu a tvář farmáře za ním.',
             ].map((text, i) => (
               <div key={i} style={{ display:'flex',gap:16,alignItems:'flex-start' }}>
@@ -160,17 +158,19 @@ export default function AboutPage() {
             <div style={{ fontSize:12,fontWeight:700,letterSpacing:3,color:C.terra,textTransform:'uppercase',marginBottom:12 }}>Kdo za tím stojí</div>
             <h2 style={{ fontFamily:"'Playfair Display',serif",fontSize:34,fontWeight:700,color:C.brown }}>Náš tým</h2>
           </div>
-          <div className="team-grid" style={{ display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:24 }}>
-            {TEAM.map((m, i) => (
-              <div key={i} style={{ textAlign:'center',padding:'36px 24px',borderRadius:20,background:C.cream,border:'1px solid rgba(58,87,40,.08)' }}>
-                <div style={{ width:72,height:72,borderRadius:'50%',background:`${C.green}12`,border:`2px solid ${C.green}20`,display:'flex',alignItems:'center',justifyContent:'center',fontSize:32,margin:'0 auto 18px' }}>
-                  {m.emoji}
+          <div style={{ display:'flex',justifyContent:'center' }}>
+            <div style={{ maxWidth:340,width:'100%' }}>
+              {TEAM.map((m, i) => (
+                <div key={i} style={{ textAlign:'center',padding:'36px 24px',borderRadius:20,background:C.cream,border:'1px solid rgba(58,87,40,.08)' }}>
+                  <div style={{ width:72,height:72,borderRadius:'50%',background:`${C.green}12`,border:`2px solid ${C.green}20`,display:'flex',alignItems:'center',justifyContent:'center',fontSize:32,margin:'0 auto 18px' }}>
+                    {m.emoji}
+                  </div>
+                  <div style={{ fontFamily:"'Playfair Display',serif",fontSize:20,fontWeight:700,color:C.brown,marginBottom:4 }}>{m.name}</div>
+                  <div style={{ fontSize:12,fontWeight:700,color:C.terra,marginBottom:12,textTransform:'uppercase',letterSpacing:1 }}>{m.role}</div>
+                  <p style={{ fontSize:14,color:'#6B4F3A',lineHeight:1.7 }}>{m.desc}</p>
                 </div>
-                <div style={{ fontFamily:"'Playfair Display',serif",fontSize:20,fontWeight:700,color:C.brown,marginBottom:4 }}>{m.name}</div>
-                <div style={{ fontSize:12,fontWeight:700,color:C.terra,marginBottom:12,textTransform:'uppercase',letterSpacing:1 }}>{m.role}</div>
-                <p style={{ fontSize:14,color:'#6B4F3A',lineHeight:1.7 }}>{m.desc}</p>
-              </div>
-            ))}
+              ))}
+            </div>
           </div>
         </div>
       </section>

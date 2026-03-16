@@ -12,10 +12,18 @@ const TOP_MAP_FARMS = FARMS_DATA
   .slice(0, 14);
 
 const MAP_PINS_STR = TOP_MAP_FARMS
-  .map(f => `pin-s+3a5728(${parseFloat(f.lng).toFixed(4)},${parseFloat(f.lat).toFixed(4)})`)
+  .map(f => {
+    const lng = parseFloat(f.lng);
+    const lat = parseFloat(f.lat);
+    if (!isNaN(lng) && !isNaN(lat)) {
+      return `pin-s+3a5728(${lng.toFixed(4)},${lat.toFixed(4)})`;
+    }
+    return '';
+  })
+  .filter(Boolean)
   .join(',');
 
-const MAPBOX_IMG = MAPBOX_TOKEN
+const MAPBOX_IMG = MAPBOX_TOKEN && MAP_PINS_STR
   ? `https://api.mapbox.com/styles/v1/mapbox/light-v11/static/${MAP_PINS_STR}/15.4,49.8,6.05,0,0/1100x460@2x?access_token=${MAPBOX_TOKEN}&logo=false&attribution=false`
   : null;
 
@@ -206,11 +214,11 @@ export default function LandingPage() {
                 <div style={{ fontFamily:"'Playfair Display',serif",fontWeight:900,fontSize:11,color:'#3A5728',lineHeight:1.2,textAlign:'center' }}>BIO<br/>certif.</div>
               </div>
 
-              {/* Social proof card */}
+              {/* Social proof card — real farm from Zlínský kraj */}
               <div style={{ position:'absolute',top:24,right:-20,background:'white',borderRadius:14,padding:'11px 16px',boxShadow:'0 8px 24px rgba(44,24,16,.15)',border:'1px solid rgba(58,87,40,.08)',minWidth:148 }}>
-                <div style={{ fontSize:10,color:'#bbb',textTransform:'uppercase',letterSpacing:1,marginBottom:4 }}>Nová farma</div>
-                <div style={{ fontWeight:700,fontSize:13,color:'#2C1810' }}>Farma Kopec ⭐ 4.9</div>
-                <div style={{ fontSize:11,color:'#3A5728',marginTop:2 }}>Přidána dnes</div>
+                <div style={{ fontSize:10,color:'#bbb',textTransform:'uppercase',letterSpacing:1,marginBottom:4 }}>Zlínský kraj</div>
+                <div style={{ fontWeight:700,fontSize:13,color:'#2C1810' }}>Ke Kořenům ⭐ 4.9</div>
+                <div style={{ fontSize:11,color:'#3A5728',marginTop:2 }}>Lokální produkty</div>
               </div>
 
               <Leaf style={{ position:'absolute',top:20,right:-28,width:44,height:66,color:C.terra,opacity:.35,transform:'rotate(25deg)' }}/>
@@ -372,9 +380,9 @@ export default function LandingPage() {
           </div>
           <div className="testimonials-grid" style={{ display:'grid', gridTemplateColumns:'repeat(3,1fr)', gap:24 }}>
             {[
-              { name:'Martina K.', loc:'Praha', rating:5, text:'Konečně vím, kde koupit zeleninu bez chemie. Farma Zelený Statek dodává každý týden a kvalita je výborná. Doporučuji každému!', farm:'Zelený Statek', avatar:'🌿' },
-              { name:'Tomáš V.', loc:'Brno', rating:5, text:'Přes mapu jsem objevil sýrárnu 12 km od nás. Teď si chodíme pro čerstvý sýr každý pátek. Nejlepší objev roku.', farm:'Sýrárna U Petra', avatar:'🧀' },
-              { name:'Jana B.', loc:'Olomouc', rating:5, text:'Moje děti se naučily, kde se bere jídlo. Jezdíme na výlety na farmy a víme, co jíme. Tohle by měl mít každý.', farm:'Farma Na Kopci', avatar:'🥕' },
+              { name:'Petra H.', loc:'Zlínský kraj', rating:5, text:'Konečně vím, kde koupit čerstvé mléko a sýr bez chemie. Minimlékárna ZPZ je top — přímo od farmáře, bez mezičlánků.', farm:'Minimlékárna - Farma ZPZ', avatar:'🥛' },
+              { name:'Radek M.', loc:'Zlínský kraj', rating:5, text:'Přes mapu jsem objevil výborný med od včelaře kousek od Zlína. Žádný supermarket, žádné přidané věci — jen čistý med.', farm:'MED přímo od včelaře', avatar:'🍯' },
+              { name:'Lenka V.', loc:'Zlínský kraj', rating:5, text:'Ke Kořenům je přesně to, co jsem hledala. Bylinky, koření, vše lokální a kvalitní. Chodím tam každý týden.', farm:'Ke Kořenům', avatar:'🌿' },
             ].map((r, i) => (
               <div key={i} style={{ background:'white', borderRadius:20, padding:'28px 28px 24px', boxShadow:'0 4px 20px rgba(44,24,16,.08)', border:'1px solid rgba(58,87,40,.06)', position:'relative' }}>
                 {/* Quote mark */}
@@ -395,9 +403,9 @@ export default function LandingPage() {
           <div style={{ marginTop:52, display:'flex', justifyContent:'center', gap:40, flexWrap:'wrap' }}>
             {[
               { n:'1 695', l:'ověřených farem', icon:'🌾' },
-              { n:'4.7★', l:'průměrné hodnocení', icon:'⭐' },
+              { n:'4.5★', l:'průměrné hodnocení', icon:'⭐' },
               { n:'14', l:'krajů pokryto', icon:'📍' },
-              { n:'100%', l:'lokální produkty', icon:'🇨🇿' },
+              { n:'Zdarma', l:'přidání farmy', icon:'🤝' },
             ].map(({n,l,icon}) => (
               <div key={l} style={{ textAlign:'center' }}>
                 <div style={{ fontSize:20, marginBottom:6 }}>{icon}</div>
