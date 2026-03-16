@@ -160,7 +160,7 @@ export default function LandingPage() {
           </div>
         </div>
         <div className="nav-links" style={{ display:'flex', gap:4, alignItems:'center' }}>
-          {[['Produkty','/mapa'],['O nás','/o-nas'],['Farmáři','/pridat-farmu']].map(([l,h]) => (
+          {[['Produkty','/mapa'],['O nás','/o-nas'],['Ceník','/cenik'],['Farmáři','/pridat-farmu']].map(([l,h]) => (
             <button key={l} onClick={() => navigate(h)}
               style={{ padding:'8px 15px', background:'none', border:'none', fontSize:14, fontWeight:500, cursor:'pointer', color:'rgba(245,237,224,.65)', fontFamily:"'DM Sans',sans-serif", borderRadius:4, transition:'color .15s' }}
               onMouseEnter={e=>e.currentTarget.style.color=C.cream}
@@ -452,7 +452,7 @@ export default function LandingPage() {
             </div>
             {[
               { title:'Produkty', links:[['Zelenina & ovoce','/mapa?filter=veggie'],['Mléčné výrobky','/mapa?filter=dairy'],['Maso & uzeniny','/mapa?filter=meat']] },
-              { title:'O nás',    links:[['Jak to funguje','/'],['Sezónní průvodce','/sezona'],['O projektu','/o-nas']] },
+              { title:'O nás',    links:[['Jak to funguje','/'],['Sezónní průvodce','/sezona'],['O projektu','/o-nas'],['Ceník','/cenik']] },
               { title:'Farmáři', links:[['+Přidat farmu','/pridat-farmu'],['Přihlásit se','/prihlaseni'],['Dashboard','/dashboard']] },
             ].map(col => (
               <div key={col.title}>

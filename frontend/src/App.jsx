@@ -17,6 +17,7 @@ import { NotFoundPage } from './pages/OtherPages';
 import SeasonalGuidePage from './pages/SeasonalGuidePage';
 import AdminPage from './pages/AdminPage';
 import AboutPage from './pages/AboutPage';
+import PricingPage from './pages/PricingPage';
 import { useAuthStore } from './store/index.js';
 
 export default function App() {
@@ -40,6 +41,7 @@ export default function App() {
         <Route path="/sezona" element={<SeasonalGuidePage />} />
         <Route path="/sezona/:season" element={<SeasonalGuidePage />} />
         <Route path="/o-nas" element={<AboutPage />} />
+        <Route path="/cenik" element={<PricingPage />} />
         <Route path="/admin" element={<AdminPage />} />
         {/* Stará URL přesměruje na mapu */}
         <Route path="/zeměplocha" element={<Navigate to="/mapa" replace />} />

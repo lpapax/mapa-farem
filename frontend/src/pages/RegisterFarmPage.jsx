@@ -124,7 +124,7 @@ export default function RegisterFarmPage() {
       {/* Header */}
       <div style={{ background:'rgba(245,237,224,.97)', backdropFilter:'blur(14px)', borderBottom:'1px solid rgba(191,91,61,.12)', padding:'0 32px', height:62, display:'flex', alignItems:'center', justifyContent:'space-between', position:'sticky', top:0, zIndex:100, boxShadow:'0 1px 12px rgba(44,24,16,.06)' }}>
         <Link to="/" style={{ textDecoration:'none', display:'flex', alignItems:'center', gap:8 }}>
-          <span style={{ fontSize:22 }}>🐓</span>
+          <span style={{ fontSize:22 }}>🌾</span>
           <div style={{ fontFamily:"'Playfair Display',serif", fontSize:18, fontWeight:700, color:'#2C1810' }}>
             Mapa<span style={{ color:'#BF5B3D' }}>Farem</span>
           </div>
