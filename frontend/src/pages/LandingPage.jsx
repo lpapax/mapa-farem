@@ -16,12 +16,12 @@ const MAP_PINS_STR = TOP_MAP_FARMS
   .map(f => {
     const lng = parseFloat(f.lng);
     const lat = parseFloat(f.lat);
-    if (!isNaN(lng) && !isNaN(lat)) return `pin-s+3a5728(${lng.toFixed(4)},${lat.toFixed(4)})`;
+    if (!isNaN(lng) && !isNaN(lat)) return `pin-s+c8973a(${lng.toFixed(4)},${lat.toFixed(4)})`;
     return '';
   }).filter(Boolean).join(',');
 
 const MAPBOX_IMG = MAPBOX_TOKEN && MAP_PINS_STR
-  ? `https://api.mapbox.com/styles/v1/mapbox/light-v11/static/${MAP_PINS_STR}/15.4,49.8,6.05,0,0/1100x460@2x?access_token=${MAPBOX_TOKEN}&logo=false&attribution=false`
+  ? `https://api.mapbox.com/styles/v1/mapbox/dark-v11/static/${MAP_PINS_STR}/15.5,49.8,6.2,0,0/1100x460@2x?access_token=${MAPBOX_TOKEN}&logo=false&attribution=false`
   : null;
 
 const BOHEMIA_FARM = FARMS_DATA
@@ -328,8 +328,6 @@ export default function LandingPage() {
                   </div>
                 ))}
               </div>
-              <FarmCard farm={BOHEMIA_FARM} navigate={navigate} style={{ top:16, left:16 }}/>
-              <FarmCard farm={MORAVIA_FARM} navigate={navigate} style={{ top:16, right:16 }}/>
             </div>
           </div>
 
