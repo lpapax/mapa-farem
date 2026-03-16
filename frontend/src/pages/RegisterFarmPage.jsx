@@ -122,13 +122,14 @@ export default function RegisterFarmPage() {
       `}</style>
 
       {/* Header */}
-      <div style={{ background:'white', borderBottom:`1px solid ${T.border}`, padding:'0 32px', height:60, display:'flex', alignItems:'center', justifyContent:'space-between' }}>
-        <Link to="/" style={{ textDecoration:'none' }}>
-          <div style={{ fontFamily:"'Playfair Display',serif", fontSize:19, fontWeight:700, color:T.text }}>
-            <span style={{ color:T.green }}>Mapa</span>Farem<span style={{ color:T.green }}>.cz</span>
+      <div style={{ background:'rgba(245,237,224,.97)', backdropFilter:'blur(14px)', borderBottom:'1px solid rgba(191,91,61,.12)', padding:'0 32px', height:62, display:'flex', alignItems:'center', justifyContent:'space-between', position:'sticky', top:0, zIndex:100, boxShadow:'0 1px 12px rgba(44,24,16,.06)' }}>
+        <Link to="/" style={{ textDecoration:'none', display:'flex', alignItems:'center', gap:8 }}>
+          <span style={{ fontSize:22 }}>🐓</span>
+          <div style={{ fontFamily:"'Playfair Display',serif", fontSize:18, fontWeight:700, color:'#2C1810' }}>
+            Mapa<span style={{ color:'#BF5B3D' }}>Farem</span>
           </div>
         </Link>
-        <Link to="/mapa" style={{ fontSize:13, color:T.sub, textDecoration:'none' }}>← Zpět na mapu</Link>
+        <Link to="/mapa" style={{ fontSize:13, color:'#6B4F3A', textDecoration:'none', fontWeight:500 }}>← Zpět na mapu</Link>
       </div>
 
       <div style={{ maxWidth:640, margin:'0 auto', padding:'40px 24px 60px' }}>

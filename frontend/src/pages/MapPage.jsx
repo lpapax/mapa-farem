@@ -489,6 +489,7 @@ export default function MapPage() {
   const [nearbyMode, setNearbyMode] = useState(false);
   const [showRadiusPanel, setShowRadiusPanel] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
+  const [activeTypes, setActiveTypes] = useState(() => filter !== 'all' ? new Set([filter]) : new Set());
   const [dark, setDark] = useState(() => localStorage.getItem('mf-dark') === '1');
   const [mapStyle, setMapStyle] = useState(() => localStorage.getItem('mf-style') || 'outdoors');
   const [stylePickerOpen, setStylePickerOpen] = useState(false);
@@ -575,7 +576,7 @@ export default function MapPage() {
         .filter(f => f._dist <= radius)
         .sort((a, b) => a._dist - b._dist);
     }
-    if (filter !== 'all') data = data.filter(f => f.type === filter);
+    if (activeTypes.size > 0) data = data.filter(f => activeTypes.has(f.type));
     const q = search.toLowerCase();
     if (q) data = data.filter(f =>
       f.name.toLowerCase().includes(q) ||
@@ -583,7 +584,7 @@ export default function MapPage() {
       (f.products||[]).some(p => p.toLowerCase().includes(q))
     );
     return data;
-  }, [filter, search, nearbyMode, userLocation, radius, regionFilter, tagFilter]);
+  }, [activeTypes, search, nearbyMode, userLocation, radius, regionFilter, tagFilter]);
 
   const handleSelect = useCallback(farm => {
     selectFarm(farm.id);
@@ -598,6 +599,15 @@ export default function MapPage() {
         ::-webkit-scrollbar { width:4px; }
         ::-webkit-scrollbar-thumb { background:#B8A882; border-radius:2px; }
         @keyframes spin { to { transform:rotate(360deg) } }
+        @keyframes seasonPulse {
+          0%,100% { box-shadow:0 2px 10px rgba(0,0,0,.15); }
+          50% { box-shadow:0 2px 24px rgba(201,155,48,.55), 0 0 0 5px rgba(201,155,48,.12); }
+        }
+        @keyframes fadeInUp {
+          from { opacity:0; transform:translateY(6px); }
+          to { opacity:1; transform:translateY(0); }
+        }
+        .farm-card-anim { animation: fadeInUp .18s ease both; }
         .hide-mobile { display:flex; }
         .show-mobile { display:none; }
         @media (max-width:640px) {
@@ -764,19 +774,36 @@ export default function MapPage() {
             <button onClick={() => setShowRadiusPanel(v => !v)} style={{ background:'none', border:'none', color:'#89CFF0', cursor:'pointer', fontSize:13, padding:0, lineHeight:1 }}>⚙️</button>
           </div>
         )}
-        {Object.entries(LABELS).map(([key, label]) => (
-          <button key={key} onClick={() => setFilter(key)} style={{
-            padding:'5px 12px', borderRadius:50,
-            border:`1.5px solid ${filter===key ? (COLORS[key]||'#7DB05A') : 'rgba(255,255,255,.15)'}`,
-            background: filter===key ? (COLORS[key]||'#7DB05A') : 'transparent',
-            color: filter===key ? 'white' : 'rgba(255,255,255,.7)',
-            fontFamily:"'DM Sans',sans-serif", fontSize:12, fontWeight: filter===key?700:500,
-            cursor:'pointer', whiteSpace:'nowrap', transition:'all .15s', display:'flex', alignItems:'center', gap:5,
-          }}>
-            {key!=='all' && <span style={{ width:7, height:7, borderRadius:'50%', background:filter===key?'rgba(255,255,255,.5)':COLORS[key], display:'inline-block' }}/>}
-            {label}
+        {Object.entries(LABELS).map(([key, label]) => {
+          const isAll = key === 'all';
+          const active = isAll ? activeTypes.size === 0 : activeTypes.has(key);
+          const color = COLORS[key] || '#7DB05A';
+          return (
+            <button key={key} onClick={() => {
+              if (isAll) { setActiveTypes(new Set()); return; }
+              setActiveTypes(prev => {
+                const next = new Set(prev);
+                next.has(key) ? next.delete(key) : next.add(key);
+                return next;
+              });
+            }} style={{
+              padding:'5px 12px', borderRadius:50,
+              border:`1.5px solid ${active ? color : 'rgba(255,255,255,.15)'}`,
+              background: active ? color : 'transparent',
+              color: active ? 'white' : 'rgba(255,255,255,.7)',
+              fontFamily:"'DM Sans',sans-serif", fontSize:12, fontWeight: active?700:500,
+              cursor:'pointer', whiteSpace:'nowrap', transition:'all .15s', display:'flex', alignItems:'center', gap:5,
+            }}>
+              {!isAll && <span style={{ width:7, height:7, borderRadius:'50%', background:active?'rgba(255,255,255,.5)':color, display:'inline-block' }}/>}
+              {label}
+            </button>
+          );
+        })}
+        {activeTypes.size > 0 && (
+          <button onClick={() => setActiveTypes(new Set())} style={{ flexShrink:0, display:'flex', alignItems:'center', gap:5, padding:'4px 10px', borderRadius:50, background:'rgba(191,91,61,.3)', border:'1px solid rgba(191,91,61,.5)', color:'#FFB8A0', fontSize:11, fontWeight:700, cursor:'pointer' }}>
+            {activeTypes.size} vybrány ✕
           </button>
-        ))}
+        )}
         <div style={{ marginLeft:'auto', fontSize:12, color:'rgba(255,255,255,.4)', whiteSpace:'nowrap', flexShrink:0 }}>
           {filtered.length} farem
         </div>
@@ -799,8 +826,8 @@ export default function MapPage() {
                   <div style={{ fontSize:32, marginBottom:10 }}>{nearbyMode?'📍':'😕'}</div>
                   {nearbyMode ? `Žádné farmy do ${radius} km. Zkuste zvýšit radius.` : 'Žádné farmy neodpovídají filtru.'}
                 </div>
-              ) : filtered.map(farm => (
-                <div key={farm.id} id={'card-'+farm.id}>
+              ) : filtered.map((farm, i) => (
+                <div key={farm.id} id={'card-'+farm.id} className="farm-card-anim" style={{ animationDelay: `${Math.min(i*0.03, 0.3)}s` }}>
                   <FarmCard farm={farm} selected={selectedFarmId===farm.id} onClick={handleSelect} userLocation={userLocation} dark={dark}/>
                 </div>
               ))}
@@ -831,10 +858,11 @@ export default function MapPage() {
           )}
 
           {/* Sezónní banner */}
-          <div onClick={() => navigate('/sezona')} style={{ position:'absolute', top:10, left:'50%', transform:'translateX(-50%)', background:'#C99B30', color:'#1E120A', padding:'5px 16px', borderRadius:50, fontSize:12, fontWeight:700, boxShadow:'0 2px 10px rgba(0,0,0,.15)', zIndex:500, whiteSpace:'nowrap', cursor:'pointer', transition:'transform .15s' }}
-            onMouseEnter={e => e.currentTarget.style.transform='translateX(-50%) scale(1.04)'}
-            onMouseLeave={e => e.currentTarget.style.transform='translateX(-50%) scale(1)'}>
-            {(() => { const m = new Date().getMonth()+1; return m>=3&&m<=5?'🌱 Jaro — co je teď v sezóně? →':m>=6&&m<=8?'☀️ Léto — co je teď v sezóně? →':m>=9&&m<=11?'🍂 Podzim — co je teď v sezóně? →':'❄️ Zima — co je teď v sezóně? →'; })()}
+          <div onClick={() => navigate('/sezona')} style={{ position:'absolute', top:10, left:'50%', transform:'translateX(-50%)', background:'linear-gradient(135deg,#C99B30,#E0B84A)', color:'#1E120A', padding:'6px 18px', borderRadius:50, fontSize:12, fontWeight:700, zIndex:500, whiteSpace:'nowrap', cursor:'pointer', transition:'transform .15s', animation:'seasonPulse 2.8s ease-in-out infinite', display:'flex', alignItems:'center', gap:6 }}
+            onMouseEnter={e => { e.currentTarget.style.transform='translateX(-50%) scale(1.05)'; e.currentTarget.style.animation='none'; }}
+            onMouseLeave={e => { e.currentTarget.style.transform='translateX(-50%) scale(1)'; e.currentTarget.style.animation='seasonPulse 2.8s ease-in-out infinite'; }}>
+            {(() => { const m = new Date().getMonth()+1; return m>=3&&m<=5?'🌱 Jaro — co je teď v sezóně?':m>=6&&m<=8?'☀️ Léto — co je teď v sezóně?':m>=9&&m<=11?'🍂 Podzim — co je teď v sezóně?':'❄️ Zima — co je teď v sezóně?'; })()}
+            <span style={{ opacity:.7 }}>→</span>
           </div>
 
           {/* Přepínač stylů mapy */}

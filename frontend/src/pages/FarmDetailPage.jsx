@@ -8,6 +8,16 @@ import { supabase } from '../supabase';
 import FARMS_DATA from '../data/farms.json';
 
 const COLORS = { bio:'#C99B30', veggie:'#3A5728', meat:'#9B2226', dairy:'#2980B9', honey:'#D4A017', wine:'#7D3C98', herbs:'#5F8050', market:'#5D4037' };
+const TYPE_HERO = {
+  veggie: 'https://images.unsplash.com/photo-1540420773420-3366772f4999?w=1200&q=80&fit=crop&crop=center',
+  meat:   'https://images.unsplash.com/photo-1529692236671-f1f6cf9683ba?w=1200&q=80&fit=crop&crop=center',
+  dairy:  'https://images.unsplash.com/photo-1486297678162-eb2a19b0a318?w=1200&q=80&fit=crop&crop=center',
+  honey:  'https://images.unsplash.com/photo-1558642452-9d2a7deb7f62?w=1200&q=80&fit=crop&crop=center',
+  wine:   'https://images.unsplash.com/photo-1506377247377-2a5b3b417ebb?w=1200&q=80&fit=crop&crop=center',
+  herbs:  'https://images.unsplash.com/photo-1465226388285-0adb1a0a3ba0?w=1200&q=80&fit=crop&crop=center',
+  market: 'https://images.unsplash.com/photo-1488459716781-31db52582fe9?w=1200&q=80&fit=crop&crop=center',
+  bio:    'https://images.unsplash.com/photo-1523741543316-beb7fc7023d8?w=1200&q=80&fit=crop&crop=center',
+};
 
 export default function FarmDetailPage() {
   const { id } = useParams();
@@ -160,7 +170,11 @@ export default function FarmDetailPage() {
         .fi:focus{border-color:${color}}`}</style>
 
       {/* Hero */}
-      <div style={{ background:`linear-gradient(135deg, ${color}ee, ${color}88)`, position:'relative', overflow:'hidden' }}>
+      <div style={{ position:'relative', overflow:'hidden' }}>
+        {TYPE_HERO[farm.type] && (
+          <img src={TYPE_HERO[farm.type]} alt="" aria-hidden style={{ position:'absolute', inset:0, width:'100%', height:'100%', objectFit:'cover', objectPosition:'center', opacity:.35 }}/>
+        )}
+        <div style={{ position:'absolute', inset:0, background:`linear-gradient(135deg, ${color}dd, ${color}99)` }}/>
         <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', padding:'14px 20px' }}>
           <button onClick={() => navigate(-1)} style={{ display:'flex', alignItems:'center', gap:6, background:'rgba(255,255,255,0.2)', border:'none', borderRadius:50, padding:'7px 14px', color:'white', cursor:'pointer', fontFamily:"'DM Sans',sans-serif", fontWeight:600, fontSize:13 }}>
             <ArrowLeft size={14} /> Zpět
@@ -551,31 +565,64 @@ export default function FarmDetailPage() {
           : FARMS_DATA.filter(f => String(f.id) !== String(farm.id) && f.loc === farm.loc).slice(0, 4);
         if (similar.length === 0) return null;
         return (
-          <div style={{ maxWidth:900, margin:'0 auto', padding:'0 20px 32px' }}>
-            <div style={{ fontFamily:"'Playfair Display',serif", fontSize:20, fontWeight:700, marginBottom:16, color:'#1E120A' }}>
-              Podobné farmy v okolí
-            </div>
-            <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill,minmax(190px,1fr))', gap:12 }}>
-              {similar.map(f => (
-                <div key={f.id} onClick={() => navigate(`/farma/${f.id}`)}
-                  style={{ background:'white', borderRadius:12, padding:'14px', cursor:'pointer', boxShadow:'0 2px 8px rgba(0,0,0,0.06)', transition:'transform .15s' }}
-                  onMouseEnter={e => e.currentTarget.style.transform='translateY(-2px)'}
-                  onMouseLeave={e => e.currentTarget.style.transform=''}>
-                  <div style={{ fontSize:32, marginBottom:6 }}>{f.emoji}</div>
-                  <div style={{ fontWeight:700, fontSize:14, marginBottom:2, lineHeight:1.3 }}>{f.name}</div>
-                  <div style={{ fontSize:12, color:'#888', marginBottom:8 }}>📍 {f.loc}</div>
-                  <div style={{ display:'flex', gap:4, flexWrap:'wrap' }}>
-                    {f.bio && <span style={{ fontSize:10, background:'#FFF3CD', color:'#856404', borderRadius:50, padding:'2px 6px', fontWeight:600 }}>🌱 BIO</span>}
-                    {f.delivery && <span style={{ fontSize:10, background:'#E3F2FD', color:'#1565C0', borderRadius:50, padding:'2px 6px', fontWeight:600 }}>🚚</span>}
-                    {f.eshop && <span style={{ fontSize:10, background:'#E8F0E4', color:'#3A5728', borderRadius:50, padding:'2px 6px', fontWeight:600 }}>🛒</span>}
-                  </div>
+          <div style={{ background:'#F0E8D6', padding:'32px 20px 40px' }}>
+            <div style={{ maxWidth:900, margin:'0 auto' }}>
+              <div style={{ display:'flex', alignItems:'center', gap:10, marginBottom:20 }}>
+                <div style={{ flex:1, height:1, background:'rgba(44,24,16,.1)' }}/>
+                <div style={{ fontFamily:"'Playfair Display',serif", fontSize:18, fontWeight:700, color:'#1E120A', whiteSpace:'nowrap' }}>
+                  📍 Farmy v okolí
                 </div>
-              ))}
+                <div style={{ flex:1, height:1, background:'rgba(44,24,16,.1)' }}/>
+              </div>
+              <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill,minmax(200px,1fr))', gap:14 }}>
+                {similar.map(f => {
+                  const distKm = f._dist != null ? f._dist.toFixed(1) : null;
+                  return (
+                    <div key={f.id} onClick={() => navigate(`/farma/${f.id}`)}
+                      style={{ background:'white', borderRadius:14, padding:'16px', cursor:'pointer', boxShadow:'0 2px 10px rgba(0,0,0,0.07)', transition:'all .18s', border:'1px solid rgba(44,24,16,.06)' }}
+                      onMouseEnter={e => { e.currentTarget.style.transform='translateY(-3px)'; e.currentTarget.style.boxShadow='0 8px 24px rgba(0,0,0,0.12)'; }}
+                      onMouseLeave={e => { e.currentTarget.style.transform=''; e.currentTarget.style.boxShadow='0 2px 10px rgba(0,0,0,0.07)'; }}>
+                      <div style={{ display:'flex', justifyContent:'space-between', alignItems:'flex-start', marginBottom:10 }}>
+                        <div style={{ fontSize:36, lineHeight:1 }}>{f.emoji}</div>
+                        {distKm && <div style={{ fontSize:11, fontWeight:700, color:'#3A5728', background:'rgba(58,87,40,.08)', borderRadius:50, padding:'2px 8px' }}>{distKm} km</div>}
+                      </div>
+                      <div style={{ fontWeight:700, fontSize:14, marginBottom:2, lineHeight:1.3, color:'#1E120A' }}>{f.name}</div>
+                      <div style={{ fontSize:12, color:'#888', marginBottom:8 }}>📍 {f.loc}</div>
+                      <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between' }}>
+                        <div style={{ fontSize:12, color:'#C5A028', fontWeight:700 }}>⭐ {f.rating}</div>
+                        <div style={{ display:'flex', gap:4 }}>
+                          {f.bio && <span style={{ fontSize:10, background:'#FFF3CD', color:'#856404', borderRadius:50, padding:'2px 6px', fontWeight:600 }}>🌱</span>}
+                          {f.delivery && <span style={{ fontSize:10, background:'#E3F2FD', color:'#1565C0', borderRadius:50, padding:'2px 6px', fontWeight:600 }}>🚚</span>}
+                          {f.eshop && <span style={{ fontSize:10, background:'#E8F0E4', color:'#3A5728', borderRadius:50, padding:'2px 6px', fontWeight:600 }}>🛒</span>}
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
             </div>
           </div>
         );
       })()}
 
+      {/* Sticky bottom CTA */}
+      {(farm.phone || farm.website || farm.lat) && (
+        <div style={{ position:'fixed', bottom:0, left:0, right:0, zIndex:900, background:'white', borderTop:'1px solid #EDE5D0', padding:'10px 16px', display:'flex', gap:8, justifyContent:'center', boxShadow:'0 -4px 20px rgba(0,0,0,0.08)' }}>
+          {farm.phone && (
+            <a href={`tel:${farm.phone}`} style={{ flex:1, maxWidth:200, display:'flex', alignItems:'center', justifyContent:'center', gap:6, padding:'10px', background:color, color:'white', borderRadius:10, textDecoration:'none', fontFamily:"'DM Sans',sans-serif", fontWeight:700, fontSize:13 }}>
+              📞 Zavolat
+            </a>
+          )}
+          {farm.website && (
+            <a href={farm.website} target="_blank" rel="noopener noreferrer" style={{ flex:1, maxWidth:200, display:'flex', alignItems:'center', justifyContent:'center', gap:6, padding:'10px', background:'#F4EDD8', color:'#3A5728', borderRadius:10, textDecoration:'none', fontFamily:"'DM Sans',sans-serif", fontWeight:700, fontSize:13, border:'1.5px solid rgba(58,87,40,.2)' }}>
+              🌐 Web
+            </a>
+          )}
+          <a href={googleMapsUrl} target="_blank" rel="noopener noreferrer" style={{ flex:1, maxWidth:200, display:'flex', alignItems:'center', justifyContent:'center', gap:6, padding:'10px', background:'#F4EDD8', color:'#1A5276', borderRadius:10, textDecoration:'none', fontFamily:"'DM Sans',sans-serif", fontWeight:700, fontSize:13, border:'1.5px solid rgba(26,82,118,.2)' }}>
+            📍 Navigovat
+          </a>
+        </div>
+      )}
     </div>
   );
 }

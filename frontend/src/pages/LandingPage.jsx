@@ -57,9 +57,12 @@ function FarmCard({ farm, navigate, style }) {
     <div style={{
       position:'absolute', background:'white', borderRadius:16,
       padding:'12px 16px', boxShadow:'0 10px 32px rgba(44,24,16,.22)',
-      minWidth:190, border:'1px solid rgba(58,87,40,.08)', ...style,
+      minWidth:196, border:'1px solid rgba(58,87,40,.08)', ...style,
     }}>
-      <div style={{ fontSize:10, color:'#aaa', marginBottom:6, textTransform:'uppercase', letterSpacing:1 }}>Ověřená farma</div>
+      <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:6 }}>
+        <div style={{ fontSize:10, color:'#aaa', textTransform:'uppercase', letterSpacing:1 }}>Ověřená farma</div>
+        <div style={{ fontSize:9, fontWeight:700, color:'#3A5728', background:'rgba(58,87,40,.1)', borderRadius:20, padding:'2px 7px' }}>🌿 BIO</div>
+      </div>
       <div style={{ display:'flex', alignItems:'center', gap:10, marginBottom:8 }}>
         <div style={{ width:34, height:34, borderRadius:'50%', background:'#F5EDE0', display:'flex', alignItems:'center', justifyContent:'center', fontSize:18, flexShrink:0 }}>
           {farm.emoji}
@@ -97,6 +100,8 @@ export default function LandingPage() {
           .hero-img{display:none!important;}
           .cat-grid{grid-template-columns:1fr!important;}
           .stats-grid{grid-template-columns:repeat(2,1fr)!important;}
+          .testimonials-grid{grid-template-columns:1fr!important;}
+          .steps-grid{grid-template-columns:1fr!important;}
         }
         @media(max-width:600px){.nav-links{display:none!important;}}
       `}</style>
@@ -169,10 +174,15 @@ export default function LandingPage() {
               </div>
 
               {/* Mini stats row under buttons */}
-              <div style={{ display:'flex', gap:28, paddingTop:24, borderTop:'1px solid rgba(58,87,40,.12)' }}>
-                {[[FARMS_DATA.length,'farem'],[14,'krajů'],['4.7★','hodnocení']].map(([n,l]) => (
-                  <div key={l}>
-                    <div style={{ fontFamily:"'Playfair Display',serif",fontSize:24,fontWeight:900,color:C.brown,lineHeight:1 }}>{n}</div>
+              <div style={{ display:'flex', gap:0, paddingTop:24, borderTop:'1px solid rgba(58,87,40,.12)' }}>
+                {[
+                  { n:FARMS_DATA.length.toLocaleString('cs-CZ'), l:'farem', icon:'🌾' },
+                  { n:'14', l:'krajů', icon:'📍' },
+                  { n:'4.7★', l:'hodnocení', icon:'⭐' },
+                ].map(({n,l,icon},i) => (
+                  <div key={l} style={{ flex:1, paddingLeft: i>0?24:0, borderLeft: i>0?'1px solid rgba(58,87,40,.12)':undefined }}>
+                    <div style={{ fontSize:11, marginBottom:4 }}>{icon}</div>
+                    <div style={{ fontFamily:"'Playfair Display',serif",fontSize:26,fontWeight:900,color:C.brown,lineHeight:1 }}>{n}</div>
                     <div style={{ fontSize:12,color:'#999',marginTop:3 }}>{l}</div>
                   </div>
                 ))}
@@ -181,23 +191,28 @@ export default function LandingPage() {
 
             {/* RIGHT — farmer photo */}
             <div className="hero-img" style={{ position:'relative' }}>
-              <div style={{ borderRadius:28,overflow:'hidden',boxShadow:'0 24px 64px rgba(44,24,16,.18)',aspectRatio:'4/5',position:'relative' }}>
+              <div style={{ borderRadius:28,overflow:'hidden',boxShadow:'0 24px 64px rgba(44,24,16,.22)',aspectRatio:'4/5',position:'relative' }}>
                 <img
-                  src="https://images.unsplash.com/photo-1595273670150-bd0c3c392e46?w=900&q=85&fit=crop&crop=faces"
-                  alt="Farmářka s čerstvou zeleninou"
-                  style={{ width:'100%',height:'100%',objectFit:'cover',objectPosition:'center top' }}
+                  src="https://images.unsplash.com/photo-1523741543316-beb7fc7023d8?w=900&q=85&fit=crop&crop=faces,top"
+                  alt="Farmářka s čerstvou sklizní"
+                  style={{ width:'100%',height:'100%',objectFit:'cover',objectPosition:'center 20%' }}
                 />
-                <div style={{ position:'absolute',inset:0,background:'linear-gradient(to top, rgba(44,24,16,.3) 0%, transparent 55%)' }}/>
+                <div style={{ position:'absolute',inset:0,background:'linear-gradient(to top, rgba(44,24,16,.35) 0%, transparent 50%)' }}/>
               </div>
 
-              {/* Floating BIO badge */}
-              <div style={{ position:'absolute',bottom:32,left:-24,background:'white',borderRadius:16,padding:'14px 20px',boxShadow:'0 10px 28px rgba(44,24,16,.16)',border:'1px solid rgba(58,87,40,.1)' }}>
-                <div style={{ fontSize:11,color:'#aaa',marginBottom:4,textTransform:'uppercase',letterSpacing:1 }}>Ověřená farma</div>
-                <div style={{ fontFamily:"'Playfair Display',serif",fontWeight:700,fontSize:16,color:C.brown }}>🌿 BIO certifikát</div>
-                <div style={{ fontSize:12,color:C.green,marginTop:2,fontWeight:600 }}>Bez chemie · Od souseda</div>
+              {/* BIO Seal */}
+              <div style={{ position:'absolute',bottom:28,left:-32,width:88,height:88,borderRadius:'50%',background:'white',boxShadow:'0 10px 32px rgba(44,24,16,.2)',border:'3px solid #3A5728',display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',gap:1 }}>
+                <span style={{ fontSize:18 }}>🌿</span>
+                <div style={{ fontFamily:"'Playfair Display',serif",fontWeight:900,fontSize:11,color:'#3A5728',lineHeight:1.2,textAlign:'center' }}>BIO<br/>certif.</div>
               </div>
 
-              <div style={{ position:'absolute',top:-18,right:-18,width:72,height:72,borderRadius:'50%',border:`3px solid rgba(191,91,61,.25)` }}/>
+              {/* Social proof card */}
+              <div style={{ position:'absolute',top:24,right:-20,background:'white',borderRadius:14,padding:'11px 16px',boxShadow:'0 8px 24px rgba(44,24,16,.15)',border:'1px solid rgba(58,87,40,.08)',minWidth:148 }}>
+                <div style={{ fontSize:10,color:'#bbb',textTransform:'uppercase',letterSpacing:1,marginBottom:4 }}>Nová farma</div>
+                <div style={{ fontWeight:700,fontSize:13,color:'#2C1810' }}>Farma Kopec ⭐ 4.9</div>
+                <div style={{ fontSize:11,color:'#3A5728',marginTop:2 }}>Přidána dnes</div>
+              </div>
+
               <Leaf style={{ position:'absolute',top:20,right:-28,width:44,height:66,color:C.terra,opacity:.35,transform:'rotate(25deg)' }}/>
             </div>
           </div>
@@ -222,6 +237,27 @@ export default function LandingPage() {
                 </div>
               </div>
             ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ── CTA BANNER ── */}
+      <section style={{ padding:'0 40px', background:'white' }}>
+        <div style={{ maxWidth:1100, margin:'0 auto', paddingBottom:80 }}>
+          <div style={{ borderRadius:24, background:`linear-gradient(135deg, ${C.green} 0%, #4A7535 100%)`, padding:'40px 48px', display:'flex', alignItems:'center', justifyContent:'space-between', gap:32, flexWrap:'wrap', position:'relative', overflow:'hidden' }}>
+            <Blob style={{ position:'absolute', right:-40, top:-60, width:260, color:'white', opacity:.05, pointerEvents:'none' }}/>
+            <div style={{ color:'white', zIndex:1 }}>
+              <div style={{ fontSize:12, fontWeight:700, letterSpacing:3, opacity:.7, textTransform:'uppercase', marginBottom:10 }}>Sezónní průvodce</div>
+              <h3 style={{ fontFamily:"'Playfair Display',serif", fontSize:26, fontWeight:900, marginBottom:8, lineHeight:1.2 }}>Co je teď v sezóně?</h3>
+              <p style={{ fontSize:14, opacity:.85, lineHeight:1.7, maxWidth:380 }}>
+                {(() => { const m = new Date().getMonth()+1; return m>=3&&m<=5?'Jaro přináší chřest, jahody a špenát. Nakupujte přímo od farmáře.':m>=6&&m<=8?'Léto je čas rajčat, borůvek a hrášku. Využijte sezónu naplno.':m>=9&&m<=11?'Podzim: dýně, jablka, houby. Jezte sezónně a lokálně.':'Zima: kořenová zelenina, kvašené produkty a uchovaná dobrota.'; })()}
+              </p>
+            </div>
+            <button onClick={() => navigate('/sezona')} style={{ padding:'14px 32px', background:'white', color:C.green, border:'none', borderRadius:50, fontWeight:700, fontSize:15, cursor:'pointer', fontFamily:"'DM Sans',sans-serif", boxShadow:'0 4px 16px rgba(0,0,0,.15)', whiteSpace:'nowrap', zIndex:1, transition:'all .2s', flexShrink:0 }}
+              onMouseEnter={e=>{e.currentTarget.style.transform='translateY(-2px)';e.currentTarget.style.boxShadow='0 8px 24px rgba(0,0,0,.2)';}}
+              onMouseLeave={e=>{e.currentTarget.style.transform='none';e.currentTarget.style.boxShadow='0 4px 16px rgba(0,0,0,.15)';}}>
+              Otevřít průvodce →
+            </button>
           </div>
         </div>
       </section>
@@ -283,9 +319,9 @@ export default function LandingPage() {
           </div>
 
           <div style={{ textAlign:'center',marginTop:40 }}>
-            <button onClick={() => navigate('/pridat-farmu')} style={{ padding:'14px 38px',background:C.terra,color:'white',border:'none',borderRadius:50,fontWeight:700,fontSize:15,cursor:'pointer',fontFamily:"'DM Sans',sans-serif",boxShadow:'0 5px 22px rgba(191,91,61,.3)',transition:'all .2s' }}
-              onMouseEnter={e=>e.currentTarget.style.transform='translateY(-2px)'}
-              onMouseLeave={e=>e.currentTarget.style.transform='none'}>
+            <button onClick={() => navigate('/pridat-farmu')} style={{ padding:'14px 38px',background:'white',color:C.green,border:`2px solid ${C.green}`,borderRadius:50,fontWeight:700,fontSize:15,cursor:'pointer',fontFamily:"'DM Sans',sans-serif",boxShadow:'0 4px 16px rgba(58,87,40,.12)',transition:'all .2s' }}
+              onMouseEnter={e=>{e.currentTarget.style.background=C.green;e.currentTarget.style.color='white';e.currentTarget.style.transform='translateY(-2px)';}}
+              onMouseLeave={e=>{e.currentTarget.style.background='white';e.currentTarget.style.color=C.green;e.currentTarget.style.transform='none';}}>
               + Přidat svou farmu zdarma
             </button>
           </div>
@@ -299,18 +335,21 @@ export default function LandingPage() {
             <div style={{ fontSize:12,fontWeight:700,letterSpacing:3,color:C.terra,textTransform:'uppercase',marginBottom:10 }}>Jak to funguje</div>
             <h2 style={{ fontFamily:"'Playfair Display',serif",fontSize:34,fontWeight:700,color:C.brown }}>Tři kroky k čerstvým potravinám</h2>
           </div>
-          <div style={{ display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:32 }}>
+          <div className="steps-grid" style={{ display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:32 }}>
             {[
               { n:'01', emoji:'🗺️', title:'Otevři mapu', desc:'Zobraz farmy ve svém okolí, filtruj podle kategorie nebo vzdálenosti.', color:C.green },
               { n:'02', emoji:'📍', title:'Najdi farmu', desc:'Detail s telefonem, hodnocením, otevírací dobou a možností rozvozu.', color:C.terra },
               { n:'03', emoji:'🛒', title:'Nakup přímo', desc:'Kontaktuj farmáře osobně nebo nakup přes e-shop bez mezičlánků.', color:C.mid },
             ].map((s,i) => (
-              <div key={i} style={{ textAlign:'center' }}>
-                <div style={{ width:66,height:66,borderRadius:'50%',background:`${s.color}18`,border:`2px solid ${s.color}35`,display:'flex',alignItems:'center',justifyContent:'center',fontSize:28,margin:'0 auto 18px' }}>
+              <div key={i} style={{ textAlign:'center', position:'relative', padding:'32px 24px 28px', borderRadius:20, background:`${s.color}06`, border:`1px solid ${s.color}18` }}>
+                {/* Large decorative number */}
+                <div style={{ position:'absolute',top:8,right:16,fontFamily:"'Playfair Display',serif",fontSize:72,fontWeight:900,color:`${s.color}10`,lineHeight:1,userSelect:'none',pointerEvents:'none' }}>{s.n}</div>
+                {/* Icon circle */}
+                <div style={{ width:72,height:72,borderRadius:'50%',background:`${s.color}14`,border:`2px solid ${s.color}30`,display:'flex',alignItems:'center',justifyContent:'center',fontSize:30,margin:'0 auto 20px' }}>
                   {s.emoji}
                 </div>
-                <div style={{ fontSize:11,fontWeight:900,color:`${s.color}80`,letterSpacing:2,marginBottom:6,fontFamily:"'Playfair Display',serif" }}>{s.n}</div>
-                <h3 style={{ fontFamily:"'Playfair Display',serif",fontSize:20,fontWeight:700,color:C.brown,marginBottom:10 }}>{s.title}</h3>
+                <div style={{ display:'inline-block',background:`${s.color}18`,borderRadius:20,padding:'2px 12px',fontSize:11,fontWeight:900,color:s.color,letterSpacing:2,marginBottom:12,fontFamily:"'DM Sans',sans-serif" }}>Krok {s.n}</div>
+                <h3 style={{ fontFamily:"'Playfair Display',serif",fontSize:22,fontWeight:900,color:C.brown,marginBottom:10 }}>{s.title}</h3>
                 <p style={{ fontSize:14,color:'#6B4F3A',lineHeight:1.75 }}>{s.desc}</p>
               </div>
             ))}
@@ -319,6 +358,53 @@ export default function LandingPage() {
             <button onClick={() => navigate('/mapa')} style={{ padding:'14px 36px',background:C.green,color:'white',border:'none',borderRadius:50,fontWeight:700,fontSize:15,cursor:'pointer',fontFamily:"'DM Sans',sans-serif",boxShadow:'0 5px 20px rgba(58,87,40,.25)' }}>
               🗺️ Otevřít mapu zdarma
             </button>
+          </div>
+        </div>
+      </section>
+
+      {/* ── RECENZE ── */}
+      <section style={{ padding:'80px 40px', background:C.cream, position:'relative', overflow:'hidden' }}>
+        <Blob style={{ position:'absolute', bottom:-80, right:-60, width:320, color:C.green, opacity:.07, transform:'rotate(45deg)' }}/>
+        <div style={{ maxWidth:1100, margin:'0 auto' }}>
+          <div style={{ textAlign:'center', marginBottom:52 }}>
+            <div style={{ fontSize:12, fontWeight:700, letterSpacing:3, color:C.terra, textTransform:'uppercase', marginBottom:10 }}>Hodnocení</div>
+            <h2 style={{ fontFamily:"'Playfair Display',serif", fontSize:34, fontWeight:700, color:C.brown }}>Co říkají naši zákazníci</h2>
+          </div>
+          <div className="testimonials-grid" style={{ display:'grid', gridTemplateColumns:'repeat(3,1fr)', gap:24 }}>
+            {[
+              { name:'Martina K.', loc:'Praha', rating:5, text:'Konečně vím, kde koupit zeleninu bez chemie. Farma Zelený Statek dodává každý týden a kvalita je výborná. Doporučuji každému!', farm:'Zelený Statek', avatar:'🌿' },
+              { name:'Tomáš V.', loc:'Brno', rating:5, text:'Přes mapu jsem objevil sýrárnu 12 km od nás. Teď si chodíme pro čerstvý sýr každý pátek. Nejlepší objev roku.', farm:'Sýrárna U Petra', avatar:'🧀' },
+              { name:'Jana B.', loc:'Olomouc', rating:5, text:'Moje děti se naučily, kde se bere jídlo. Jezdíme na výlety na farmy a víme, co jíme. Tohle by měl mít každý.', farm:'Farma Na Kopci', avatar:'🥕' },
+            ].map((r, i) => (
+              <div key={i} style={{ background:'white', borderRadius:20, padding:'28px 28px 24px', boxShadow:'0 4px 20px rgba(44,24,16,.08)', border:'1px solid rgba(58,87,40,.06)', position:'relative' }}>
+                {/* Quote mark */}
+                <div style={{ fontFamily:"'Playfair Display',serif", fontSize:56, color:`${C.green}15`, lineHeight:.8, marginBottom:8, userSelect:'none' }}>"</div>
+                <p style={{ fontSize:14, color:'#6B4F3A', lineHeight:1.8, marginBottom:20 }}>{r.text}</p>
+                <div style={{ display:'flex', alignItems:'center', gap:12 }}>
+                  <div style={{ width:40, height:40, borderRadius:'50%', background:`${C.green}12`, border:`1.5px solid ${C.green}22`, display:'flex', alignItems:'center', justifyContent:'center', fontSize:20, flexShrink:0 }}>{r.avatar}</div>
+                  <div>
+                    <div style={{ fontWeight:700, fontSize:13, color:C.brown }}>{r.name} <span style={{ color:'#bbb', fontWeight:400 }}>· {r.loc}</span></div>
+                    <div style={{ fontSize:11, color:'#C5A028', fontWeight:700 }}>{'★'.repeat(r.rating)} <span style={{ color:'#aaa', fontWeight:400 }}>u farmy {r.farm}</span></div>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* Trust strip */}
+          <div style={{ marginTop:52, display:'flex', justifyContent:'center', gap:40, flexWrap:'wrap' }}>
+            {[
+              { n:'1 695', l:'ověřených farem', icon:'🌾' },
+              { n:'4.7★', l:'průměrné hodnocení', icon:'⭐' },
+              { n:'14', l:'krajů pokryto', icon:'📍' },
+              { n:'100%', l:'lokální produkty', icon:'🇨🇿' },
+            ].map(({n,l,icon}) => (
+              <div key={l} style={{ textAlign:'center' }}>
+                <div style={{ fontSize:20, marginBottom:6 }}>{icon}</div>
+                <div style={{ fontFamily:"'Playfair Display',serif", fontSize:28, fontWeight:900, color:C.brown }}>{n}</div>
+                <div style={{ fontSize:12, color:'#aaa', marginTop:2 }}>{l}</div>
+              </div>
+            ))}
           </div>
         </div>
       </section>
@@ -344,11 +430,11 @@ export default function LandingPage() {
               { title:'Farmáři', links:[['+Přidat farmu','/pridat-farmu'],['Dashboard','/dashboard'],['Kontakt','/prihlaseni']] },
             ].map(col => (
               <div key={col.title}>
-                <div style={{ fontWeight:700,fontSize:12,color:'rgba(255,255,255,.45)',textTransform:'uppercase',letterSpacing:2,marginBottom:14 }}>{col.title}</div>
+                <div style={{ fontWeight:700,fontSize:11,color:'rgba(255,255,255,.55)',textTransform:'uppercase',letterSpacing:3,marginBottom:16 }}>{col.title}</div>
                 {col.links.map(([l,h]) => (
-                  <div key={l} onClick={() => navigate(h)} style={{ fontSize:13,color:'rgba(255,255,255,.35)',cursor:'pointer',marginBottom:9,transition:'color .15s' }}
-                    onMouseEnter={e=>e.target.style.color=C.terra}
-                    onMouseLeave={e=>e.target.style.color='rgba(255,255,255,.35)'}>
+                  <div key={l} onClick={() => navigate(h)} style={{ fontSize:14,fontWeight:500,color:'rgba(255,255,255,.5)',cursor:'pointer',marginBottom:11,transition:'color .15s' }}
+                    onMouseEnter={e=>e.target.style.color='white'}
+                    onMouseLeave={e=>e.target.style.color='rgba(255,255,255,.5)'}>
                     {l}
                   </div>
                 ))}
