@@ -112,12 +112,12 @@ export default function AdminPage() {
       <style>{`* { box-sizing: border-box; margin: 0; padding: 0; }`}</style>
 
       {/* Header */}
-      <header style={{ background: T.brown, padding: '14px 24px', display: 'flex', alignItems: 'center', gap: 16 }}>
-        <button onClick={() => navigate('/')} style={{ background: 'none', border: 'none', color: '#B8A882', cursor: 'pointer', fontSize: 18 }}>←</button>
-        <span style={{ fontFamily: "'Playfair Display',serif", fontSize: 18, fontWeight: 700, color: '#F4EDD8' }}>
+      <header style={{ background: 'rgba(245,237,224,.96)', backdropFilter: 'blur(14px)', borderBottom: '1px solid rgba(191,91,61,.1)', padding: '0 24px', height: 60, display: 'flex', alignItems: 'center', gap: 16, position: 'sticky', top: 0, zIndex: 100 }}>
+        <button onClick={() => navigate('/')} style={{ background: 'none', border: 'none', color: '#6B4F3A', cursor: 'pointer', fontSize: 18, lineHeight: 1 }}>←</button>
+        <span style={{ fontFamily: "'Playfair Display',serif", fontSize: 17, fontWeight: 700, color: '#2C1810', flex: 1 }}>
           🛡️ Admin Panel
         </span>
-        <span style={{ marginLeft: 'auto', fontSize: 12, color: '#B8A882' }}>{user.email}</span>
+        <span style={{ fontSize: 12, color: '#aaa' }}>{user.email}</span>
       </header>
 
       <div style={{ maxWidth: 1100, margin: '0 auto', padding: '24px 20px' }}>
