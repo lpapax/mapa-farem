@@ -544,6 +544,31 @@ export default function MapPage() {
   const [stylePickerOpen, setStylePickerOpen] = useState(false);
   const [suggestions, setSuggestions] = useState([]);
   const [showSug, setShowSug] = useState(false);
+  const [recentSearches, setRecentSearches] = useState(() => {
+    try { return JSON.parse(localStorage.getItem('recent-searches') || '[]'); } catch { return []; }
+  });
+  const [searchFocused, setSearchFocused] = useState(false);
+
+  const saveRecentSearch = (q) => {
+    if (!q.trim()) return;
+    const updated = [q, ...recentSearches.filter(s => s !== q)].slice(0, 5);
+    setRecentSearches(updated);
+    try { localStorage.setItem('recent-searches', JSON.stringify(updated)); } catch {}
+  };
+
+  const removeRecentSearch = (q) => {
+    const updated = recentSearches.filter(s => s !== q);
+    setRecentSearches(updated);
+    try { localStorage.setItem('recent-searches', JSON.stringify(updated)); } catch {}
+  };
+
+  const POPULAR_SEARCHES = [
+    { label:'Bio zelenina', q:'bio' },
+    { label:'Čerstvé mléko', q:'mléko' },
+    { label:'Farmářská vejce', q:'vejce' },
+    { label:'Místní med', q:'med' },
+    { label:'Domácí maso', q:'maso' },
+  ];
 
   const MAP_STYLES = [
     { id:'light',    label:'Světlá',    emoji:'☀️', url:'mapbox://styles/mapbox/light-v11' },
@@ -700,22 +725,27 @@ export default function MapPage() {
               if (val.length >= 2) {
                 const q = val.toLowerCase();
                 const hits = FARMS_DATA.filter(f =>
-                  f.name.toLowerCase().includes(q) || f.loc.toLowerCase().includes(q)
+                  f.name.toLowerCase().includes(q) ||
+                  f.loc.toLowerCase().includes(q) ||
+                  (f.products||[]).some(p => p.toLowerCase().includes(q))
                 ).slice(0, 6);
                 setSuggestions(hits);
                 setShowSug(hits.length > 0);
               } else {
+                setSuggestions([]);
                 setShowSug(false);
               }
             }}
-            onBlur={() => setTimeout(() => setShowSug(false), 150)}
-            onFocus={() => search.length >= 2 && suggestions.length > 0 && setShowSug(true)}
+            onBlur={() => setTimeout(() => { setShowSug(false); setSearchFocused(false); }, 180)}
+            onFocus={() => { setSearchFocused(true); if (search.length >= 2 && suggestions.length > 0) setShowSug(true); }}
+            onKeyDown={e => { if (e.key === 'Enter' && search.trim()) { saveRecentSearch(search.trim()); setShowSug(false); } if (e.key === 'Escape') { setShowSug(false); setSearchFocused(false); } }}
             placeholder="Hledat farmu, produkt, obec…"
             style={{ width:'100%', padding:'8px 14px 8px 34px', borderRadius:50, border:'1.5px solid rgba(255,255,255,.12)', background:'rgba(255,255,255,.08)', color:'#F4EDD8', fontFamily:"'DM Sans',sans-serif", fontSize:13, outline:'none' }}/>
-          {showSug && (
+          {/* Autocomplete suggestions */}
+          {showSug && suggestions.length > 0 && (
             <div style={{ position:'absolute', top:'calc(100% + 6px)', left:0, right:0, background:'white', borderRadius:12, boxShadow:'0 8px 32px rgba(0,0,0,.2)', overflow:'hidden', zIndex:2000 }}>
               {suggestions.map(f => (
-                <div key={f.id} onMouseDown={() => { navigate(`/farma/${f.id}`); setShowSug(false); }}
+                <div key={f.id} onMouseDown={() => { setSearch(f.name); saveRecentSearch(f.name); navigate(`/farma/${f.id}`); setShowSug(false); }}
                   style={{ padding:'9px 14px', cursor:'pointer', display:'flex', alignItems:'center', gap:10, borderBottom:'1px solid #f0ebe0' }}
                   onMouseEnter={e => e.currentTarget.style.background='#F4EDD8'}
                   onMouseLeave={e => e.currentTarget.style.background='white'}>
@@ -724,6 +754,21 @@ export default function MapPage() {
                     <div style={{ fontSize:13, fontWeight:700, color:'#1E120A' }}>{f.name}</div>
                     <div style={{ fontSize:11, color:'#888' }}>📍 {f.loc}</div>
                   </div>
+                </div>
+              ))}
+            </div>
+          )}
+          {/* Recent searches when focused + empty */}
+          {searchFocused && !search && recentSearches.length > 0 && (
+            <div style={{ position:'absolute', top:'calc(100% + 6px)', left:0, right:0, background:'white', borderRadius:12, boxShadow:'0 8px 32px rgba(0,0,0,.2)', overflow:'hidden', zIndex:2000, padding:'10px 0 6px' }}>
+              <div style={{ fontSize:10, fontWeight:700, color:'#999', textTransform:'uppercase', letterSpacing:1, padding:'0 14px 6px' }}>Nedávné hledání</div>
+              {recentSearches.map(q => (
+                <div key={q} onMouseDown={() => { setSearch(q); setShowSug(false); }}
+                  style={{ padding:'8px 14px', cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'space-between', borderBottom:'1px solid #f5f0e8' }}
+                  onMouseEnter={e => e.currentTarget.style.background='#F4EDD8'}
+                  onMouseLeave={e => e.currentTarget.style.background='white'}>
+                  <span style={{ fontSize:13, color:'#333' }}>🕐 {q}</span>
+                  <span onMouseDown={e => { e.stopPropagation(); removeRecentSearch(q); }} style={{ fontSize:16, color:'#ccc', lineHeight:1, cursor:'pointer', padding:'0 4px' }}>×</span>
                 </div>
               ))}
             </div>
@@ -800,6 +845,17 @@ export default function MapPage() {
           </button>
         </div>
       </header>
+
+      {/* POPULAR SEARCHES */}
+      <div style={{ display:'flex', alignItems:'center', gap:6, padding:'5px 14px', background:T.headerBg, borderBottom:'1px solid rgba(255,255,255,.06)', overflowX:'auto', flexShrink:0, scrollbarWidth:'none' }}>
+        <span style={{ fontSize:11, color:'#888', whiteSpace:'nowrap', flexShrink:0 }}>Populární:</span>
+        {POPULAR_SEARCHES.map(({ label, q }) => (
+          <button key={q} onClick={() => { setSearch(q); saveRecentSearch(q); }}
+            style={{ padding:'3px 11px', background: search === q ? 'rgba(200,151,58,.25)' : 'rgba(255,255,255,.06)', border:`1px solid ${search === q ? 'rgba(200,151,58,.5)' : 'rgba(255,255,255,.1)'}`, borderRadius:50, fontSize:12, color: search === q ? '#C8973A' : '#B8A882', cursor:'pointer', whiteSpace:'nowrap', fontFamily:"'DM Sans',sans-serif", transition:'all .15s', flexShrink:0 }}>
+            {label}
+          </button>
+        ))}
+      </div>
 
       {/* FILTRY */}
       <div
