@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { MapContainer, TileLayer, GeoJSON } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
 
-const GEOJSON_URL = 'https://raw.githubusercontent.com/codeforgermany/click_that_hood/main/public/data/czech-republic.geojson';
+const GEOJSON_URL = 'https://cdn.jsdelivr.net/gh/osmlab/click-that-hood@master/public/data/czech-republic.geojson';
 
 const PALETTE = [
   '#C8973A', '#2A6B3A', '#8B3A2C', '#1A5C7A', '#6B3A8B',
