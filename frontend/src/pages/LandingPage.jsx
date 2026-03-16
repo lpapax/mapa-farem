@@ -47,7 +47,7 @@ const CAT_PHOTOS = [
   { label:'Zelenina & ovoce',   filter:'veggie', emoji:'🥕',
     img:'https://images.unsplash.com/photo-1540420773420-3366772f4999?w=700&q=80&fit=crop' },
   { label:'Mléčné výrobky',     filter:'dairy',  emoji:'🥛',
-    img:'https://images.unsplash.com/photo-1486297678162-eb2a19b0a318?w=700&q=80&fit=crop' },
+    img:'https://images.unsplash.com/photo-1559598467-f8b76c8155d0?w=700&q=80&fit=crop' },
   { label:'Maso & uzeniny',     filter:'meat',   emoji:'🥩',
     img:'https://images.unsplash.com/photo-1529692236671-f1f6cf9683ba?w=700&q=80&fit=crop' },
 ];
@@ -238,11 +238,6 @@ export default function LandingPage() {
                 <div style={{ fontSize:10, color:C.gold, textTransform:'uppercase', letterSpacing:2, marginBottom:5 }}>Zlínský kraj</div>
                 <div style={{ fontWeight:700, fontSize:13, color:C.cream }}>Ke Kořenům ⭐ 4.9</div>
                 <div style={{ fontSize:11, color:'rgba(245,237,224,.4)', marginTop:2 }}>Lokální produkty</div>
-              </div>
-              {/* BIO seal */}
-              <div style={{ position:'absolute', bottom:28, left:-24, width:78, height:78, borderRadius:'50%', background:'rgba(17,29,16,.96)', backdropFilter:'blur(8px)', border:'1.5px solid rgba(200,151,58,.35)', display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', gap:2 }}>
-                <span style={{ fontSize:16 }}>🌿</span>
-                <div style={{ fontFamily:"'Playfair Display',serif", fontWeight:900, fontSize:10, color:C.gold, lineHeight:1.2, textAlign:'center' }}>BIO<br/>certif.</div>
               </div>
             </div>
           </div>
