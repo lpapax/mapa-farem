@@ -1,7 +1,7 @@
 // frontend/src/pages/MapPage.jsx
 // Mapbox GL JS + GPS + Clustering + PWA
 import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Search, Plus, ShoppingCart, Menu, X, Navigation, Moon, Sun } from 'lucide-react';
 import { useAuthStore, useMapStore, useCartStore, useNotificationStore, useFavoritesStore } from '../store/index.js';
 import FARMS_DATA from '../data/farms.json';
@@ -73,14 +73,16 @@ function FarmCard({ farm, selected, onClick, userLocation, dark }) {
         {farm.eshop && <span style={{ fontSize:10, fontWeight:700, padding:'2px 7px', borderRadius:50, background:'#E8F0E4', color:'#3A5728' }}>🛒 E-shop</span>}
         {farm.delivery && <span style={{ fontSize:10, fontWeight:700, padding:'2px 7px', borderRadius:50, background:'#E8F0FE', color:'#1A5276' }}>🚚 Rozvoz</span>}
       </div>
-      <div style={{ display:'flex', justifyContent:'space-between', fontSize:11, fontWeight:600 }}>
+      <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginTop:10, paddingTop:10, borderTop:`1px solid ${dark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)'}`, fontSize:11, fontWeight:700 }}>
         {realDist
-          ? <span style={{ color: Number(realDist)<10?'#3A5728':Number(realDist)<30?'#C99B30':'#888' }}>
+          ? <span style={{ color: Number(realDist)<10?'#3A5728':Number(realDist)<30?'#C99B30':'#888', display:'flex', alignItems:'center' }}>
               📍 {realDist} km od vás
             </span>
-          : <span style={{ color:'#5F8050' }}>📏 {farm.dist}</span>
+          : <span style={{ color:'#5F8050', display:'flex', alignItems:'center' }}>{farm.dist ? `📏 ${farm.dist}` : ''}</span>
         }
-        <span style={{ color:'#999' }}>Detail →</span>
+        <span style={{ color:color, background:`${color}15`, padding:'4px 10px', borderRadius:50, display:'flex', alignItems:'center', gap:4 }}>
+          Detail <span style={{fontSize:13}}>→</span>
+        </span>
       </div>
     </div>
   );
@@ -489,7 +491,12 @@ export default function MapPage() {
   const [nearbyMode, setNearbyMode] = useState(false);
   const [showRadiusPanel, setShowRadiusPanel] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
-  const [activeTypes, setActiveTypes] = useState(() => filter !== 'all' ? new Set([filter]) : new Set());
+  const [searchParams] = useSearchParams();
+  const [activeTypes, setActiveTypes] = useState(() => {
+    const urlFilter = searchParams.get('filter');
+    if (urlFilter) return new Set([urlFilter]);
+    return filter !== 'all' ? new Set([filter]) : new Set();
+  });
   const [dark, setDark] = useState(() => localStorage.getItem('mf-dark') === '1');
   const [mapStyle, setMapStyle] = useState(() => localStorage.getItem('mf-style') || 'outdoors');
   const [stylePickerOpen, setStylePickerOpen] = useState(false);

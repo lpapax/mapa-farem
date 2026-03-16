@@ -47,7 +47,7 @@ const CAT_PHOTOS = [
   { label:'Zelenina & ovoce',   filter:'veggie', emoji:'🥕',
     img:'https://images.unsplash.com/photo-1540420773420-3366772f4999?w=700&q=80&fit=crop' },
   { label:'Mléčné výrobky',     filter:'dairy',  emoji:'🥛',
-    img:'https://images.unsplash.com/photo-1559598467-f8b76c8155d0?w=700&q=80&fit=crop' },
+    img:'https://images.unsplash.com/photo-1550583724-b2692b85b150?w=700&q=80&fit=crop' },
   { label:'Maso & uzeniny',     filter:'meat',   emoji:'🥩',
     img:'https://images.unsplash.com/photo-1529692236671-f1f6cf9683ba?w=700&q=80&fit=crop' },
 ];
