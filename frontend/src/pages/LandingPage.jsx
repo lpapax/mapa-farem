@@ -1,6 +1,7 @@
 // frontend/src/pages/LandingPage.jsx
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { motion, useInView, useScroll, useTransform } from 'framer-motion';
 import FARMS_DATA from '../data/farms.json';
 import CzechRegionMap from '../components/CzechRegionMap';
 
@@ -45,12 +46,18 @@ const C = {
 };
 
 const CAT_PHOTOS = [
-  { label:'Zelenina & ovoce',   filter:'veggie', emoji:'🥕',
+  { label:'Zelenina & ovoce', filter:'veggie', emoji:'🥕',
     img:'https://images.unsplash.com/photo-1540420773420-3366772f4999?w=700&q=80&fit=crop' },
-  { label:'Mléčné výrobky',     filter:'dairy',  emoji:'🥛',
+  { label:'Mléčné výrobky',   filter:'dairy',  emoji:'🥛',
     img:'https://images.unsplash.com/photo-1550583724-b2692b85b150?w=700&q=80&fit=crop' },
-  { label:'Maso & uzeniny',     filter:'meat',   emoji:'🥩',
+  { label:'Maso & uzeniny',   filter:'meat',   emoji:'🥩',
     img:'https://images.unsplash.com/photo-1529692236671-f1f6cf9683ba?w=700&q=80&fit=crop' },
+  { label:'Med & včelí produkty', filter:'honey', emoji:'🍯',
+    img:'https://images.unsplash.com/photo-1558642452-9d2a7deb7f62?w=700&q=80&fit=crop' },
+  { label:'BIO produkty',     filter:'bio',    emoji:'🌱',
+    img:'https://images.unsplash.com/photo-1523741543316-beb7fc7023d8?w=700&q=80&fit=crop' },
+  { label:'Víno & nápoje',    filter:'wine',   emoji:'🍷',
+    img:'https://images.unsplash.com/photo-1506377247377-2a5b3b417ebb?w=700&q=80&fit=crop' },
 ];
 
 function FarmCard({ farm, navigate, style }) {
@@ -117,6 +124,10 @@ export default function LandingPage() {
     return () => obs.disconnect();
   }, []);
 
+  /* ── Parallax hero ── */
+  const { scrollY } = useScroll();
+  const parallaxY = useTransform(scrollY, [0, 300], [0, -90]);
+
   return (
     <div style={{ fontFamily:"'DM Sans',sans-serif", background:C.dark, color:C.cream, overflowX:'hidden' }}>
       <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;0,900;1,700&family=DM+Sans:wght@300;400;500;700&display=swap" rel="stylesheet"/>
@@ -135,12 +146,15 @@ export default function LandingPage() {
         @media(max-width:900px){
           .hero-grid{grid-template-columns:1fr!important;}
           .hero-img{display:none!important;}
-          .cat-grid{grid-template-columns:1fr!important;}
+          .cat-grid{grid-template-columns:repeat(2,1fr)!important;}
           .steps-grid{grid-template-columns:1fr!important;}
           .testimonials-grid{grid-template-columns:1fr!important;}
           .footer-grid{grid-template-columns:1fr 1fr!important;}
         }
-        @media(max-width:600px){.nav-links{display:none!important;}}
+        @media(max-width:600px){
+          .nav-links{display:none!important;}
+          .cat-grid{grid-template-columns:1fr!important;}
+        }
         .mobile-cta{display:none!important;}
         @media(max-width:768px){.mobile-cta{display:flex!important;}}
       `}</style>
@@ -190,11 +204,17 @@ export default function LandingPage() {
                 {FARMS_DATA.length.toLocaleString('cs-CZ')} ověřených farem
               </div>
 
-              <h1 style={{ fontFamily:"'Playfair Display',serif", fontSize:'clamp(38px,4.2vw,56px)', fontWeight:900, lineHeight:1.08, color:C.cream, marginBottom:24 }}>
-                Poctivé jídlo<br/>
-                <em style={{ color:C.gold, fontStyle:'italic' }}>přímo od farmáře</em><br/>
-                ve tvém okolí
-              </h1>
+              <motion.div
+                initial={{ opacity:0, y:30 }}
+                animate={{ opacity:1, y:0 }}
+                transition={{ duration:0.8, delay:0.2 }}
+              >
+                <h1 style={{ fontFamily:"'Playfair Display',serif", fontSize:'clamp(38px,4.2vw,56px)', fontWeight:900, lineHeight:1.08, color:C.cream, marginBottom:24 }}>
+                  Poctivé jídlo<br/>
+                  <em style={{ color:C.gold, fontStyle:'italic' }}>přímo od farmáře</em><br/>
+                  ve tvém okolí
+                </h1>
+              </motion.div>
 
               <p style={{ fontSize:16, color:'rgba(245,237,224,.6)', lineHeight:1.85, marginBottom:28, maxWidth:440 }}>
                 {FARMS_DATA.length} lokálních farem na jedné mapě. Zelenina, sýry, maso, med — bez supermarketů, bez mezičlánků.
@@ -215,7 +235,12 @@ export default function LandingPage() {
                 </button>
               </form>
 
-              <div style={{ display:'flex', gap:14, flexWrap:'wrap', marginBottom:48 }}>
+              <motion.div
+                initial={{ opacity:0, y:30 }}
+                animate={{ opacity:1, y:0 }}
+                transition={{ duration:0.8, delay:0.5 }}
+                style={{ display:'flex', gap:14, flexWrap:'wrap', marginBottom:48 }}
+              >
                 <button onClick={() => navigate('/mapa')}
                   style={{ padding:'15px 36px', background:C.gold, color:'white', border:'none', borderRadius:2, fontWeight:700, fontSize:15, cursor:'pointer', fontFamily:"'DM Sans',sans-serif", letterSpacing:.5, transition:'all .2s' }}
                   onMouseEnter={e=>{e.currentTarget.style.background=C.goldLight;e.currentTarget.style.transform='translateY(-2px)';}}
@@ -228,7 +253,7 @@ export default function LandingPage() {
                   onMouseLeave={e=>e.currentTarget.style.borderColor='rgba(245,237,224,.25)'}>
                   Přidat svou farmu →
                 </button>
-              </div>
+              </motion.div>
 
               <div ref={statsRef} style={{ display:'flex', gap:0, paddingTop:28, borderTop:'1px solid rgba(200,151,58,.15)' }}>
                 {[
@@ -246,11 +271,13 @@ export default function LandingPage() {
 
             <div className="hero-img" style={{ position:'relative' }}>
               <div style={{ borderRadius:2, overflow:'hidden', boxShadow:'0 32px 80px rgba(0,0,0,.5)', aspectRatio:'4/5', position:'relative', border:'1px solid rgba(200,151,58,.15)' }}>
-                <img
-                  src="https://images.unsplash.com/photo-1523741543316-beb7fc7023d8?w=900&q=85&fit=crop&crop=faces,top"
-                  alt="Farmářka s čerstvou sklizní"
-                  style={{ width:'100%', height:'100%', objectFit:'cover', objectPosition:'center 20%' }}
-                />
+                <motion.div style={{ y: parallaxY, width:'100%', height:'100%' }}>
+                  <img
+                    src="https://images.unsplash.com/photo-1523741543316-beb7fc7023d8?w=900&q=85&fit=crop&crop=faces,top"
+                    alt="Farmářka s čerstvou sklizní"
+                    style={{ width:'100%', height:'100%', objectFit:'cover', objectPosition:'center 20%' }}
+                  />
+                </motion.div>
                 <div style={{ position:'absolute', inset:0, background:'linear-gradient(to top, rgba(26,45,24,.55) 0%, transparent 50%)' }}/>
               </div>
               {/* Corner accents */}
@@ -268,7 +295,13 @@ export default function LandingPage() {
       </section>
 
       {/* ── KATEGORIE — Cream editorial ── */}
-      <section style={{ background:C.cream, padding:'80px 0' }}>
+      <motion.section
+        style={{ background:C.cream, padding:'80px 0' }}
+        initial={{ opacity:0, y:40 }}
+        whileInView={{ opacity:1, y:0 }}
+        viewport={{ once:true, margin:'-100px' }}
+        transition={{ duration:0.6 }}
+      >
         <div style={{ maxWidth:1100, margin:'0 auto', padding:'0 40px' }}>
           <div style={{ display:'flex', alignItems:'flex-end', justifyContent:'space-between', marginBottom:48, flexWrap:'wrap', gap:16 }}>
             <div>
@@ -295,7 +328,7 @@ export default function LandingPage() {
             ))}
           </div>
         </div>
-      </section>
+      </motion.section>
 
       {/* ── SEZÓNA BANNER — Gold ── */}
       <section style={{ padding:'0 40px', background:C.cream }}>
@@ -345,7 +378,13 @@ export default function LandingPage() {
       </section>
 
       {/* ── JAK TO FUNGUJE — Cream editorial ── */}
-      <section style={{ padding:'88px 40px', background:C.cream }}>
+      <motion.section
+        style={{ padding:'88px 40px', background:C.cream }}
+        initial={{ opacity:0, y:40 }}
+        whileInView={{ opacity:1, y:0 }}
+        viewport={{ once:true, margin:'-100px' }}
+        transition={{ duration:0.6 }}
+      >
         <div style={{ maxWidth:1000, margin:'0 auto' }}>
           <div style={{ marginBottom:64 }}>
             <div style={{ fontSize:11, fontWeight:700, letterSpacing:4, color:C.gold, textTransform:'uppercase', marginBottom:12 }}>Postup</div>
@@ -375,24 +414,33 @@ export default function LandingPage() {
             </button>
           </div>
         </div>
-      </section>
+      </motion.section>
 
       {/* ── RECENZE — Dark editorial ── */}
-      <section style={{ padding:'88px 40px', background:C.dark, position:'relative', overflow:'hidden' }}>
+      <motion.section
+        style={{ padding:'88px 40px', background:C.dark, position:'relative', overflow:'hidden' }}
+        initial={{ opacity:0, y:40 }}
+        whileInView={{ opacity:1, y:0 }}
+        viewport={{ once:true, margin:'-100px' }}
+        transition={{ duration:0.6 }}
+      >
         <div style={{ position:'absolute', inset:0, backgroundImage:'radial-gradient(rgba(200,151,58,.04) 1px,transparent 1px)', backgroundSize:'32px 32px', pointerEvents:'none' }}/>
         <div style={{ maxWidth:1100, margin:'0 auto', position:'relative' }}>
           <div style={{ display:'flex', alignItems:'flex-end', justifyContent:'space-between', marginBottom:56, flexWrap:'wrap', gap:16 }}>
             <div>
-              <div style={{ fontSize:11, fontWeight:700, letterSpacing:4, color:C.gold, textTransform:'uppercase', marginBottom:12 }}>Reference</div>
-              <h2 style={{ fontFamily:"'Playfair Display',serif", fontSize:38, fontWeight:700, color:C.cream }}>Co říkají zákazníci</h2>
+              <div style={{ fontSize:11, fontWeight:700, letterSpacing:4, color:C.gold, textTransform:'uppercase', marginBottom:12 }}>Farmáři o nás</div>
+              <h2 style={{ fontFamily:"'Playfair Display',serif", fontSize:38, fontWeight:700, color:C.cream }}>Co říkají farmáři</h2>
             </div>
           </div>
 
           <div className="testimonials-grid" style={{ display:'grid', gridTemplateColumns:'repeat(3,1fr)', gap:2 }}>
             {[
-              { name:'Petra H.', loc:'Zlínský kraj', rating:5, text:'Konečně vím, kde koupit čerstvé mléko a sýr bez chemie. Minimlékárna ZPZ je top — přímo od farmáře, bez mezičlánků.', farm:'Minimlékárna - Farma ZPZ', avatar:'🥛' },
-              { name:'Radek M.', loc:'Zlínský kraj', rating:5, text:'Přes mapu jsem objevil výborný med od včelaře kousek od Zlína. Žádný supermarket, žádné přidané věci — jen čistý med.', farm:'MED přímo od včelaře', avatar:'🍯' },
-              { name:'Lenka V.', loc:'Zlínský kraj', rating:5, text:'Ke Kořenům je přesně to, co jsem hledala. Bylinky, koření, vše lokální a kvalitní. Chodím tam každý týden.', farm:'Ke Kořenům', avatar:'🌿' },
+              { name:'Jana Kopecká', farm:'Farma Kopec, Jihomoravský kraj', role:'Farmářka 12 let', rating:5,
+                text:'Přes MapaFarem.cz k nám přišlo za první měsíc 40 nových zákazníků. Konečně se nemusím spoléhat jen na farmářské trhy.', avatar:'🌻' },
+              { name:'Tomáš Dvořák', farm:'Bio Dvůr Vítkovice, Moravskoslezský kraj', role:'Farmář, BIO certifikát', rating:5,
+                text:'Registrace trvala 10 minut a hned druhý den mi začali psát zákazníci ze Zlína. Pro malého farmáře neocenitelné.', avatar:'🥛' },
+              { name:'Marie Horáková', farm:'Včelí farma Horáků, Vysočina', role:'Včelařka od roku 2015', rating:5,
+                text:'Med teď prodávám přímo spotřebitelům — bez zprostředkovatelů, za férovou cenu. Zákazníci oceňují přímý kontakt.', avatar:'🍯' },
             ].map((r,i) => (
               <div key={i} className="review-card">
                 <div style={{ fontFamily:"'Playfair Display',serif", fontSize:52, color:C.gold, lineHeight:.8, marginBottom:16, opacity:.5 }}>"</div>
@@ -400,8 +448,8 @@ export default function LandingPage() {
                 <div style={{ display:'flex', alignItems:'center', gap:12, paddingTop:20, borderTop:'1px solid rgba(200,151,58,.1)' }}>
                   <div style={{ width:38, height:38, borderRadius:'50%', background:'rgba(200,151,58,.1)', border:'1px solid rgba(200,151,58,.2)', display:'flex', alignItems:'center', justifyContent:'center', fontSize:18, flexShrink:0 }}>{r.avatar}</div>
                   <div>
-                    <div style={{ fontWeight:700, fontSize:13, color:C.cream }}>{r.name} <span style={{ color:'rgba(245,237,224,.3)', fontWeight:400 }}>· {r.loc}</span></div>
-                    <div style={{ fontSize:11, color:C.gold, marginTop:2 }}>{'★'.repeat(r.rating)} <span style={{ color:'rgba(245,237,224,.25)', fontWeight:400 }}>u farmy {r.farm}</span></div>
+                    <div style={{ fontWeight:700, fontSize:13, color:C.cream }}>{r.name} <span style={{ color:'rgba(245,237,224,.3)', fontWeight:400 }}>· {r.role}</span></div>
+                    <div style={{ fontSize:11, color:C.gold, marginTop:2 }}>{'★'.repeat(r.rating)} <span style={{ color:'rgba(245,237,224,.25)', fontWeight:400 }}>{r.farm}</span></div>
                   </div>
                 </div>
               </div>
@@ -423,7 +471,7 @@ export default function LandingPage() {
             ))}
           </div>
         </div>
-      </section>
+      </motion.section>
 
       {/* ── STICKY MOBILE CTA ── */}
       <div className="mobile-cta" style={{ position:'fixed', bottom:0, left:0, right:0, zIndex:200, background:'rgba(17,29,16,.97)', backdropFilter:'blur(12px)', borderTop:'1px solid rgba(200,151,58,.2)', padding:'10px 16px', gap:10, alignItems:'center' }}>
