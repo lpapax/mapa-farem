@@ -1,431 +1,707 @@
 // frontend/src/pages/DashboardPage.jsx
-// Farmer dashboard — real data from Supabase
-//
-// Supabase tables needed:
-//   farms_submitted  (already exists)
-//   farm_products:
-//     create table farm_products (
-//       id uuid primary key default gen_random_uuid(),
-//       farm_id uuid references farms_submitted(id) on delete cascade,
-//       name text not null,
-//       emoji text default '🌿',
-//       price numeric default 0,
-//       unit text default 'kg',
-//       description text,
-//       active boolean default true,
-//       created_at timestamptz default now()
-//     );
-//     alter table farm_products enable row level security;
-//     create policy "farmers manage own products" on farm_products
-//       using (farm_id in (select id from farms_submitted where user_id = auth.uid()))
-//       with check (farm_id in (select id from farms_submitted where user_id = auth.uid()));
-//
-import { useState, useEffect, useCallback } from 'react';
+// Farmer dashboard — MapaFarem.cz
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { supabase } from '../supabase';
-import { useOrdersStore } from '../store/index.js';
-import toast, { Toaster } from 'react-hot-toast';
+import { useAuthStore } from '../store/index.js';
 
-const TYPE_LABELS = {
-  veggie: '🥕 Zelenina & ovoce', bio: '🌱 BIO', meat: '🥩 Maso & uzeniny',
-  dairy: '🥛 Mléčné výrobky', honey: '🍯 Med & včely', wine: '🍷 Víno & nápoje',
-  herbs: '🌿 Bylinky & kosmetika', market: '🏪 Farmářský trh',
+// ── Design tokens ────────────────────────────────────────────────────────────
+const C = {
+  cream:  '#F5EDE0',
+  terra:  '#BF5B3D',
+  green:  '#3A5728',
+  dark:   '#1A2D18',
+  gold:   '#C8973A',
+  brown:  '#2C1810',
+  white:  '#FFFFFF',
+  sub:    '#7A6A58',
+  border: 'rgba(44,24,16,.10)',
+  shadow: '0 2px 12px rgba(26,45,24,.08)',
+  shadowMd: '0 4px 24px rgba(26,45,24,.12)',
 };
-const STATUS_MAP = {
-  pending:  { bg: '#FFF3CD', color: '#856404', label: '⏳ Čeká na schválení' },
-  approved: { bg: '#D4EDDA', color: '#155724', label: '✅ Schválena a aktivní' },
-  rejected: { bg: '#F8D7DA', color: '#721C24', label: '✗ Zamítnuta' },
-};
-const ORDER_STATUS = {
-  PENDING: ['⏳ Čeká', '#FFF3CD', '#856404'],
-  CONFIRMED: ['✓ Potvrzena', '#D4EDDA', '#155724'],
-  PREPARING: ['🔧 Připravuje se', '#D1ECF1', '#0C5460'],
-  READY: ['📦 Připravena', '#E8F0E4', '#3A5728'],
-  DELIVERED: ['✅ Doručena', '#D4EDDA', '#155724'],
-  CANCELLED: ['✗ Zrušena', '#F8D7DA', '#721C24'],
-};
-const T = { bg: '#F4EDD8', card: 'white', green: '#3A5728', brown: '#1E120A', sub: '#666', border: 'rgba(0,0,0,.08)' };
 
+// ── Mock data ────────────────────────────────────────────────────────────────
+const MOCK_PRODUCTS = [
+  { id: 1, emoji: '🥕', name: 'Mrkev (1 kg)', season: ['Srp','Říj'], active: true },
+  { id: 2, emoji: '🥔', name: 'Brambory (5 kg)', season: ['Čvc','Říj'], active: true },
+  { id: 3, emoji: '🍅', name: 'Rajčata Cherry', season: ['Čvc','Srp'], active: true },
+  { id: 4, emoji: '🥬', name: 'Špenát (svazek)', season: ['Dub','Kvě'], active: false },
+  { id: 5, emoji: '🍯', name: 'Med lipový (0,5 l)', season: ['Čvc','Srp'], active: true },
+];
+
+const MOCK_ACTIVITY = [
+  { id: 1, icon: '🔍', text: 'Nová návštěva z Brna', time: 'před 2 hodinami' },
+  { id: 2, icon: '❤️', text: 'Jana K. přidala vaši farmu do oblíbených', time: 'včera' },
+  { id: 3, icon: '⭐', text: 'Nová recenze (5★) od Petra M.', time: 'před 3 dny' },
+  { id: 4, icon: '🔍', text: 'Nová návštěva z Prahy', time: 'před 4 dny' },
+  { id: 5, icon: '❤️', text: 'Martin V. přidal vaši farmu do oblíbených', time: 'před týdnem' },
+];
+
+const CHART_DATA = [
+  { day: 'Po', views: 18 },
+  { day: 'Út', views: 24 },
+  { day: 'St', views: 31 },
+  { day: 'Čt', views: 22 },
+  { day: 'Pá', views: 41 },
+  { day: 'So', views: 55 },
+  { day: 'Ne', views: 43 },
+];
+
+const EMOJI_OPTIONS = ['🌿', '🥕', '🥔', '🍅', '🥬', '🍯', '🥛', '🧀', '🥚', '🍎', '🌽', '🫑'];
+const MONTHS = ['Led','Úno','Bře','Dub','Kvě','Čvn','Čvc','Srp','Zář','Říj','Lis','Pro'];
+
+// ── Helpers ──────────────────────────────────────────────────────────────────
+function calcCompletion(user, products) {
+  const fields = [
+    { key: 'name',     label: '+ Přidat název',      done: !!(user?.name) },
+    { key: 'email',    label: '+ Přidat email',       done: !!(user?.email) },
+    { key: 'phone',    label: '+ Přidat telefon',     done: false },
+    { key: 'website',  label: '+ Přidat web',         done: false },
+    { key: 'desc',     label: '+ Přidat popis',       done: false },
+    { key: 'products', label: '+ Přidat produkt',     done: products.length > 0 },
+    { key: 'photo',    label: '+ Přidat foto',        done: false },
+  ];
+  const done = fields.filter(f => f.done).length;
+  const pct = Math.round((done / fields.length) * 100);
+  const missing = fields.filter(f => !f.done);
+  return { pct, missing };
+}
+
+const maxViews = Math.max(...CHART_DATA.map(d => d.views));
+
+// ── Styles helpers ───────────────────────────────────────────────────────────
+const inputSt = {
+  width: '100%', padding: '10px 13px', border: `1.5px solid ${C.border}`,
+  borderRadius: 9, fontSize: 14, fontFamily: "'DM Sans',sans-serif",
+  outline: 'none', background: C.white, color: C.brown, boxSizing: 'border-box',
+};
+
+function Btn({ children, color = C.green, onClick, style = {} }) {
+  return (
+    <button
+      onClick={onClick}
+      style={{
+        padding: '10px 20px', background: color, color: C.white, border: 'none',
+        borderRadius: 10, fontFamily: "'DM Sans',sans-serif", fontWeight: 700,
+        fontSize: 14, cursor: 'pointer', transition: 'opacity .15s',
+        ...style,
+      }}
+      onMouseEnter={e => e.currentTarget.style.opacity = '0.88'}
+      onMouseLeave={e => e.currentTarget.style.opacity = '1'}
+    >
+      {children}
+    </button>
+  );
+}
+
+function Card({ children, style = {} }) {
+  return (
+    <div style={{
+      background: C.white, borderRadius: 16, padding: '20px 22px',
+      boxShadow: C.shadow, ...style,
+    }}>
+      {children}
+    </div>
+  );
+}
+
+function SectionTitle({ children }) {
+  return (
+    <div style={{
+      fontFamily: "'Playfair Display',serif", fontSize: 18, fontWeight: 700,
+      color: C.dark, marginBottom: 16,
+    }}>
+      {children}
+    </div>
+  );
+}
+
+// ── Main component ────────────────────────────────────────────────────────────
 export default function DashboardPage() {
   const navigate = useNavigate();
-  const { orders } = useOrdersStore();
-  const [user, setUser] = useState(null);
-  const [farm, setFarm] = useState(null);
-  const [products, setProducts] = useState([]);
-  const [tab, setTab] = useState('overview');
-  const [loading, setLoading] = useState(true);
-  const [productsLoading, setProductsLoading] = useState(false);
-  const [savingFarm, setSavingFarm] = useState(false);
-  const [farmForm, setFarmForm] = useState(null);
-  const [productForm, setProductForm] = useState({ name: '', emoji: '🌿', price: '', unit: 'kg', description: '' });
-  const [editingProduct, setEditingProduct] = useState(null);
-  const [showProductForm, setShowProductForm] = useState(false);
-  const [noTable, setNoTable] = useState(false);
+  const { user, logout } = useAuthStore();
 
-  useEffect(() => {
-    supabase.auth.getUser().then(({ data }) => setUser(data.user));
-  }, []);
+  // Products state
+  const [products, setProducts] = useState(MOCK_PRODUCTS);
+  const [showAddForm, setShowAddForm] = useState(false);
+  const [editingId, setEditingId] = useState(null);
+  const [newProduct, setNewProduct] = useState({
+    name: '', emoji: '🌿', season: [],
+  });
 
-  const loadFarm = useCallback(async (uid) => {
-    const { data } = await supabase
-      .from('farms_submitted')
-      .select('*')
-      .eq('user_id', uid)
-      .order('created_at', { ascending: false })
-      .limit(1)
-      .single();
-    if (data) {
-      setFarm(data);
-      setFarmForm({ name: data.name, type: data.type, loc: data.loc, phone: data.phone || '', email: data.email || '', website: data.website || '', hours: data.hours || '', description: data.description || '', bio: data.bio || false, eshop: data.eshop || false, delivery: data.delivery || false });
-    }
-    setLoading(false);
-  }, []);
+  const { pct, missing } = calcCompletion(user, products);
 
-  const loadProducts = useCallback(async (farmId) => {
-    setProductsLoading(true);
-    const { data, error } = await supabase
-      .from('farm_products')
-      .select('*')
-      .eq('farm_id', farmId)
-      .order('created_at', { ascending: true });
-    if (error?.code === '42P01') { setNoTable(true); }
-    else if (data) { setProducts(data); }
-    setProductsLoading(false);
-  }, []);
-
-  useEffect(() => {
-    if (user) loadFarm(user.id);
-  }, [user, loadFarm]);
-
-  useEffect(() => {
-    if (farm?.id) loadProducts(farm.id);
-  }, [farm?.id, loadProducts]);
-
-  async function saveFarmProfile() {
-    setSavingFarm(true);
-    const { error } = await supabase.from('farms_submitted').update({ ...farmForm }).eq('id', farm.id);
-    if (error) { toast.error('Chyba při ukládání: ' + error.message); }
-    else { toast.success('Profil farmy uložen!'); setFarm(f => ({ ...f, ...farmForm })); }
-    setSavingFarm(false);
+  function handleLogout() {
+    logout();
+    navigate('/');
   }
 
-  async function saveProduct() {
-    if (!productForm.name.trim()) { toast.error('Zadejte název produktu'); return; }
-    const payload = { ...productForm, farm_id: farm.id, price: parseFloat(productForm.price) || 0 };
-    if (editingProduct) {
-      const { error } = await supabase.from('farm_products').update(payload).eq('id', editingProduct);
-      if (!error) { setProducts(prev => prev.map(p => p.id === editingProduct ? { ...p, ...payload } : p)); toast.success('Produkt uložen'); }
+  function toggleMonth(month) {
+    setNewProduct(p => ({
+      ...p,
+      season: p.season.includes(month)
+        ? p.season.filter(m => m !== month)
+        : [...p.season, month],
+    }));
+  }
+
+  function addProduct() {
+    if (!newProduct.name.trim()) return;
+    if (editingId !== null) {
+      setProducts(prev => prev.map(p =>
+        p.id === editingId ? { ...p, ...newProduct } : p
+      ));
+      setEditingId(null);
     } else {
-      const { data, error } = await supabase.from('farm_products').insert(payload).select().single();
-      if (!error && data) { setProducts(prev => [...prev, data]); toast.success('Produkt přidán!'); }
-      else if (error) { toast.error('Chyba: ' + error.message); }
+      setProducts(prev => [...prev, { ...newProduct, id: Date.now(), active: true }]);
     }
-    setProductForm({ name: '', emoji: '🌿', price: '', unit: 'kg', description: '' });
-    setEditingProduct(null);
-    setShowProductForm(false);
+    setNewProduct({ name: '', emoji: '🌿', season: [] });
+    setShowAddForm(false);
   }
 
-  async function deleteProduct(id) {
-    if (!confirm('Smazat produkt?')) return;
-    await supabase.from('farm_products').delete().eq('id', id);
+  function startEdit(p) {
+    setNewProduct({ name: p.name, emoji: p.emoji, season: [...p.season] });
+    setEditingId(p.id);
+    setShowAddForm(true);
+  }
+
+  function deleteProduct(id) {
     setProducts(prev => prev.filter(p => p.id !== id));
-    toast.success('Produkt smazán');
   }
 
-  async function toggleProductActive(id, active) {
-    await supabase.from('farm_products').update({ active: !active }).eq('id', id);
-    setProducts(prev => prev.map(p => p.id === id ? { ...p, active: !active } : p));
+  function toggleActive(id) {
+    setProducts(prev => prev.map(p =>
+      p.id === id ? { ...p, active: !p.active } : p
+    ));
   }
-
-  function startEditProduct(p) {
-    setProductForm({ name: p.name, emoji: p.emoji, price: String(p.price), unit: p.unit, description: p.description || '' });
-    setEditingProduct(p.id);
-    setShowProductForm(true);
-  }
-
-  const farmOrders = orders.filter(o => farm && String(o.farmId) === String(farm.id));
-
-  if (!user) return (
-    <Shell title="Dashboard farmáře" onBack={() => navigate('/')}>
-      <div style={{ textAlign: 'center', padding: '60px 20px' }}>
-        <div style={{ fontSize: 48 }}>🌾</div>
-        <div style={{ fontSize: 20, fontWeight: 700, margin: '12px 0 8px' }}>Pro přístup se přihlaste</div>
-        <button onClick={() => navigate('/prihlaseni')} style={btn(T.green)}>Přihlásit se</button>
-      </div>
-    </Shell>
-  );
-
-  if (loading) return (
-    <Shell title="Dashboard farmáře" onBack={() => navigate('/')}>
-      <div style={{ textAlign: 'center', padding: 60, color: T.sub }}>Načítám data...</div>
-    </Shell>
-  );
-
-  if (!farm) return (
-    <Shell title="Dashboard farmáře" onBack={() => navigate('/')}>
-      <div style={{ textAlign: 'center', padding: '60px 20px' }}>
-        <div style={{ fontSize: 48, marginBottom: 12 }}>🌱</div>
-        <div style={{ fontFamily: "'Playfair Display',serif", fontSize: 22, fontWeight: 700, marginBottom: 8 }}>Nemáte registrovanou farmu</div>
-        <p style={{ color: T.sub, marginBottom: 20 }}>Přidejte svou farmu a začněte ji spravovat.</p>
-        <button onClick={() => navigate('/pridat-farmu')} style={btn(T.green)}>+ Přidat farmu</button>
-      </div>
-    </Shell>
-  );
 
   return (
-    <Shell title="Dashboard farmáře" onBack={() => navigate('/')}>
-      <Toaster position="top-right"/>
+    <div style={{ minHeight: '100vh', background: C.cream, fontFamily: "'DM Sans',sans-serif" }}>
+      {/* Google Fonts */}
+      <link
+        href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=DM+Sans:wght@400;500;700&display=swap"
+        rel="stylesheet"
+      />
+      <style>{`
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: rgba(191,91,61,.3); border-radius: 99px; }
+      `}</style>
 
-      {/* Farm header */}
-      <div style={{ background: T.green, borderRadius: 16, padding: '20px 24px', marginBottom: 24, color: 'white' }}>
-        <div style={{ display: 'flex', gap: 16, alignItems: 'center', flexWrap: 'wrap' }}>
-          <div style={{ flex: 1 }}>
-            <div style={{ fontFamily: "'Playfair Display',serif", fontSize: 22, fontWeight: 700, marginBottom: 4 }}>{farm.name}</div>
-            <div style={{ fontSize: 13, opacity: .85 }}>📍 {farm.loc}</div>
-          </div>
-          <div style={{ ...STATUS_MAP[farm.status], ...{ borderRadius: 50, padding: '5px 14px', fontWeight: 700, fontSize: 12 } }}>
-            {STATUS_MAP[farm.status]?.label}
-          </div>
+      {/* ── 1. Header / Nav ─────────────────────────────────────────────── */}
+      <header style={{
+        position: 'sticky', top: 0, zIndex: 100,
+        background: 'rgba(245,237,224,.96)', backdropFilter: 'blur(16px)',
+        borderBottom: `1px solid ${C.border}`,
+        height: 62, display: 'flex', alignItems: 'center',
+        padding: '0 28px', gap: 16,
+      }}>
+        <span
+          onClick={() => navigate('/')}
+          style={{
+            fontFamily: "'Playfair Display',serif", fontSize: 19, fontWeight: 900,
+            color: C.dark, cursor: 'pointer', flex: 1, userSelect: 'none',
+          }}
+        >
+          🌾 Mapa<span style={{ color: C.terra }}>Farem</span>
+        </span>
+        <span style={{ fontSize: 14, color: C.sub, fontWeight: 500 }}>
+          {user?.name || 'Farmář'}
+        </span>
+        <button
+          onClick={handleLogout}
+          style={{
+            padding: '7px 16px', background: 'none', border: `1.5px solid ${C.border}`,
+            borderRadius: 9, fontSize: 13, fontWeight: 600, color: C.terra, cursor: 'pointer',
+            fontFamily: "'DM Sans',sans-serif",
+          }}
+        >
+          Odhlásit
+        </button>
+      </header>
+
+      {/* ── Main content ───────────────────────────────────────────────── */}
+      <div style={{ maxWidth: 940, margin: '0 auto', padding: '32px 20px 60px' }}>
+
+        {/* Page title */}
+        <div style={{ marginBottom: 28 }}>
+          <h1 style={{
+            fontFamily: "'Playfair Display',serif", fontSize: 28, fontWeight: 900,
+            color: C.dark, lineHeight: 1.2, marginBottom: 4,
+          }}>
+            Dashboard farmáře
+          </h1>
+          <p style={{ color: C.sub, fontSize: 14 }}>
+            Spravujte svůj profil, produkty a sledujte statistiky.
+          </p>
         </div>
-      </div>
 
-      {/* Tabs */}
-      <div style={{ display: 'flex', gap: 6, marginBottom: 24, background: 'rgba(0,0,0,.05)', borderRadius: 12, padding: 4 }}>
-        {[['overview', '📊 Přehled'], ['products', '🌿 Produkty'], ['profile', '✏️ Profil farmy']].map(([key, label]) => (
-          <button key={key} onClick={() => setTab(key)} style={{ flex: 1, padding: '9px', borderRadius: 9, border: 'none', fontFamily: "'DM Sans',sans-serif", fontWeight: 600, fontSize: 13, cursor: 'pointer', transition: 'all .15s', background: tab === key ? 'white' : 'transparent', color: tab === key ? T.brown : T.sub, boxShadow: tab === key ? '0 2px 8px rgba(0,0,0,.08)' : 'none' }}>
-            {label}
-          </button>
-        ))}
-      </div>
-
-      {/* ── OVERVIEW ── */}
-      {tab === 'overview' && (
-        <>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill,minmax(180px,1fr))', gap: 14, marginBottom: 24 }}>
-            {[
-              ['📦', farmOrders.length, 'Objednávek', '#2980B9'],
-              ['🌿', products.filter(p => p.active).length, 'Aktivních produktů', T.green],
-              ['⭐', TYPE_LABELS[farm.type] || farm.type, 'Zaměření', '#C99B30'],
-              ['📅', new Date(farm.created_at).toLocaleDateString('cs-CZ'), 'Registrována', '#7D3C98'],
-            ].map(([icon, val, label, color]) => (
-              <div key={label} style={{ background: T.card, borderRadius: 14, padding: '18px', boxShadow: '0 2px 8px rgba(0,0,0,.06)' }}>
-                <div style={{ fontSize: 28, marginBottom: 8 }}>{icon}</div>
-                <div style={{ fontFamily: "'Playfair Display',serif", fontSize: val?.toString().length > 10 ? 16 : 26, fontWeight: 700, color, lineHeight: 1.2 }}>{val}</div>
-                <div style={{ fontSize: 12, color: T.sub, marginTop: 4 }}>{label}</div>
-              </div>
+        {/* ── 2. Profile Completion Progress Bar ──────────────────────── */}
+        <Card style={{ marginBottom: 24 }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
+            <SectionTitle>Dokončenost profilu</SectionTitle>
+            <span style={{
+              fontFamily: "'Playfair Display',serif", fontSize: 22, fontWeight: 700,
+              color: pct >= 80 ? C.green : pct >= 50 ? C.gold : C.terra,
+            }}>
+              {pct}%
+            </span>
+          </div>
+          {/* Bar track */}
+          <div style={{
+            height: 10, background: 'rgba(0,0,0,.07)', borderRadius: 99,
+            overflow: 'hidden', marginBottom: 14,
+          }}>
+            <div style={{
+              height: '100%', borderRadius: 99,
+              width: `${pct}%`,
+              background: pct >= 80
+                ? `linear-gradient(90deg, ${C.green}, #5F8050)`
+                : pct >= 50
+                  ? `linear-gradient(90deg, ${C.gold}, #D4A84B)`
+                  : `linear-gradient(90deg, ${C.terra}, #D4745A)`,
+              transition: 'width .6s ease',
+            }} />
+          </div>
+          <div style={{ fontSize: 13, color: C.sub, marginBottom: 12 }}>
+            Profil dokončen z {pct}% — doplňte zbývající informace pro lepší viditelnost
+          </div>
+          {/* Missing chips */}
+          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+            {missing.map(item => (
+              <button
+                key={item.key}
+                onClick={() => navigate('/dashboard/profil')}
+                style={{
+                  padding: '5px 13px', background: 'rgba(200,151,58,.12)',
+                  border: `1.5px solid rgba(200,151,58,.4)`, borderRadius: 99,
+                  fontSize: 12, fontWeight: 600, color: C.gold, cursor: 'pointer',
+                  fontFamily: "'DM Sans',sans-serif",
+                }}
+              >
+                {item.label}
+              </button>
             ))}
           </div>
+        </Card>
 
-          <div style={{ background: T.card, borderRadius: 14, padding: '18px 20px', boxShadow: '0 2px 8px rgba(0,0,0,.06)', marginBottom: 16 }}>
-            <div style={{ fontFamily: "'Playfair Display',serif", fontSize: 17, fontWeight: 700, marginBottom: 14 }}>Rychlé akce</div>
-            <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
-              {[
-                ['🌿 Přidat produkt', T.green, () => { setTab('products'); setShowProductForm(true); }],
-                ['✏️ Upravit profil', '#5F8050', () => setTab('profile')],
-                ['🗺️ Zobrazit na mapě', '#2980B9', () => navigate('/mapa')],
-                ['+ Přidat další farmu', '#C99B30', () => navigate('/pridat-farmu')],
-              ].map(([label, color, onClick]) => (
-                <button key={label} onClick={onClick} style={btn(color, { padding: '9px 18px', fontSize: 13 })}>{label}</button>
-              ))}
+        {/* ── 3. Stats Cards Row ─────────────────────────────────────────── */}
+        <div style={{
+          display: 'grid',
+          gridTemplateColumns: 'repeat(auto-fill, minmax(190px, 1fr))',
+          gap: 16, marginBottom: 24,
+        }}>
+          {[
+            { icon: '👁️', value: '234', label: 'zobrazení profilu', sub: 'tento týden', trend: '+12%' },
+            { icon: '🔗', value: '18',  label: 'kliknutí na web',   sub: 'tento týden', trend: '+7%'  },
+            { icon: '❤️', value: '47',  label: 'oblíbených',        sub: 'celkem',      trend: '+5%'  },
+            { icon: '⭐', value: '4.7', label: 'průměrné hodnocení', sub: '12 recenzí', trend: '+0.2' },
+          ].map(card => (
+            <div key={card.label} style={{
+              background: C.white, borderRadius: 16, padding: '18px 20px',
+              boxShadow: C.shadow,
+            }}>
+              <div style={{ fontSize: 26, marginBottom: 8 }}>{card.icon}</div>
+              <div style={{
+                fontFamily: "'Playfair Display',serif", fontSize: 30, fontWeight: 700,
+                color: C.gold, lineHeight: 1,
+              }}>
+                {card.value}
+              </div>
+              <div style={{ fontSize: 13, color: C.brown, fontWeight: 600, marginTop: 4 }}>
+                {card.label}
+              </div>
+              <div style={{ fontSize: 12, color: C.sub, marginTop: 2 }}>{card.sub}</div>
+              <div style={{
+                fontSize: 11, fontWeight: 700, color: C.green, marginTop: 8,
+                background: 'rgba(58,87,40,.1)', display: 'inline-block',
+                padding: '2px 8px', borderRadius: 99,
+              }}>
+                {card.trend} vs minulý týden
+              </div>
             </div>
+          ))}
+        </div>
+
+        {/* ── 4. Quick Actions Row ───────────────────────────────────────── */}
+        <Card style={{ marginBottom: 24 }}>
+          <SectionTitle>Rychlé akce</SectionTitle>
+          <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
+            <Btn color={C.green} onClick={() => navigate('/dashboard/profil')}>
+              ✏️ Upravit profil
+            </Btn>
+            <Btn color={C.terra} onClick={() => navigate('/dashboard/foto')}>
+              📸 Přidat foto
+            </Btn>
+            <Btn color={C.gold} onClick={() => { setShowAddForm(true); setEditingId(null); setNewProduct({ name: '', emoji: '🌿', season: [] }); }}>
+              🛍️ Přidat produkt
+            </Btn>
+            <Btn color={C.brown} onClick={() => navigate('/mapa')} style={{ background: C.brown }}>
+              🗺️ Zobrazit na mapě
+            </Btn>
           </div>
+        </Card>
 
-          {farmOrders.length > 0 && (
-            <div style={{ background: T.card, borderRadius: 14, padding: '18px 20px', boxShadow: '0 2px 8px rgba(0,0,0,.06)' }}>
-              <div style={{ fontFamily: "'Playfair Display',serif", fontSize: 17, fontWeight: 700, marginBottom: 14 }}>Poslední objednávky</div>
-              {farmOrders.slice(0, 5).map(o => {
-                const [statusLabel, statusBg, statusColor] = ORDER_STATUS[o.status] || ORDER_STATUS.PENDING;
-                return (
-                  <div key={o.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 0', borderBottom: '1px solid #EDE5D0' }}>
-                    <div>
-                      <div style={{ fontWeight: 700, fontSize: 14 }}>{o.id}</div>
-                      <div style={{ fontSize: 12, color: T.sub }}>{Array.isArray(o.items) ? o.items.join(', ') : o.items}</div>
-                    </div>
-                    <div style={{ textAlign: 'right' }}>
-                      <div style={{ fontWeight: 700 }}>{o.total}</div>
-                      <span style={{ fontSize: 11, fontWeight: 700, padding: '2px 8px', borderRadius: 50, background: statusBg, color: statusColor }}>{statusLabel}</span>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          )}
-        </>
-      )}
-
-      {/* ── PRODUCTS ── */}
-      {tab === 'products' && (
-        <>
-          {noTable && (
-            <div style={{ background: '#FFF3CD', border: '1px solid #FDE047', borderRadius: 12, padding: 18, marginBottom: 16, fontSize: 13 }}>
-              <strong>⚠️ Tabulka farm_products neexistuje.</strong> Vytvořte ji v Supabase SQL Editor:
-              <pre style={{ marginTop: 10, background: '#1E120A', color: '#F4EDD8', padding: 12, borderRadius: 8, fontSize: 11, overflowX: 'auto' }}>{`create table farm_products (
-  id uuid primary key default gen_random_uuid(),
-  farm_id uuid references farms_submitted(id) on delete cascade,
-  name text not null,
-  emoji text default '🌿',
-  price numeric default 0,
-  unit text default 'kg',
-  description text,
-  active boolean default true,
-  created_at timestamptz default now()
-);
-alter table farm_products enable row level security;
-create policy "farmers manage own products" on farm_products
-  using (farm_id in (select id from farms_submitted where user_id = auth.uid()))
-  with check (farm_id in (select id from farms_submitted where user_id = auth.uid()));`}</pre>
-            </div>
-          )}
-
+        {/* ── 5. Products Management Table ──────────────────────────────── */}
+        <Card style={{ marginBottom: 24 }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
-            <div style={{ fontFamily: "'Playfair Display',serif", fontSize: 18, fontWeight: 700 }}>
-              Moje produkty <span style={{ color: T.sub, fontSize: 14 }}>({products.length})</span>
-            </div>
-            <button onClick={() => { setEditingProduct(null); setProductForm({ name: '', emoji: '🌿', price: '', unit: 'kg', description: '' }); setShowProductForm(v => !v); }} style={btn(T.green, { padding: '9px 18px', fontSize: 13 })}>
-              {showProductForm && !editingProduct ? '✕ Zavřít' : '+ Přidat produkt'}
-            </button>
+            <SectionTitle>Moje produkty</SectionTitle>
+            <Btn
+              color={showAddForm && !editingId ? C.sub : C.green}
+              onClick={() => {
+                if (showAddForm && !editingId) {
+                  setShowAddForm(false);
+                } else {
+                  setEditingId(null);
+                  setNewProduct({ name: '', emoji: '🌿', season: [] });
+                  setShowAddForm(true);
+                }
+              }}
+              style={{ padding: '8px 16px', fontSize: 13 }}
+            >
+              {showAddForm && !editingId ? '✕ Zavřít' : '+ Přidat produkt'}
+            </Btn>
           </div>
 
-          {/* Product form */}
-          {showProductForm && (
-            <div style={{ background: T.card, borderRadius: 14, padding: 20, boxShadow: '0 2px 8px rgba(0,0,0,.06)', marginBottom: 16 }}>
-              <div style={{ fontWeight: 700, marginBottom: 14 }}>{editingProduct ? '✏️ Upravit produkt' : '+ Nový produkt'}</div>
-              <div style={{ display: 'grid', gridTemplateColumns: '60px 1fr', gap: 12, marginBottom: 12 }}>
-                <input value={productForm.emoji} onChange={e => setProductForm(f => ({ ...f, emoji: e.target.value }))} style={inputStyle} placeholder="🌿" />
-                <input value={productForm.name} onChange={e => setProductForm(f => ({ ...f, name: e.target.value }))} style={inputStyle} placeholder="Název produktu *" />
+          {/* Inline add / edit form */}
+          {showAddForm && (
+            <div style={{
+              background: C.cream, borderRadius: 12, padding: 18,
+              marginBottom: 18, border: `1.5px solid rgba(200,151,58,.25)`,
+            }}>
+              <div style={{ fontWeight: 700, fontSize: 15, marginBottom: 14, color: C.dark }}>
+                {editingId ? '✏️ Upravit produkt' : '+ Nový produkt'}
               </div>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 12 }}>
-                <input value={productForm.price} onChange={e => setProductForm(f => ({ ...f, price: e.target.value }))} style={inputStyle} placeholder="Cena (Kč)" type="number" min="0" />
-                <input value={productForm.unit} onChange={e => setProductForm(f => ({ ...f, unit: e.target.value }))} style={inputStyle} placeholder="Jednotka (kg, ks, l...)" />
+
+              {/* Emoji selector */}
+              <div style={{ marginBottom: 12 }}>
+                <div style={{ fontSize: 13, fontWeight: 600, color: C.sub, marginBottom: 6 }}>Emoji</div>
+                <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                  {EMOJI_OPTIONS.map(em => (
+                    <button
+                      key={em}
+                      onClick={() => setNewProduct(p => ({ ...p, emoji: em }))}
+                      style={{
+                        width: 40, height: 40, fontSize: 20, border: '2px solid',
+                        borderColor: newProduct.emoji === em ? C.gold : C.border,
+                        borderRadius: 9, background: newProduct.emoji === em ? 'rgba(200,151,58,.12)' : C.white,
+                        cursor: 'pointer',
+                      }}
+                    >
+                      {em}
+                    </button>
+                  ))}
+                </div>
               </div>
-              <textarea value={productForm.description} onChange={e => setProductForm(f => ({ ...f, description: e.target.value }))} style={{ ...inputStyle, resize: 'vertical', minHeight: 60, width: '100%', marginBottom: 12 }} placeholder="Popis produktu (volitelné)" />
+
+              {/* Name input */}
+              <div style={{ marginBottom: 12 }}>
+                <div style={{ fontSize: 13, fontWeight: 600, color: C.sub, marginBottom: 6 }}>Název produktu *</div>
+                <input
+                  value={newProduct.name}
+                  onChange={e => setNewProduct(p => ({ ...p, name: e.target.value }))}
+                  placeholder="Např. Mrkev (1 kg)"
+                  style={inputSt}
+                  onKeyDown={e => e.key === 'Enter' && addProduct()}
+                />
+              </div>
+
+              {/* Season checkboxes */}
+              <div style={{ marginBottom: 16 }}>
+                <div style={{ fontSize: 13, fontWeight: 600, color: C.sub, marginBottom: 6 }}>Sezóna dostupnosti</div>
+                <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+                  {MONTHS.map(m => (
+                    <label
+                      key={m}
+                      style={{
+                        display: 'flex', alignItems: 'center', gap: 4,
+                        padding: '4px 10px', borderRadius: 99, fontSize: 12, fontWeight: 600,
+                        cursor: 'pointer', userSelect: 'none',
+                        background: newProduct.season.includes(m) ? C.green : 'rgba(0,0,0,.06)',
+                        color: newProduct.season.includes(m) ? C.white : C.sub,
+                        border: '1.5px solid',
+                        borderColor: newProduct.season.includes(m) ? C.green : 'transparent',
+                        transition: 'all .15s',
+                      }}
+                    >
+                      <input
+                        type="checkbox"
+                        checked={newProduct.season.includes(m)}
+                        onChange={() => toggleMonth(m)}
+                        style={{ display: 'none' }}
+                      />
+                      {m}
+                    </label>
+                  ))}
+                </div>
+              </div>
+
               <div style={{ display: 'flex', gap: 10 }}>
-                <button onClick={saveProduct} style={btn(T.green, { padding: '9px 20px', fontSize: 13 })}>
-                  {editingProduct ? '💾 Uložit změny' : '✅ Přidat produkt'}
-                </button>
-                <button onClick={() => { setShowProductForm(false); setEditingProduct(null); }} style={{ padding: '9px 20px', background: 'none', border: '1px solid #ccc', borderRadius: 9, cursor: 'pointer', fontSize: 13 }}>
+                <Btn color={C.green} onClick={addProduct} style={{ padding: '9px 20px', fontSize: 13 }}>
+                  {editingId ? '💾 Uložit' : '✅ Přidat'}
+                </Btn>
+                <button
+                  onClick={() => { setShowAddForm(false); setEditingId(null); }}
+                  style={{
+                    padding: '9px 20px', background: 'none', border: `1.5px solid ${C.border}`,
+                    borderRadius: 10, cursor: 'pointer', fontSize: 13, fontFamily: "'DM Sans',sans-serif",
+                    color: C.sub,
+                  }}
+                >
                   Zrušit
                 </button>
               </div>
             </div>
           )}
 
-          {productsLoading ? (
-            <div style={{ textAlign: 'center', padding: 40, color: T.sub }}>Načítám produkty...</div>
-          ) : products.length === 0 && !noTable ? (
-            <div style={{ textAlign: 'center', padding: '50px 20px', background: T.card, borderRadius: 14 }}>
-              <div style={{ fontSize: 40, marginBottom: 12 }}>🌿</div>
-              <div style={{ fontWeight: 700, marginBottom: 8 }}>Zatím žádné produkty</div>
-              <p style={{ color: T.sub, fontSize: 14 }}>Přidejte první produkt a zákazníci ho uvidí na detailu vaší farmy.</p>
+          {/* Products table */}
+          {products.length === 0 ? (
+            <div style={{ textAlign: 'center', padding: '40px 20px', color: C.sub }}>
+              <div style={{ fontSize: 36, marginBottom: 10 }}>🌿</div>
+              <div style={{ fontWeight: 700 }}>Zatím žádné produkty</div>
             </div>
           ) : (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-              {products.map(p => (
-                <div key={p.id} style={{ background: T.card, borderRadius: 12, padding: '14px 18px', boxShadow: '0 2px 8px rgba(0,0,0,.06)', display: 'flex', gap: 14, alignItems: 'center', opacity: p.active ? 1 : 0.55 }}>
-                  <div style={{ fontSize: 32, flexShrink: 0 }}>{p.emoji}</div>
-                  <div style={{ flex: 1 }}>
-                    <div style={{ fontWeight: 700, fontSize: 15 }}>{p.name}</div>
-                    <div style={{ fontSize: 13, color: T.sub }}>{p.price} Kč / {p.unit}</div>
-                    {p.description && <div style={{ fontSize: 12, color: '#aaa', marginTop: 2 }}>{p.description}</div>}
+            <div style={{ overflowX: 'auto' }}>
+              {/* Table header */}
+              <div style={{
+                display: 'grid', gridTemplateColumns: '48px 1fr 160px 100px 80px',
+                gap: 12, padding: '8px 12px',
+                borderBottom: `1.5px solid ${C.border}`,
+                fontSize: 11, fontWeight: 700, color: C.sub, letterSpacing: '.05em',
+              }}>
+                <div></div>
+                <div>NÁZEV</div>
+                <div>SEZÓNA</div>
+                <div>STAV</div>
+                <div style={{ textAlign: 'right' }}>AKCE</div>
+              </div>
+
+              {products.map((p, i) => (
+                <div
+                  key={p.id}
+                  style={{
+                    display: 'grid', gridTemplateColumns: '48px 1fr 160px 100px 80px',
+                    gap: 12, padding: '12px 12px', alignItems: 'center',
+                    borderBottom: i < products.length - 1 ? `1px solid ${C.border}` : 'none',
+                    opacity: p.active ? 1 : 0.5, transition: 'opacity .2s',
+                  }}
+                >
+                  <div style={{ fontSize: 26, textAlign: 'center' }}>{p.emoji}</div>
+                  <div style={{ fontWeight: 600, fontSize: 14, color: C.dark }}>{p.name}</div>
+                  <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap' }}>
+                    {p.season.length > 0
+                      ? p.season.map(m => (
+                          <span
+                            key={m}
+                            style={{
+                              fontSize: 10, fontWeight: 700, padding: '2px 6px',
+                              borderRadius: 99, background: 'rgba(58,87,40,.1)', color: C.green,
+                            }}
+                          >
+                            {m}
+                          </span>
+                        ))
+                      : <span style={{ fontSize: 12, color: C.sub }}>—</span>
+                    }
                   </div>
-                  <div style={{ display: 'flex', gap: 8, flexShrink: 0 }}>
-                    <button onClick={() => toggleProductActive(p.id, p.active)} style={{ padding: '5px 12px', borderRadius: 8, border: '1px solid #ddd', background: p.active ? '#E8F0E4' : '#F8D7DA', color: p.active ? T.green : '#721C24', cursor: 'pointer', fontSize: 12, fontWeight: 600 }}>
-                      {p.active ? '✓ Aktivní' : '✗ Skryto'}
+                  <div>
+                    <button
+                      onClick={() => toggleActive(p.id)}
+                      style={{
+                        padding: '4px 12px', borderRadius: 99, border: 'none',
+                        fontSize: 11, fontWeight: 700, cursor: 'pointer',
+                        fontFamily: "'DM Sans',sans-serif",
+                        background: p.active ? 'rgba(58,87,40,.12)' : 'rgba(191,91,61,.12)',
+                        color: p.active ? C.green : C.terra,
+                      }}
+                    >
+                      {p.active ? '● aktivní' : '○ skryto'}
                     </button>
-                    <button onClick={() => startEditProduct(p)} style={{ padding: '5px 10px', borderRadius: 8, border: '1px solid #ddd', background: 'white', cursor: 'pointer', fontSize: 12 }}>✏️</button>
-                    <button onClick={() => deleteProduct(p.id)} style={{ padding: '5px 10px', borderRadius: 8, border: '1px solid #ddd', background: 'white', cursor: 'pointer', fontSize: 12, color: '#9B2226' }}>🗑</button>
+                  </div>
+                  <div style={{ display: 'flex', gap: 6, justifyContent: 'flex-end' }}>
+                    <button
+                      onClick={() => startEdit(p)}
+                      title="Upravit"
+                      style={{
+                        width: 30, height: 30, border: `1px solid ${C.border}`, borderRadius: 7,
+                        background: C.white, cursor: 'pointer', fontSize: 14, display: 'flex',
+                        alignItems: 'center', justifyContent: 'center',
+                      }}
+                    >
+                      ✏️
+                    </button>
+                    <button
+                      onClick={() => deleteProduct(p.id)}
+                      title="Smazat"
+                      style={{
+                        width: 30, height: 30, border: `1px solid rgba(191,91,61,.25)`, borderRadius: 7,
+                        background: 'rgba(191,91,61,.06)', cursor: 'pointer', fontSize: 14,
+                        display: 'flex', alignItems: 'center', justifyContent: 'center', color: C.terra,
+                      }}
+                    >
+                      🗑
+                    </button>
                   </div>
                 </div>
               ))}
             </div>
           )}
-        </>
-      )}
+        </Card>
 
-      {/* ── PROFILE EDIT ── */}
-      {tab === 'profile' && farmForm && (
-        <div style={{ background: T.card, borderRadius: 14, padding: 24, boxShadow: '0 2px 8px rgba(0,0,0,.06)' }}>
-          <div style={{ fontFamily: "'Playfair Display',serif", fontSize: 18, fontWeight: 700, marginBottom: 20 }}>Upravit profil farmy</div>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-            <FieldGroup label="Název farmy *">
-              <input value={farmForm.name} onChange={e => setFarmForm(f => ({ ...f, name: e.target.value }))} style={inputStyle} />
-            </FieldGroup>
-            <FieldGroup label="Adresa *">
-              <input value={farmForm.loc} onChange={e => setFarmForm(f => ({ ...f, loc: e.target.value }))} style={inputStyle} />
-            </FieldGroup>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
-              <FieldGroup label="Telefon">
-                <input value={farmForm.phone} onChange={e => setFarmForm(f => ({ ...f, phone: e.target.value }))} style={inputStyle} placeholder="+420 ..." />
-              </FieldGroup>
-              <FieldGroup label="Email">
-                <input value={farmForm.email} onChange={e => setFarmForm(f => ({ ...f, email: e.target.value }))} style={inputStyle} placeholder="farma@email.cz" />
-              </FieldGroup>
+        {/* ── 6. Recent Activity Feed ────────────────────────────────────── */}
+        <Card style={{ marginBottom: 24 }}>
+          <SectionTitle>Nedávná aktivita</SectionTitle>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 0 }}>
+            {MOCK_ACTIVITY.map((item, i) => (
+              <div
+                key={item.id}
+                style={{
+                  display: 'flex', gap: 14, alignItems: 'flex-start',
+                  padding: '12px 0',
+                  borderBottom: i < MOCK_ACTIVITY.length - 1 ? `1px solid ${C.border}` : 'none',
+                }}
+              >
+                <div style={{
+                  width: 36, height: 36, borderRadius: 99, flexShrink: 0,
+                  background: 'rgba(200,151,58,.12)', display: 'flex',
+                  alignItems: 'center', justifyContent: 'center', fontSize: 16,
+                }}>
+                  {item.icon}
+                </div>
+                <div style={{ flex: 1 }}>
+                  <div style={{ fontSize: 14, color: C.dark, fontWeight: 500 }}>
+                    {item.text}
+                  </div>
+                  <div style={{ fontSize: 12, color: C.sub, marginTop: 2 }}>
+                    {item.time}
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </Card>
+
+        {/* ── 7. Premium Upsell Banner ───────────────────────────────────── */}
+        <div style={{
+          borderRadius: 20, padding: '28px 32px', marginBottom: 24,
+          background: `linear-gradient(135deg, ${C.gold} 0%, #A07020 100%)`,
+          color: C.white, position: 'relative', overflow: 'hidden',
+        }}>
+          {/* Decorative circles */}
+          <div style={{
+            position: 'absolute', right: -40, top: -40, width: 180, height: 180,
+            borderRadius: '50%', background: 'rgba(255,255,255,.08)',
+            pointerEvents: 'none',
+          }} />
+          <div style={{
+            position: 'absolute', right: 40, bottom: -60, width: 140, height: 140,
+            borderRadius: '50%', background: 'rgba(255,255,255,.06)',
+            pointerEvents: 'none',
+          }} />
+
+          <div style={{ position: 'relative', zIndex: 1 }}>
+            <div style={{
+              fontFamily: "'Playfair Display',serif", fontSize: 22, fontWeight: 900,
+              marginBottom: 8,
+            }}>
+              ⚡ Získejte 10× více zákazníků s prémiovým profilem
             </div>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
-              <FieldGroup label="Web / e-shop">
-                <input value={farmForm.website} onChange={e => setFarmForm(f => ({ ...f, website: e.target.value }))} style={inputStyle} placeholder="https://..." />
-              </FieldGroup>
-              <FieldGroup label="Otevírací doba">
-                <input value={farmForm.hours} onChange={e => setFarmForm(f => ({ ...f, hours: e.target.value }))} style={inputStyle} placeholder="Po-Pá 8-17, So 8-12" />
-              </FieldGroup>
+            <div style={{ fontSize: 14, opacity: .9, marginBottom: 16 }}>
+              Prémiový profil vám přináší:
             </div>
-            <FieldGroup label="Popis farmy">
-              <textarea value={farmForm.description} onChange={e => setFarmForm(f => ({ ...f, description: e.target.value }))} style={{ ...inputStyle, resize: 'vertical', minHeight: 80 }} />
-            </FieldGroup>
-            <div style={{ display: 'flex', gap: 24, flexWrap: 'wrap' }}>
-              {[['bio', '🌱 BIO certifikát'], ['eshop', '🛒 Máme e-shop'], ['delivery', '🚚 Nabízíme rozvoz']].map(([key, label]) => (
-                <label key={key} style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer', fontSize: 14 }}>
-                  <input type="checkbox" checked={farmForm[key]} onChange={e => setFarmForm(f => ({ ...f, [key]: e.target.checked }))} style={{ width: 16, height: 16, accentColor: T.green }} />
-                  {label}
-                </label>
+            <ul style={{
+              display: 'flex', gap: 10, flexWrap: 'wrap', listStyle: 'none',
+              marginBottom: 20,
+            }}>
+              {[
+                '✓ Prioritní zobrazení na mapě',
+                '✓ Fotogalerie až 20 fotek',
+                '✓ Vlastní sezónní nabídky',
+                '✓ Statistiky návštěv',
+                '✓ Odznak "Prémiová farma"',
+              ].map(feat => (
+                <li key={feat} style={{
+                  fontSize: 13, fontWeight: 600, background: 'rgba(255,255,255,.15)',
+                  padding: '4px 12px', borderRadius: 99,
+                }}>
+                  {feat}
+                </li>
               ))}
-            </div>
-            <button onClick={saveFarmProfile} disabled={savingFarm} style={btn(T.green, { marginTop: 8 })}>
-              {savingFarm ? '⏳ Ukládám...' : '💾 Uložit změny'}
-            </button>
+            </ul>
+            <Btn
+              color={C.dark}
+              onClick={() => navigate('/cenik')}
+              style={{ fontSize: 15, padding: '12px 28px', background: C.dark }}
+            >
+              Upgradovat za 299 Kč/měsíc
+            </Btn>
           </div>
         </div>
-      )}
-    </Shell>
-  );
-}
 
-function Shell({ title, children, onBack }) {
-  return (
-    <div style={{ minHeight: '100vh', background: '#F5EDE0', fontFamily: "'DM Sans',sans-serif" }}>
-      <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet"/>
-      <style>{`* { box-sizing:border-box; margin:0; padding:0; }`}</style>
-      <header style={{ background: 'rgba(245,237,224,.96)', backdropFilter: 'blur(14px)', borderBottom: '1px solid rgba(191,91,61,.1)', padding: '0 24px', height: 60, display: 'flex', alignItems: 'center', gap: 14, position: 'sticky', top: 0, zIndex: 100 }}>
-        <button onClick={onBack} style={{ background: 'none', border: 'none', color: '#6B4F3A', cursor: 'pointer', fontSize: 20, lineHeight: 1 }}>←</button>
-        <span style={{ fontFamily: "'Playfair Display',serif", fontSize: 17, fontWeight: 700, color: '#2C1810', flex: 1 }}>{title}</span>
-        <span onClick={() => window.location.href='/'} style={{ fontFamily: "'Playfair Display',serif", fontSize: 16, fontWeight: 900, color: '#2C1810', cursor: 'pointer' }}>
-          🐓 Mapa<span style={{ color: '#BF5B3D' }}>Farem</span>
-        </span>
-      </header>
-      <div style={{ maxWidth: 900, margin: '0 auto', padding: '28px 20px' }}>{children}</div>
+        {/* ── 8. Mini Analytics Chart ─────────────────────────────────────── */}
+        <Card>
+          <SectionTitle>Návštěvnost tento měsíc</SectionTitle>
+          <div style={{ fontSize: 13, color: C.sub, marginBottom: 20 }}>
+            Posledních 7 dní — počet zobrazení profilu
+          </div>
+          <div style={{
+            display: 'flex', gap: 10, alignItems: 'flex-end',
+            height: 120, padding: '0 4px',
+          }}>
+            {CHART_DATA.map((d, i) => {
+              const barH = Math.round((d.views / maxViews) * 100);
+              const isMax = d.views === maxViews;
+              return (
+                <div
+                  key={d.day}
+                  style={{
+                    flex: 1, display: 'flex', flexDirection: 'column',
+                    alignItems: 'center', gap: 6, height: '100%',
+                    justifyContent: 'flex-end',
+                  }}
+                >
+                  {/* Value label on top of bar */}
+                  <div style={{
+                    fontSize: 11, fontWeight: 700,
+                    color: isMax ? C.gold : C.sub,
+                    opacity: isMax ? 1 : 0.7,
+                  }}>
+                    {d.views}
+                  </div>
+                  {/* Bar */}
+                  <div style={{
+                    width: '100%', maxWidth: 44,
+                    height: `${barH}%`, minHeight: 6,
+                    borderRadius: '6px 6px 3px 3px',
+                    background: isMax
+                      ? `linear-gradient(180deg, ${C.gold}, #A07020)`
+                      : `linear-gradient(180deg, rgba(58,87,40,.55), rgba(58,87,40,.35))`,
+                    transition: 'height .4s ease',
+                    position: 'relative',
+                  }} />
+                  {/* Day label */}
+                  <div style={{
+                    fontSize: 11, fontWeight: 600, color: C.sub,
+                    letterSpacing: '.02em',
+                  }}>
+                    {d.day}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+          {/* X-axis line */}
+          <div style={{
+            height: 1, background: C.border, marginTop: 4,
+          }} />
+          <div style={{ marginTop: 12, fontSize: 12, color: C.sub }}>
+            Celkem za 7 dní: <strong style={{ color: C.dark }}>
+              {CHART_DATA.reduce((s, d) => s + d.views, 0)} zobrazení
+            </strong>
+          </div>
+        </Card>
+
+      </div>
     </div>
   );
-}
-
-function FieldGroup({ label, children }) {
-  return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-      <label style={{ fontSize: 13, fontWeight: 600, color: '#444' }}>{label}</label>
-      {children}
-    </div>
-  );
-}
-
-const inputStyle = {
-  width: '100%', padding: '11px 14px', border: '1.5px solid rgba(0,0,0,.12)',
-  borderRadius: 10, fontSize: 14, fontFamily: "'DM Sans',sans-serif",
-  outline: 'none', background: 'white', color: '#1E120A',
-};
-
-function btn(bg, extra = {}) {
-  return {
-    padding: '11px 22px', background: bg, color: 'white', border: 'none',
-    borderRadius: 10, fontFamily: "'DM Sans',sans-serif", fontWeight: 700,
-    fontSize: 14, cursor: 'pointer', transition: 'opacity .15s', ...extra,
-  };
 }

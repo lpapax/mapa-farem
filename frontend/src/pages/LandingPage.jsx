@@ -94,6 +94,13 @@ function FarmCard({ farm, navigate, style }) {
 export default function LandingPage() {
   const navigate = useNavigate();
   const [searchQ, setSearchQ] = useState('');
+  const [newsletterEmail, setNewsletterEmail] = useState('');
+  const [newsletterOk, setNewsletterOk] = useState(false);
+
+  const handleNewsletterSubmit = (e) => {
+    e.preventDefault();
+    if (newsletterEmail.trim()) setNewsletterOk(true);
+  };
 
   const handleSearch = (e) => {
     e.preventDefault();
@@ -435,21 +442,25 @@ export default function LandingPage() {
 
           <div className="testimonials-grid" style={{ display:'grid', gridTemplateColumns:'repeat(3,1fr)', gap:2 }}>
             {[
-              { name:'Jana Kopecká', farm:'Farma Kopec, Jihomoravský kraj', role:'Farmářka 12 let', rating:5,
-                text:'Přes MapaFarem.cz k nám přišlo za první měsíc 40 nových zákazníků. Konečně se nemusím spoléhat jen na farmářské trhy.', avatar:'🌻' },
-              { name:'Tomáš Dvořák', farm:'Bio Dvůr Vítkovice, Moravskoslezský kraj', role:'Farmář, BIO certifikát', rating:5,
-                text:'Registrace trvala 10 minut a hned druhý den mi začali psát zákazníci ze Zlína. Pro malého farmáře neocenitelné.', avatar:'🥛' },
-              { name:'Marie Horáková', farm:'Včelí farma Horáků, Vysočina', role:'Včelařka od roku 2015', rating:5,
-                text:'Med teď prodávám přímo spotřebitelům — bez zprostředkovatelů, za férovou cenu. Zákazníci oceňují přímý kontakt.', avatar:'🍯' },
+              { name:'Jana Kopecká', farm:'Farma Kopec', region:'Jihomoravský kraj', role:'Farmářka 12 let', rating:5,
+                text:'Přes MapaFarem.cz k nám přišlo za první měsíc 40 nových zákazníků. Konečně se nemusím spoléhat jen na farmářské trhy.', photo:'photo-1438761681033-6461ffad8d80' },
+              { name:'Tomáš Dvořák', farm:'Bio Dvůr Vítkovice', region:'Moravskoslezský kraj', role:'Farmář, BIO certifikát', rating:5,
+                text:'Registrace trvala 10 minut a hned druhý den mi začali psát zákazníci ze Zlína. Pro malého farmáře neocenitelné.', photo:'photo-1560250097-0b93528c311a' },
+              { name:'Marie Horáková', farm:'Včelí farma Horáků', region:'Vysočina', role:'Včelařka od roku 2015', rating:5,
+                text:'Med teď prodávám přímo spotřebitelům — bez zprostředkovatelů, za férovou cenu. Zákazníci oceňují přímý kontakt.', photo:'photo-1507003211169-0a1dd7228f2d' },
             ].map((r,i) => (
               <div key={i} className="review-card">
                 <div style={{ fontFamily:"'Playfair Display',serif", fontSize:52, color:C.gold, lineHeight:.8, marginBottom:16, opacity:.5 }}>"</div>
-                <p style={{ fontSize:14, color:'rgba(245,237,224,.65)', lineHeight:1.85, marginBottom:24 }}>{r.text}</p>
+                <p style={{ fontSize:14, color:'rgba(245,237,224,.65)', lineHeight:1.85, marginBottom:24, fontStyle:'italic' }}>{r.text}</p>
                 <div style={{ display:'flex', alignItems:'center', gap:12, paddingTop:20, borderTop:'1px solid rgba(200,151,58,.1)' }}>
-                  <div style={{ width:38, height:38, borderRadius:'50%', background:'rgba(200,151,58,.1)', border:'1px solid rgba(200,151,58,.2)', display:'flex', alignItems:'center', justifyContent:'center', fontSize:18, flexShrink:0 }}>{r.avatar}</div>
+                  <img
+                    src={`https://images.unsplash.com/${r.photo}?w=80&h=80&fit=crop&crop=faces`}
+                    alt={r.name}
+                    style={{ width:44, height:44, borderRadius:'50%', objectFit:'cover', flexShrink:0, border:'2px solid rgba(200,151,58,.4)' }}
+                  />
                   <div>
                     <div style={{ fontWeight:700, fontSize:13, color:C.cream }}>{r.name} <span style={{ color:'rgba(245,237,224,.3)', fontWeight:400 }}>· {r.role}</span></div>
-                    <div style={{ fontSize:11, color:C.gold, marginTop:2 }}>{'★'.repeat(r.rating)} <span style={{ color:'rgba(245,237,224,.25)', fontWeight:400 }}>{r.farm}</span></div>
+                    <div style={{ fontSize:11, color:C.gold, marginTop:2 }}>{'★'.repeat(r.rating)} <span style={{ color:'rgba(245,237,224,.25)', fontWeight:400 }}>{r.farm} · {r.region}</span></div>
                   </div>
                 </div>
               </div>
@@ -470,6 +481,59 @@ export default function LandingPage() {
               </div>
             ))}
           </div>
+        </div>
+      </motion.section>
+
+      {/* ── NEWSLETTER ── */}
+      <motion.section
+        style={{ padding:'88px 40px', background:'#111D10', borderTop:'1px solid rgba(200,151,58,.08)', position:'relative', overflow:'hidden' }}
+        initial={{ opacity:0, y:40 }}
+        whileInView={{ opacity:1, y:0 }}
+        viewport={{ once:true, margin:'-80px' }}
+        transition={{ duration:0.6 }}
+      >
+        <div style={{ position:'absolute', top:-80, right:-80, width:360, height:360, background:'radial-gradient(circle, rgba(200,151,58,.05) 0%, transparent 65%)', pointerEvents:'none' }}/>
+        <div style={{ maxWidth:600, margin:'0 auto', textAlign:'center', position:'relative' }}>
+          <div style={{ fontSize:11, fontWeight:700, letterSpacing:4, color:C.gold, textTransform:'uppercase', marginBottom:16 }}>Newsletter</div>
+          <h2 style={{ fontFamily:"'Playfair Display',serif", fontSize:36, fontWeight:900, color:C.cream, marginBottom:14, lineHeight:1.2 }}>
+            Dostávejte tipy od farmářů
+          </h2>
+          <p style={{ fontSize:15, color:'rgba(245,237,224,.45)', lineHeight:1.75, marginBottom:36 }}>
+            Každý měsíc recepty, sezónní tipy a nové farmy ve vašem kraji
+          </p>
+          {newsletterOk ? (
+            <motion.div
+              initial={{ opacity:0, scale:0.9 }}
+              animate={{ opacity:1, scale:1 }}
+              transition={{ duration:0.4 }}
+              style={{ display:'inline-flex', alignItems:'center', gap:12, padding:'18px 32px', background:'rgba(58,87,40,.2)', border:'1px solid rgba(58,87,40,.4)', borderRadius:2 }}
+            >
+              <span style={{ fontSize:20, color:C.gold }}>✓</span>
+              <span style={{ fontSize:15, fontWeight:700, color:C.cream }}>Děkujeme! Brzy se ozveme.</span>
+            </motion.div>
+          ) : (
+            <form onSubmit={handleNewsletterSubmit}>
+              <div style={{ display:'flex', gap:0, maxWidth:460, margin:'0 auto 12px' }}>
+                <input
+                  type="email"
+                  value={newsletterEmail}
+                  onChange={e => setNewsletterEmail(e.target.value)}
+                  placeholder="váš@email.cz"
+                  required
+                  style={{ flex:1, padding:'14px 18px', background:'rgba(255,255,255,.06)', border:'1px solid rgba(200,151,58,.25)', borderRight:'none', borderRadius:'2px 0 0 2px', fontSize:14, color:C.cream, fontFamily:"'DM Sans',sans-serif", outline:'none' }}
+                />
+                <button
+                  type="submit"
+                  style={{ padding:'14px 24px', background:C.gold, color:'white', border:'none', borderRadius:'0 2px 2px 0', fontWeight:700, fontSize:14, cursor:'pointer', fontFamily:"'DM Sans',sans-serif", whiteSpace:'nowrap', letterSpacing:.5, transition:'background .15s', flexShrink:0 }}
+                  onMouseEnter={e=>e.currentTarget.style.background=C.goldLight}
+                  onMouseLeave={e=>e.currentTarget.style.background=C.gold}
+                >
+                  Odebírat zdarma
+                </button>
+              </div>
+              <p style={{ fontSize:12, color:'rgba(245,237,224,.2)', letterSpacing:.3 }}>Žádný spam. Odhlásit se lze kdykoliv.</p>
+            </form>
+          )}
         </div>
       </motion.section>
 
