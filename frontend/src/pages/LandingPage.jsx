@@ -20,8 +20,8 @@ const MAP_PINS_STR = TOP_MAP_FARMS
     return '';
   }).filter(Boolean).join(',');
 
-const MAPBOX_IMG = MAPBOX_TOKEN && MAP_PINS_STR
-  ? `https://api.mapbox.com/styles/v1/mapbox/dark-v11/static/${MAP_PINS_STR}/15.5,49.8,6.2,0,0/1100x460@2x?access_token=${MAPBOX_TOKEN}&logo=false&attribution=false`
+const MAPBOX_IMG = MAPBOX_TOKEN
+  ? `https://api.mapbox.com/styles/v1/mapbox/satellite-v9/static/15.5,49.8,6.2,0,0/1200x500@2x?access_token=${MAPBOX_TOKEN}&logo=false&attribution=false`
   : null;
 
 const BOHEMIA_FARM = FARMS_DATA
