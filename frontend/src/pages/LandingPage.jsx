@@ -122,7 +122,7 @@ export default function LandingPage() {
           </div>
         </div>
         <div className="nav-links" style={{ display:'flex',gap:4,alignItems:'center' }}>
-          {[['Produkty','/mapa'],['O nás','/'],['Farmáři','/pridat-farmu'],['Kontakt','/prihlaseni']].map(([l,h]) => (
+          {[['Produkty','/mapa'],['O nás','/o-nas'],['Farmáři','/pridat-farmu'],['Kontakt','/prihlaseni']].map(([l,h]) => (
             <button key={l} onClick={() => navigate(h)} style={{ padding:'8px 15px',background:'none',border:'none',fontSize:14,fontWeight:500,cursor:'pointer',color:'#555',fontFamily:"'DM Sans',sans-serif",borderRadius:8 }}
               onMouseEnter={e=>e.currentTarget.style.background='rgba(58,87,40,.08)'}
               onMouseLeave={e=>e.currentTarget.style.background='none'}>{l}</button>
