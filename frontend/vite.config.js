@@ -13,4 +13,17 @@ export default defineConfig({
       },
     },
   },
+  build: {
+    chunkSizeWarningLimit: 1400,
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          'vendor-react': ['react', 'react-dom', 'react-router-dom'],
+          'vendor-map': ['leaflet', 'react-leaflet'],
+          'vendor-motion': ['framer-motion'],
+          'vendor-misc': ['zustand', 'axios', 'date-fns', 'lucide-react', 'react-hot-toast'],
+        },
+      },
+    },
+  },
 });

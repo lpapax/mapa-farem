@@ -2,11 +2,11 @@
 // Přidána routa / → LandingPage, mapa přesunuta na /mapa
 import { useEffect, lazy, Suspense } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
-import LandingPage from './pages/LandingPage';
-import MapPage from './pages/MapPage';
 import { useAuthStore } from './store/index.js';
 
-// Lazy-loaded pages
+// All pages lazy-loaded for optimal code splitting
+const LandingPage       = lazy(() => import('./pages/LandingPage'));
+const MapPage           = lazy(() => import('./pages/MapPage'));
 const FarmDetailPage    = lazy(() => import('./pages/FarmDetailPage'));
 const LoginPage         = lazy(() => import('./pages/LoginPage'));
 const RegisterPage      = lazy(() => import('./pages/RegisterPage'));
