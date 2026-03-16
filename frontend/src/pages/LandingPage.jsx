@@ -2,6 +2,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import FARMS_DATA from '../data/farms.json';
+import CzechRegionMap from '../components/CzechRegionMap';
 
 /* ─── Mapbox Static map ─── */
 const MAPBOX_TOKEN = import.meta.env.VITE_MAPBOX_TOKEN;
@@ -308,28 +309,7 @@ export default function LandingPage() {
             <p style={{ fontSize:15, color:'rgba(245,237,224,.4)', marginTop:12 }}>Pokrýváme všech 14 krajů České republiky</p>
           </div>
 
-          <div style={{ border:'1px solid rgba(200,151,58,.15)', borderRadius:2, overflow:'hidden' }}>
-            <div style={{ background:'rgba(255,255,255,.03)', padding:'14px 20px', display:'flex', alignItems:'center', gap:8, borderBottom:'1px solid rgba(200,151,58,.1)' }}>
-              <span style={{ fontSize:11, fontWeight:700, color:C.gold, letterSpacing:2, textTransform:'uppercase' }}>📍 Farmy v České republice</span>
-            </div>
-            <div style={{ position:'relative' }}>
-              {MAPBOX_IMG ? (
-                <img src={MAPBOX_IMG} alt="Mapa farem" style={{ width:'100%', height:'auto', display:'block', filter:'brightness(.88) saturate(.9)' }} loading="lazy"/>
-              ) : (
-                <div style={{ height:400, background:'rgba(255,255,255,.03)', display:'flex', alignItems:'center', justifyContent:'center', color:'rgba(245,237,224,.3)', fontSize:14 }}>
-                  Mapa se načítá…
-                </div>
-              )}
-              <div style={{ position:'absolute', bottom:0, left:0, right:0, background:'linear-gradient(to top, rgba(17,29,16,.88) 0%, transparent 100%)', padding:'28px 28px 18px', display:'flex', gap:36, alignItems:'flex-end' }}>
-                {[[`${FARMS_DATA.length}+`,'farem'],['14','krajů'],['4.5 ⭐','hodnocení']].map(([n,l]) => (
-                  <div key={l}>
-                    <div style={{ fontFamily:"'Playfair Display',serif", fontSize:22, fontWeight:900, color:C.gold, lineHeight:1 }}>{n}</div>
-                    <div style={{ fontSize:11, color:'rgba(245,237,224,.45)', marginTop:3 }}>{l}</div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
+          <CzechRegionMap />
 
           <div style={{ textAlign:'center', marginTop:40 }}>
             <button onClick={() => navigate('/pridat-farmu')}

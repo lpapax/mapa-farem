@@ -2,6 +2,7 @@
 // Mapbox GL JS + GPS + Clustering + PWA
 import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
+import { KRAJ_BOUNDS } from '../components/CzechRegionMap';
 import { Search, Plus, ShoppingCart, Menu, X, Navigation, Moon, Sun } from 'lucide-react';
 import { useAuthStore, useMapStore, useCartStore, useNotificationStore, useFavoritesStore } from '../store/index.js';
 import FARMS_DATA from '../data/farms.json';
@@ -497,6 +498,7 @@ export default function MapPage() {
     if (urlFilter) return new Set([urlFilter]);
     return filter !== 'all' ? new Set([filter]) : new Set();
   });
+  const [krajFilter] = useState(() => searchParams.get('kraj') || null);
   const [dark, setDark] = useState(() => localStorage.getItem('mf-dark') === '1');
   const [mapStyle, setMapStyle] = useState(() => localStorage.getItem('mf-style') || 'outdoors');
   const [stylePickerOpen, setStylePickerOpen] = useState(false);
@@ -569,6 +571,10 @@ export default function MapPage() {
 
   const filtered = useMemo(() => {
     let data = FARMS_DATA;
+    if (krajFilter && KRAJ_BOUNDS[krajFilter]) {
+      const [minLat, minLng, maxLat, maxLng] = KRAJ_BOUNDS[krajFilter];
+      data = data.filter(f => f.lat && f.lng && f.lat >= minLat && f.lat <= maxLat && f.lng >= minLng && f.lng <= maxLng);
+    }
     if (regionFilter !== 'all') data = data.filter(f => f.loc === regionFilter);
     if (tagFilter === 'bio') data = data.filter(f => f.bio);
     if (tagFilter === 'eshop') data = data.filter(f => f.eshop);
@@ -591,7 +597,7 @@ export default function MapPage() {
       (f.products||[]).some(p => p.toLowerCase().includes(q))
     );
     return data;
-  }, [activeTypes, search, nearbyMode, userLocation, radius, regionFilter, tagFilter]);
+  }, [activeTypes, search, nearbyMode, userLocation, radius, regionFilter, tagFilter, krajFilter]);
 
   const handleSelect = useCallback(farm => {
     selectFarm(farm.id);
