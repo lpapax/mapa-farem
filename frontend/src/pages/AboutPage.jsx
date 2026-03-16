@@ -48,7 +48,7 @@ export default function AboutPage() {
       {/* NAV */}
       <nav style={{ position:'fixed',top:0,left:0,right:0,zIndex:300,background:'rgba(245,237,224,.96)',backdropFilter:'blur(14px)',borderBottom:'1px solid rgba(191,91,61,.1)',padding:'0 40px',height:64,display:'flex',alignItems:'center',justifyContent:'space-between' }}>
         <div onClick={() => navigate('/')} style={{ display:'flex',alignItems:'center',gap:10,cursor:'pointer' }}>
-          <span style={{ fontSize:24 }}>🐓</span>
+          <span style={{ fontSize:24 }}>🌾</span>
           <div style={{ fontFamily:"'Playfair Display',serif",fontWeight:700,fontSize:19,color:C.brown }}>
             Mapa<span style={{ color:C.terra }}>Farem</span>
           </div>

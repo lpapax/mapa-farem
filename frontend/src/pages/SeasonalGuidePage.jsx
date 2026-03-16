@@ -73,7 +73,7 @@ const SEASONS = {
       { name:'Jablečný mošt', emoji:'🥤', tip:'Lisovaný přímo z jablek. Hledej u sadařů nebo na farmářských trzích.',
         img:'https://images.unsplash.com/photo-1568702846914-96b305d2aaeb?w=400&q=80&fit=crop' },
       { name:'Sýry', emoji:'🧀', tip:'Zimní sýry z mlékáren – farmářský eidam, niva nebo hermelín.',
-        img:'https://images.unsplash.com/photo-1486297678162-eb2a19b0a318?w=400&q=80&fit=crop' },
+        img:'https://images.unsplash.com/photo-1550583724-b2692b85b150?w=400&q=80&fit=crop' },
       { name:'Zvěřina', emoji:'🦌', tip:'Podzim a zima jsou sezónou zvěřiny. Přímý prodej od myslivců.',
         img:'https://images.unsplash.com/photo-1529692236671-f1f6cf9683ba?w=400&q=80&fit=crop' },
     ],
@@ -108,7 +108,7 @@ export default function SeasonalGuidePage() {
       {/* ── NAV ── */}
       <nav style={{ position:'sticky',top:0,zIndex:100,background:'rgba(245,237,224,.96)',backdropFilter:'blur(14px)',borderBottom:'1px solid rgba(191,91,61,.1)',padding:'0 40px',height:62,display:'flex',alignItems:'center',justifyContent:'space-between' }}>
         <div onClick={() => navigate('/')} style={{ display:'flex',alignItems:'center',gap:10,cursor:'pointer' }}>
-          <span style={{ fontSize:22 }}>🐓</span>
+          <span style={{ fontSize:22 }}>🌾</span>
           <div style={{ fontFamily:"'Playfair Display',serif",fontWeight:700,fontSize:18,color:C.brown }}>
             Mapa<span style={{ color:C.terra }}>Farem</span>
           </div>

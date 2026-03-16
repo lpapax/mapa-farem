@@ -86,6 +86,13 @@ function FarmCard({ farm, navigate, style }) {
 /* ══════════════════════════════════════════════════════════ */
 export default function LandingPage() {
   const navigate = useNavigate();
+  const [searchQ, setSearchQ] = useState('');
+
+  const handleSearch = (e) => {
+    e.preventDefault();
+    if (searchQ.trim()) navigate(`/mapa?search=${encodeURIComponent(searchQ.trim())}`);
+    else navigate('/mapa');
+  };
 
   const [farmCount, setFarmCount] = useState(0);
   const statsRef = useRef(null);
@@ -189,9 +196,24 @@ export default function LandingPage() {
                 ve tvém okolí
               </h1>
 
-              <p style={{ fontSize:16, color:'rgba(245,237,224,.6)', lineHeight:1.85, marginBottom:40, maxWidth:440 }}>
+              <p style={{ fontSize:16, color:'rgba(245,237,224,.6)', lineHeight:1.85, marginBottom:28, maxWidth:440 }}>
                 {FARMS_DATA.length} lokálních farem na jedné mapě. Zelenina, sýry, maso, med — bez supermarketů, bez mezičlánků.
               </p>
+
+              {/* Hero search */}
+              <form onSubmit={handleSearch} style={{ display:'flex', gap:0, marginBottom:28, maxWidth:440 }}>
+                <input
+                  value={searchQ}
+                  onChange={e => setSearchQ(e.target.value)}
+                  placeholder="Hledat farmu nebo produkt…"
+                  style={{ flex:1, padding:'13px 18px', background:'rgba(255,255,255,.08)', border:'1px solid rgba(200,151,58,.3)', borderRight:'none', borderRadius:'2px 0 0 2px', fontSize:14, color:C.cream, fontFamily:"'DM Sans',sans-serif", outline:'none' }}
+                />
+                <button type="submit" style={{ padding:'13px 20px', background:C.gold, color:'white', border:'none', borderRadius:'0 2px 2px 0', fontWeight:700, fontSize:14, cursor:'pointer', fontFamily:"'DM Sans',sans-serif", whiteSpace:'nowrap', transition:'background .15s' }}
+                  onMouseEnter={e=>e.currentTarget.style.background=C.goldLight}
+                  onMouseLeave={e=>e.currentTarget.style.background=C.gold}>
+                  Hledat →
+                </button>
+              </form>
 
               <div style={{ display:'flex', gap:14, flexWrap:'wrap', marginBottom:48 }}>
                 <button onClick={() => navigate('/mapa')}
@@ -389,7 +411,7 @@ export default function LandingPage() {
           {/* Trust strip */}
           <div style={{ marginTop:64, display:'flex', justifyContent:'center', borderTop:'1px solid rgba(200,151,58,.1)', paddingTop:48 }}>
             {[
-              { n:'1 695', l:'ověřených farem' },
+              { n:FARMS_DATA.length.toLocaleString('cs-CZ'), l:'ověřených farem' },
               { n:'4.5★', l:'průměrné hodnocení' },
               { n:'14', l:'krajů pokryto' },
               { n:'Zdarma', l:'přidání farmy' },
@@ -429,7 +451,7 @@ export default function LandingPage() {
               </p>
             </div>
             {[
-              { title:'Produkty', links:[['Zelenina & ovoce','/mapa'],['Mléčné výrobky','/mapa'],['Maso & uzeniny','/mapa']] },
+              { title:'Produkty', links:[['Zelenina & ovoce','/mapa?filter=veggie'],['Mléčné výrobky','/mapa?filter=dairy'],['Maso & uzeniny','/mapa?filter=meat']] },
               { title:'O nás',    links:[['Jak to funguje','/'],['Sezónní průvodce','/sezona'],['O projektu','/o-nas']] },
               { title:'Farmáři', links:[['+Přidat farmu','/pridat-farmu'],['Přihlásit se','/prihlaseni'],['Dashboard','/dashboard']] },
             ].map(col => (

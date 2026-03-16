@@ -499,6 +499,13 @@ export default function MapPage() {
     return filter !== 'all' ? new Set([filter]) : new Set();
   });
   const [krajFilter] = useState(() => searchParams.get('kraj') || null);
+
+  // Sync ?search= URL param → Zustand search store on mount
+  useEffect(() => {
+    const urlSearch = searchParams.get('search');
+    if (urlSearch) setSearch(urlSearch);
+  }, []); // eslint-disable-line
+
   const [dark, setDark] = useState(() => localStorage.getItem('mf-dark') === '1');
   const [mapStyle, setMapStyle] = useState(() => localStorage.getItem('mf-style') || 'outdoors');
   const [stylePickerOpen, setStylePickerOpen] = useState(false);

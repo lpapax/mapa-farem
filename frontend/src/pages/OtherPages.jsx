@@ -441,7 +441,7 @@ function PageShell({ title, children, onBack }) {
         <button onClick={onBack} style={{ background:'none', border:'none', color:'#6B4F3A', cursor:'pointer', fontSize:20, padding:4, lineHeight:1, display:'flex', alignItems:'center' }}>←</button>
         <span style={{ fontFamily:"'Playfair Display',serif", fontSize:17, fontWeight:700, color:'#2C1810', flex:1 }}>{title}</span>
         <span onClick={() => window.location.href='/'} style={{ fontFamily:"'Playfair Display',serif", fontSize:16, fontWeight:900, color:'#2C1810', cursor:'pointer' }}>
-          🐓 Mapa<span style={{ color:'#BF5B3D' }}>Farem</span>
+          🌾 Mapa<span style={{ color:'#BF5B3D' }}>Farem</span>
         </span>
       </header>
       <div style={{ maxWidth:900, margin:'0 auto', padding:'28px 20px' }}>{children}</div>
