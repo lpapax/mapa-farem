@@ -392,17 +392,17 @@ create policy "farmers manage own products" on farm_products
 
 function Shell({ title, children, onBack }) {
   return (
-    <div style={{ minHeight: '100vh', background: '#F4EDD8', fontFamily: "'DM Sans',sans-serif" }}>
+    <div style={{ minHeight: '100vh', background: '#F5EDE0', fontFamily: "'DM Sans',sans-serif" }}>
       <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet"/>
       <style>{`* { box-sizing:border-box; margin:0; padding:0; }`}</style>
-      <header style={{ background: '#1E120A', padding: '12px 20px', display: 'flex', alignItems: 'center', gap: 14 }}>
-        <button onClick={onBack} style={{ background: 'none', border: 'none', color: '#B8A882', cursor: 'pointer', fontSize: 20 }}>←</button>
-        <span style={{ fontFamily: "'Playfair Display',serif", fontSize: 18, fontWeight: 700, color: '#F4EDD8' }}>{title}</span>
-        <span onClick={() => window.location.href='/'} style={{ fontFamily: "'Playfair Display',serif", fontSize: 15, fontWeight: 900, color: '#F4EDD8', marginLeft: 'auto', cursor: 'pointer' }}>
-          <span style={{ color: '#7DB05A' }}>Mapa</span>Farem<span style={{ color: '#7DB05A' }}>.cz</span>
+      <header style={{ background: 'rgba(245,237,224,.96)', backdropFilter: 'blur(14px)', borderBottom: '1px solid rgba(191,91,61,.1)', padding: '0 24px', height: 60, display: 'flex', alignItems: 'center', gap: 14, position: 'sticky', top: 0, zIndex: 100 }}>
+        <button onClick={onBack} style={{ background: 'none', border: 'none', color: '#6B4F3A', cursor: 'pointer', fontSize: 20, lineHeight: 1 }}>←</button>
+        <span style={{ fontFamily: "'Playfair Display',serif", fontSize: 17, fontWeight: 700, color: '#2C1810', flex: 1 }}>{title}</span>
+        <span onClick={() => window.location.href='/'} style={{ fontFamily: "'Playfair Display',serif", fontSize: 16, fontWeight: 900, color: '#2C1810', cursor: 'pointer' }}>
+          🐓 Mapa<span style={{ color: '#BF5B3D' }}>Farem</span>
         </span>
       </header>
-      <div style={{ maxWidth: 900, margin: '0 auto', padding: '24px 20px' }}>{children}</div>
+      <div style={{ maxWidth: 900, margin: '0 auto', padding: '28px 20px' }}>{children}</div>
     </div>
   );
 }
