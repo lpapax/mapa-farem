@@ -3,8 +3,12 @@ import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { MapContainer, TileLayer, GeoJSON } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
+import FARMS_DATA from '../data/farms.json';
 
 const GEOJSON_URL = '/czech-regions.geojson';
+
+const farmCount = {};
+FARMS_DATA.forEach(f => { farmCount[f.loc] = (farmCount[f.loc] || 0) + 1; });
 
 const PALETTE = [
   '#C8973A', '#2A6B3A', '#8B3A2C', '#1A5C7A', '#6B3A8B',
@@ -81,10 +85,11 @@ export default function CzechRegionMap() {
     });
 
     if (name) {
-      layer.bindTooltip(name, {
-        sticky: true,
-        className: 'kraj-tooltip',
-      });
+      const count = farmCount[name] || 0;
+      layer.bindTooltip(
+        `<strong>${name}</strong><br>🏡 ${count} farem`,
+        { sticky: true, className: 'kraj-tooltip' }
+      );
     }
   };
 

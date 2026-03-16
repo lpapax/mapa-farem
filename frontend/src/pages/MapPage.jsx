@@ -18,12 +18,46 @@ if ('serviceWorker' in navigator) {
 const MAPBOX_TOKEN = import.meta.env.VITE_MAPBOX_TOKEN || '';
 
 const COLORS = {
-  bio:'#C99B30', veggie:'#3A5728', meat:'#9B2226',
-  dairy:'#2980B9', honey:'#D4A017', wine:'#7D3C98',
+  bio:'#3A5728', veggie:'#5F8050', meat:'#BF5B3D',
+  dairy:'#4A90C4', honey:'#C8973A', wine:'#8B3A6B',
   herbs:'#5F8050', market:'#5D4037',
   zerowaste:'#27AE60', bezobaly:'#16A085',
   carnivore:'#6D1A1A',
 };
+
+// ── SVG PIN ICON FACTORY ────────────────────────────────────────────────────
+const PIN_COLORS = {
+  veggie: '#5F8050',
+  meat:   '#BF5B3D',
+  dairy:  '#4A90C4',
+  honey:  '#C8973A',
+  bio:    '#3A5728',
+  wine:   '#8B3A6B',
+};
+function createFarmSvgPin(type, emoji, isActive) {
+  const color = PIN_COLORS[type] || '#3A5728';
+  const scale = isActive ? 1.3 : 1;
+  const pinEmoji = emoji || ({
+    veggie:'🥕', meat:'🥩', dairy:'🥛', honey:'🍯',
+    bio:'🌱', wine:'🍷', herbs:'🌿', market:'🏪',
+  }[type] || '🌾');
+  const svgHtml = `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="32" viewBox="0 0 24 32">
+  <path d="M12 0C5.37 0 0 5.37 0 12c0 9 12 20 12 20s12-11 12-20C24 5.37 18.63 0 12 0z" fill="${color}" stroke="white" stroke-width="1.5"/>
+  <text x="12" y="14" text-anchor="middle" dominant-baseline="middle" font-size="10">${pinEmoji}</text>
+</svg>`;
+  const el = document.createElement('div');
+  el.style.cssText = `
+    cursor:pointer;
+    will-change:transform;
+    transform:scale(${scale}) translateZ(0);
+    transition:transform 0.15s;
+    width:24px;
+    height:32px;
+    filter:${isActive ? 'drop-shadow(0 3px 6px rgba(0,0,0,0.5))' : 'drop-shadow(0 2px 3px rgba(0,0,0,0.35))'};
+  `;
+  el.innerHTML = svgHtml;
+  return el;
+}
 const LABELS = {
   all:'Vše', veggie:'Zelenina & ovoce', market:'Farmářský trh',
   wine:'Víno & nápoje', meat:'Maso & uzeniny', honey:'Med & včelí',
@@ -315,33 +349,8 @@ function MapboxMap({ farms, selectedId, onSelect, userLocation, radius, dark, ma
       }
 
       function createPin(farm) {
-        const color = COLORS[farm.type] || '#5F8050';
         const isActive = farm.id === selectedId;
-        // Category emoji fallback if farm.emoji not present
-        const pinEmoji = farm.emoji || ({
-          veggie:'🥕', meat:'🥩', dairy:'🥛', honey:'🍯',
-          bio:'🌱', wine:'🍷', herbs:'🌿', market:'🏪',
-        }[farm.type] || '🌾');
-        const el = document.createElement('div');
-        el.style.cssText = `
-          cursor:pointer;
-          transition:transform 0.15s;
-          transform:${isActive ? 'scale(1.2)' : 'scale(1)'};
-          display:flex;
-          align-items:center;
-          justify-content:center;
-          width:36px;
-          height:36px;
-          background:${color};
-          border-radius:6px;
-          box-shadow:${isActive
-            ? '0 2px 8px rgba(0,0,0,0.4), 0 0 0 3px white, 0 0 0 5px ' + color
-            : '0 2px 8px rgba(0,0,0,0.4)'};
-          font-size:18px;
-          line-height:1;
-          position:relative;
-        `;
-        el.innerHTML = `<span style="filter:drop-shadow(0 1px 1px rgba(0,0,0,0.3));user-select:none">${pinEmoji}</span>`;
+        const el = createFarmSvgPin(farm.type, farm.emoji, isActive);
         el.addEventListener('click', (e) => { e.stopPropagation(); showPopup(farm); });
         return el;
       }
@@ -489,6 +498,7 @@ function MapboxMap({ farms, selectedId, onSelect, userLocation, radius, dark, ma
         .mapboxgl-popup-content { padding:0!important; border-radius:14px!important; overflow:hidden; box-shadow:0 12px 40px rgba(0,0,0,.18)!important; }
         .mapboxgl-popup-tip { display:none!important; }
         .mapboxgl-popup-close-button { top:8px!important; right:10px!important; color:rgba(255,255,255,.9)!important; font-size:18px!important; background:none!important; }
+        .mapboxgl-marker { will-change:transform; transform:translateZ(0); }
       `}</style>
       <div ref={mapRef} style={{ width:'100%', height:'100%' }} />
     </>
@@ -505,6 +515,7 @@ export default function MapPage() {
 
   const filterScrollRef = useRef(null);
   const filterDragRef = useRef({ dragging: false, startX: 0, scrollLeft: 0 });
+  const filterDebounceRef = useRef(null);
   const [regionFilter, setRegionFilter] = useState('all');
   const [tagFilter, setTagFilter] = useState('all'); // bio, eshop, delivery, open
   const [userLocation, setUserLocation] = useState(null);
@@ -600,9 +611,9 @@ export default function MapPage() {
 
   const filtered = useMemo(() => {
     let data = FARMS_DATA;
-    if (krajFilter && KRAJ_BOUNDS[krajFilter]) {
-      const [minLat, minLng, maxLat, maxLng] = KRAJ_BOUNDS[krajFilter];
-      data = data.filter(f => f.lat && f.lng && f.lat >= minLat && f.lat <= maxLat && f.lng >= minLng && f.lng <= maxLng);
+    if (krajFilter) {
+      const kq = krajFilter.toLowerCase();
+      data = data.filter(f => f.loc && f.loc.toLowerCase().includes(kq));
     }
     if (regionFilter !== 'all') data = data.filter(f => f.loc === regionFilter);
     if (tagFilter === 'bio') data = data.filter(f => f.bio);
@@ -627,6 +638,16 @@ export default function MapPage() {
     );
     return data;
   }, [activeTypes, search, nearbyMode, userLocation, radius, regionFilter, tagFilter, krajFilter]);
+
+  // Debounced version of filtered for the map — avoids re-rendering markers on every keystroke
+  const [debouncedFiltered, setDebouncedFiltered] = useState(filtered);
+  useEffect(() => {
+    if (filterDebounceRef.current) clearTimeout(filterDebounceRef.current);
+    filterDebounceRef.current = setTimeout(() => {
+      setDebouncedFiltered(filtered);
+    }, 150);
+    return () => clearTimeout(filterDebounceRef.current);
+  }, [filtered]);
 
   const handleSelect = useCallback(farm => {
     selectFarm(farm.id);
@@ -883,7 +904,7 @@ export default function MapPage() {
 
         {/* Mapa */}
         <div style={{ flex:1, position:'relative', overflow:'hidden' }}>
-          <MapboxMap farms={filtered} selectedId={selectedFarmId} onSelect={handleSelect} userLocation={userLocation} radius={radius} dark={dark} mapStyleUrl={currentStyle.url}/>
+          <MapboxMap farms={debouncedFiltered} selectedId={selectedFarmId} onSelect={handleSelect} userLocation={userLocation} radius={radius} dark={dark} mapStyleUrl={currentStyle.url}/>
 
           {/* Radius panel */}
           {showRadiusPanel && nearbyMode && (
