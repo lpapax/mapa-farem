@@ -30,6 +30,10 @@ const LABELS = {
   bio:'BIO', dairy:'Mléčné výrobky', herbs:'Bylinky & kosmetika',
   zerowaste:'♻️ Zero-waste', bezobaly:'🫙 Bezobalové',
 };
+const CATEGORY_EMOJI = {
+  all:'🗺️', veggie:'🥕', meat:'🥩', dairy:'🥛', honey:'🍯',
+  bio:'🌱', wine:'🍷', herbs:'🌿', market:'🏪', zerowaste:'♻️', bezobaly:'🫙',
+};
 
 // ── VZDÁLENOST (Haversine) ─────────────────────────────────────────────────
 function getDistance(lat1, lng1, lat2, lng2) {
@@ -313,13 +317,31 @@ function MapboxMap({ farms, selectedId, onSelect, userLocation, radius, dark, ma
       function createPin(farm) {
         const color = COLORS[farm.type] || '#5F8050';
         const isActive = farm.id === selectedId;
+        // Category emoji fallback if farm.emoji not present
+        const pinEmoji = farm.emoji || ({
+          veggie:'🥕', meat:'🥩', dairy:'🥛', honey:'🍯',
+          bio:'🌱', wine:'🍷', herbs:'🌿', market:'🏪',
+        }[farm.type] || '🌾');
         const el = document.createElement('div');
-        el.style.cssText = `cursor:pointer;transition:transform 0.15s;transform:${isActive?'scale(1.25)':'scale(1)'};filter:drop-shadow(0 ${isActive?'4px 10px':'2px 6px'} rgba(0,0,0,${isActive?'.4':'.2'}))`;
-        el.innerHTML = `<svg width="40" height="52" viewBox="0 0 52 68" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <path d="M26 2C14.95 2 6 10.95 6 22C6 36.5 26 66 26 66C26 66 46 36.5 46 22C46 10.95 37.05 2 26 2Z" fill="${color}" stroke="white" stroke-width="3.5"/>
-          <circle cx="26" cy="22" r="13" fill="rgba(255,255,255,0.2)"/>
-          <text x="26" y="29" text-anchor="middle" font-size="17" dominant-baseline="middle">${farm.emoji}</text>
-        </svg>`;
+        el.style.cssText = `
+          cursor:pointer;
+          transition:transform 0.15s;
+          transform:${isActive ? 'scale(1.2)' : 'scale(1)'};
+          display:flex;
+          align-items:center;
+          justify-content:center;
+          width:36px;
+          height:36px;
+          background:${color};
+          border-radius:6px;
+          box-shadow:${isActive
+            ? '0 2px 8px rgba(0,0,0,0.4), 0 0 0 3px white, 0 0 0 5px ' + color
+            : '0 2px 8px rgba(0,0,0,0.4)'};
+          font-size:18px;
+          line-height:1;
+          position:relative;
+        `;
+        el.innerHTML = `<span style="filter:drop-shadow(0 1px 1px rgba(0,0,0,0.3));user-select:none">${pinEmoji}</span>`;
         el.addEventListener('click', (e) => { e.stopPropagation(); showPopup(farm); });
         return el;
       }
@@ -342,7 +364,6 @@ function MapboxMap({ farms, selectedId, onSelect, userLocation, radius, dark, ma
           if (!markersRef.current[farm.id]) {
             const el = createPin(farm);
             // Jitter pro farmy na stejnych souradnicich
-            const key = `${farm.lat.toFixed(4)}_${farm.lng.toFixed(4)}`;
             const sameSpot = farms.filter(f => f.lat?.toFixed(4) === farm.lat?.toFixed(4) && f.lng?.toFixed(4) === farm.lng?.toFixed(4));
             const idx = sameSpot.findIndex(f => f.id === farm.id);
             const jitter = idx > 0 ? 0.0003 * idx : 0;
@@ -492,6 +513,7 @@ export default function MapPage() {
   const [nearbyMode, setNearbyMode] = useState(false);
   const [showRadiusPanel, setShowRadiusPanel] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
+  const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
   const [searchParams] = useSearchParams();
   const [activeTypes, setActiveTypes] = useState(() => {
     const urlFilter = searchParams.get('filter');
@@ -619,6 +641,7 @@ export default function MapPage() {
         ::-webkit-scrollbar { width:4px; }
         ::-webkit-scrollbar-thumb { background:#B8A882; border-radius:2px; }
         @keyframes spin { to { transform:rotate(360deg) } }
+        @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.5} }
         @keyframes seasonPulse {
           0%,100% { box-shadow:0 2px 10px rgba(0,0,0,.15); }
           50% { box-shadow:0 2px 24px rgba(201,155,48,.55), 0 0 0 5px rgba(201,155,48,.12); }
@@ -689,16 +712,17 @@ export default function MapPage() {
         {/* GPS tlačítko */}
         <button onClick={handleLocate} style={{
           display:'flex', alignItems:'center', gap:6, padding:'7px 14px', borderRadius:50,
-          background: nearbyMode ? '#3A5728' : 'rgba(255,255,255,.1)',
-          border: nearbyMode ? 'none' : '1.5px solid rgba(255,255,255,.2)',
-          color: nearbyMode ? 'white' : '#B8A882',
+          background: nearbyMode ? '#27AE60' : gpsLoading ? '#1E8449' : 'rgba(255,255,255,.1)',
+          border: (nearbyMode || gpsLoading) ? 'none' : '1.5px solid rgba(255,255,255,.2)',
+          color: (nearbyMode || gpsLoading) ? 'white' : '#B8A882',
           fontFamily:"'DM Sans',sans-serif", fontSize:12, fontWeight:700, cursor:'pointer', transition:'all .2s', whiteSpace:'nowrap',
+          animation: gpsLoading ? 'pulse 1s ease-in-out infinite' : 'none',
         }}>
           {gpsLoading
             ? <div style={{ width:14, height:14, border:'2px solid currentColor', borderTopColor:'transparent', borderRadius:'50%', animation:'spin .8s linear infinite' }}/>
             : <Navigation size={14}/>
           }
-          {nearbyMode ? `📍 ${radius} km` : 'Kolem mě'}
+          {nearbyMode ? `📍 ${radius} km` : gpsLoading ? 'Hledám…' : 'Kolem mě'}
         </button>
 
         {/* Dark mode přepínač */}
@@ -798,6 +822,7 @@ export default function MapPage() {
           const isAll = key === 'all';
           const active = isAll ? activeTypes.size === 0 : activeTypes.has(key);
           const color = COLORS[key] || '#7DB05A';
+          const emoji = CATEGORY_EMOJI[key];
           return (
             <button key={key} onClick={() => {
               if (isAll) { setActiveTypes(new Set()); return; }
@@ -814,7 +839,8 @@ export default function MapPage() {
               fontFamily:"'DM Sans',sans-serif", fontSize:12, fontWeight: active?700:500,
               cursor:'pointer', whiteSpace:'nowrap', transition:'all .15s', display:'flex', alignItems:'center', gap:5,
             }}>
-              {!isAll && <span style={{ width:7, height:7, borderRadius:'50%', background:active?'rgba(255,255,255,.5)':color, display:'inline-block' }}/>}
+              {emoji && <span style={{ fontSize:13, lineHeight:1 }}>{emoji}</span>}
+              {!isAll && !emoji && <span style={{ width:7, height:7, borderRadius:'50%', background:active?'rgba(255,255,255,.5)':color, display:'inline-block' }}/>}
               {label}
             </button>
           );
@@ -928,6 +954,28 @@ export default function MapPage() {
               </div>
             )}
           </div>
+
+          {/* Plovoucí tlačítko Filtry — pouze mobile */}
+          <button
+            className="show-mobile"
+            onClick={() => { toggleSidebar(); setMobileFiltersOpen(v => !v); }}
+            style={{
+              position:'absolute', bottom:80, left:12, zIndex:600,
+              display:'none', alignItems:'center', gap:6,
+              background: showSidebar ? '#3A5728' : '#1E120A',
+              color:'white', border:'none', borderRadius:50,
+              padding:'10px 16px', cursor:'pointer',
+              boxShadow:'0 4px 16px rgba(0,0,0,.35)',
+              fontFamily:"'DM Sans',sans-serif", fontSize:13, fontWeight:700,
+            }}>
+            {showSidebar ? <X size={15}/> : <Menu size={15}/>}
+            {showSidebar ? 'Zavřít' : 'Filtry'}
+            {activeTypes.size > 0 && (
+              <span style={{ background:'#C99B30', color:'#1E120A', borderRadius:50, fontSize:10, fontWeight:800, padding:'1px 6px', marginLeft:2 }}>
+                {activeTypes.size}
+              </span>
+            )}
+          </button>
 
           {/* Statistiky */}
           <div style={{ position:'absolute', bottom:32, right:10, background:T.statsBg, color:T.statsColor, borderRadius:14, padding:'10px 16px', display:'flex', gap:16, zIndex:500, boxShadow:'0 4px 20px rgba(0,0,0,.2)', pointerEvents:'none' }}>
