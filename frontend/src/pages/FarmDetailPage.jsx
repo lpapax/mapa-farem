@@ -38,7 +38,7 @@ const GALLERY_IMAGES = {
   honey: [
     'https://images.unsplash.com/photo-1558642452-9d2a7deb7f62?w=800&q=80&fit=crop',
     'https://images.unsplash.com/photo-1471943311424-646960669fbc?w=800&q=80&fit=crop',
-    'https://images.unsplash.com/photo-1587049352846-4a222e784d38?w=800&q=80&fit=crop',
+    'https://images.unsplash.com/photo-1558642452-9d2a7deb7f62?w=800&q=80&fit=crop',
   ],
   wine: [
     'https://images.unsplash.com/photo-1506377247377-2a5b3b417ebb?w=800&q=80&fit=crop',
