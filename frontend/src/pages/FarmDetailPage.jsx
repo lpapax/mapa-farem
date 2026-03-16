@@ -18,6 +18,49 @@ const TYPE_HERO = {
   market: 'https://images.unsplash.com/photo-1488459716781-31db52582fe9?w=1200&q=80&fit=crop&crop=center',
   bio:    'https://images.unsplash.com/photo-1523741543316-beb7fc7023d8?w=1200&q=80&fit=crop&crop=center',
 };
+const GALLERY_IMAGES = {
+  veggie: [
+    'https://images.unsplash.com/photo-1540420773420-3366772f4999?w=800&q=80&fit=crop',
+    'https://images.unsplash.com/photo-1416879595882-3373a0480b5b?w=800&q=80&fit=crop',
+    'https://images.unsplash.com/photo-1592924357228-91a4daadcfea?w=800&q=80&fit=crop',
+    'https://images.unsplash.com/photo-1574943320219-553eb213f72d?w=800&q=80&fit=crop',
+  ],
+  meat: [
+    'https://images.unsplash.com/photo-1529692236671-f1f6cf9683ba?w=800&q=80&fit=crop',
+    'https://images.unsplash.com/photo-1607623814075-e51df1bdc82f?w=800&q=80&fit=crop',
+    'https://images.unsplash.com/photo-1448907503123-67254d59ca4f?w=800&q=80&fit=crop',
+  ],
+  dairy: [
+    'https://images.unsplash.com/photo-1550583724-b2692b85b150?w=800&q=80&fit=crop',
+    'https://images.unsplash.com/photo-1589985270826-4b7bb135bc9d?w=800&q=80&fit=crop',
+    'https://images.unsplash.com/photo-1559598467-f8b76c8155d0?w=800&q=80&fit=crop',
+  ],
+  honey: [
+    'https://images.unsplash.com/photo-1558642452-9d2a7deb7f62?w=800&q=80&fit=crop',
+    'https://images.unsplash.com/photo-1471943311424-646960669fbc?w=800&q=80&fit=crop',
+    'https://images.unsplash.com/photo-1587049352846-4a222e784d38?w=800&q=80&fit=crop',
+  ],
+  wine: [
+    'https://images.unsplash.com/photo-1506377247377-2a5b3b417ebb?w=800&q=80&fit=crop',
+    'https://images.unsplash.com/photo-1510812431401-41d2bd2722f3?w=800&q=80&fit=crop',
+    'https://images.unsplash.com/photo-1474722883778-792e7990302f?w=800&q=80&fit=crop',
+  ],
+  herbs: [
+    'https://images.unsplash.com/photo-1465226388285-0adb1a0a3ba0?w=800&q=80&fit=crop',
+    'https://images.unsplash.com/photo-1515586000433-45406d8e6662?w=800&q=80&fit=crop',
+    'https://images.unsplash.com/photo-1466234017337-1cc1d6ea1d7a?w=800&q=80&fit=crop',
+  ],
+  bio: [
+    'https://images.unsplash.com/photo-1523741543316-beb7fc7023d8?w=800&q=80&fit=crop',
+    'https://images.unsplash.com/photo-1530836369250-ef72a3f5cda8?w=800&q=80&fit=crop',
+    'https://images.unsplash.com/photo-1464226184884-fa280b87c399?w=800&q=80&fit=crop',
+  ],
+  market: [
+    'https://images.unsplash.com/photo-1488459716781-31db52582fe9?w=800&q=80&fit=crop',
+    'https://images.unsplash.com/photo-1608686207856-001b95cf60ca?w=800&q=80&fit=crop',
+    'https://images.unsplash.com/photo-1565958011703-44f9829ba187?w=800&q=80&fit=crop',
+  ],
+};
 
 export default function FarmDetailPage() {
   const { id } = useParams();
@@ -38,13 +81,22 @@ export default function FarmDetailPage() {
   const [offerForm, setOfferForm] = useState({ title:'', description:'', price_czk:'', valid_until:'' });
   const [submittingOffer, setSubmittingOffer] = useState(false);
 
+  const [galleryIdx, setGalleryIdx] = useState(0);
+
   const farm = FARMS_DATA.find(f => String(f.id) === String(id));
+
+  const galleryImages = farm ? (GALLERY_IMAGES[farm.type] || GALLERY_IMAGES.bio) : [];
 
   useEffect(() => {
     window.scrollTo(0, 0);
     if (farm) document.title = `${farm.name} — MapaFarem.cz`;
     return () => { document.title = 'MapaFarem.cz — Lokální farmy v České republice'; };
   }, [id, farm]);
+
+  // Reset gallery index when farm changes
+  useEffect(() => {
+    setGalleryIdx(0);
+  }, [id]);
 
   // Load reviews
   useEffect(() => {
@@ -239,6 +291,36 @@ export default function FarmDetailPage() {
           </div>
         ))}
       </div>
+
+      {/* Photo Gallery */}
+      {galleryImages.length > 1 && (
+        <div style={{ position:'relative', background:'#1a1a1a', overflow:'hidden', height:220 }}>
+          <div style={{ display:'flex', transition:'transform 0.4s ease', transform:`translateX(-${galleryIdx * 100}%)`, height:'100%' }}>
+            {galleryImages.map((img, i) => (
+              <div key={i} style={{ minWidth:'100%', height:'100%', flexShrink:0 }}>
+                <img src={img} alt={`Foto ${i+1}`} style={{ width:'100%', height:'100%', objectFit:'cover' }} loading="lazy" />
+              </div>
+            ))}
+          </div>
+          {/* Prev button */}
+          <button onClick={() => setGalleryIdx(i => Math.max(0, i-1))}
+            style={{ position:'absolute', left:12, top:'50%', transform:'translateY(-50%)', background:'rgba(0,0,0,0.5)', color:'white', border:'none', borderRadius:'50%', width:36, height:36, fontSize:18, cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center', opacity: galleryIdx === 0 ? 0.3 : 1 }}>‹</button>
+          {/* Next button */}
+          <button onClick={() => setGalleryIdx(i => Math.min(galleryImages.length-1, i+1))}
+            style={{ position:'absolute', right:12, top:'50%', transform:'translateY(-50%)', background:'rgba(0,0,0,0.5)', color:'white', border:'none', borderRadius:'50%', width:36, height:36, fontSize:18, cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center', opacity: galleryIdx === galleryImages.length-1 ? 0.3 : 1 }}>›</button>
+          {/* Dots */}
+          <div style={{ position:'absolute', bottom:10, left:'50%', transform:'translateX(-50%)', display:'flex', gap:6 }}>
+            {galleryImages.map((_, i) => (
+              <button key={i} onClick={() => setGalleryIdx(i)}
+                style={{ width:8, height:8, borderRadius:'50%', border:'none', cursor:'pointer', background: i === galleryIdx ? 'white' : 'rgba(255,255,255,0.4)', padding:0 }}/>
+            ))}
+          </div>
+          {/* Counter */}
+          <div style={{ position:'absolute', top:10, right:12, background:'rgba(0,0,0,0.5)', color:'white', borderRadius:20, padding:'3px 10px', fontSize:12 }}>
+            {galleryIdx+1}/{galleryImages.length}
+          </div>
+        </div>
+      )}
 
       {/* Tabs */}
       <div style={{ background:'white', borderBottom:'2px solid #EDE5D0', display:'flex', padding:'0 24px', gap:0 }}>
