@@ -83,7 +83,7 @@ const SEASONS = {
   zima: {
     label: 'Zima', months: 'Prosinec – Únor', emoji: '❄️',
     color: '#1a5276', light: '#EBF5FB', gradient: 'linear-gradient(135deg,#1a5276,#2980B9)',
-    heroImg: 'https://images.unsplash.com/photo-1612532275214-e4ca76d0e4d1?w=1400&q=85&fit=crop',
+    heroImg: 'https://images.unsplash.com/photo-1516912481808-3406841bd33c?w=1400&q=85&fit=crop',
     seasonMonths: [12, 1, 2],
     tip: '❄️ Zima je čas tradičních chutí. Fermentované potraviny, hutnné polévky a domácí uzeniny – farmáři mají i v zimě co nabídnout. Podpořte je i mimo sezónu.',
     topItems: ['Med', 'Sýry', 'Zvěřina'],
