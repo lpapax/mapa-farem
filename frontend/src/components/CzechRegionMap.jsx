@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { MapContainer, TileLayer, GeoJSON } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
 
-const GEOJSON_URL = 'https://cdn.jsdelivr.net/gh/osmlab/click-that-hood@master/public/data/czech-republic.geojson';
+const GEOJSON_URL = '/czech-regions.geojson';
 
 const PALETTE = [
   '#C8973A', '#2A6B3A', '#8B3A2C', '#1A5C7A', '#6B3A8B',
@@ -42,7 +42,7 @@ export default function CzechRegionMap() {
       .then(data => {
         let i = 0;
         data.features.forEach(f => {
-          const name = f.properties?.name || f.properties?.NAM_1 || String(i);
+          const name = f.properties?.NUTS_NAME || f.properties?.name || f.properties?.NAM_1 || String(i);
           if (!colorMapRef.current[name]) {
             colorMapRef.current[name] = PALETTE[i % PALETTE.length];
             i++;
@@ -55,7 +55,7 @@ export default function CzechRegionMap() {
   }, []);
 
   const getStyle = (feature) => {
-    const name = feature.properties?.name || feature.properties?.NAM_1;
+    const name = feature.properties?.NUTS_NAME || feature.properties?.name || feature.properties?.NAM_1;
     return {
       fillColor: colorMapRef.current[name] || '#3A5728',
       fillOpacity: 0.55,
@@ -65,7 +65,7 @@ export default function CzechRegionMap() {
   };
 
   const onEachFeature = (feature, layer) => {
-    const name = feature.properties?.name || feature.properties?.NAM_1 || '';
+    const name = feature.properties?.NUTS_NAME || feature.properties?.name || feature.properties?.NAM_1 || '';
 
     layer.on({
       mouseover: (e) => {

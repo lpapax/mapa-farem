@@ -10,7 +10,7 @@ const SEASONS = {
       { name:'Jahody', emoji:'🍓', tip:'Lokální jahody jsou mnohem sladší než dovozové. Hledej od května.',
         img:'https://images.unsplash.com/photo-1464965911861-746a04b4bca6?w=400&q=80&fit=crop' },
       { name:'Chřest', emoji:'🌿', tip:'Česká sezóna trvá jen 6–8 týdnů. Nejlepší je bílý chřest z jižní Moravy.',
-        img:'https://images.unsplash.com/photo-1537025338873-8438ffbf9d9e?w=400&q=80&fit=crop' },
+        img:'https://images.unsplash.com/photo-1588070946807-0e3ce22ab0f3?w=400&q=80&fit=crop' },
       { name:'Špenát', emoji:'🥬', tip:'Jarní špenát je jemnější než podzimní. Skvělý čerstvý i dušený.',
         img:'https://images.unsplash.com/photo-1576045057995-568f588f82fb?w=400&q=80&fit=crop' },
       { name:'Ředkvičky', emoji:'🔴', tip:'Jedny z prvních jarních plodin. Vydrží až do léta.',
@@ -18,7 +18,7 @@ const SEASONS = {
       { name:'Pažitka', emoji:'🌿', tip:'Začíná růst jako jedna z prvních – signál, že jaro je tady.',
         img:'https://images.unsplash.com/photo-1540420773420-3366772f4999?w=400&q=80&fit=crop' },
       { name:'Vejce', emoji:'🥚', tip:'Jarní vejce od slepic s výběhem mají výraznější žloutek díky čerstvé trávě.',
-        img:'https://images.unsplash.com/photo-1489824904134-891ab64532f1?w=400&q=80&fit=crop' },
+        img:'https://images.unsplash.com/photo-1582722872445-44dc5f7e3c8f?w=400&q=80&fit=crop' },
     ],
   },
   leto: {
