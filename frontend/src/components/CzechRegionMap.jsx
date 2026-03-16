@@ -7,6 +7,24 @@ import FARMS_DATA from '../data/farms.json';
 
 const GEOJSON_URL = '/czech-regions.geojson';
 
+// Hardcoded NUTS_ID → correct Czech name (bypasses corrupted NUTS_NAME in GeoJSON)
+const NUTS_ID_TO_NAME = {
+  'CZ010': 'Praha',
+  'CZ020': 'Středočeský kraj',
+  'CZ031': 'Jihočeský kraj',
+  'CZ032': 'Plzeňský kraj',
+  'CZ041': 'Karlovarský kraj',
+  'CZ042': 'Ústecký kraj',
+  'CZ051': 'Liberecký kraj',
+  'CZ052': 'Královéhradecký kraj',
+  'CZ053': 'Pardubický kraj',
+  'CZ063': 'Kraj Vysočina',
+  'CZ064': 'Jihomoravský kraj',
+  'CZ071': 'Olomoucký kraj',
+  'CZ072': 'Zlínský kraj',
+  'CZ080': 'Moravskoslezský kraj',
+};
+
 const farmCount = {};
 FARMS_DATA.forEach(f => { farmCount[f.loc] = (farmCount[f.loc] || 0) + 1; });
 
@@ -46,7 +64,7 @@ export default function CzechRegionMap() {
       .then(data => {
         let i = 0;
         data.features.forEach(f => {
-          const name = f.properties?.NUTS_NAME || f.properties?.name || f.properties?.NAM_1 || String(i);
+          const name = NUTS_ID_TO_NAME[f.properties?.NUTS_ID] || f.properties?.name || f.properties?.NAM_1 || String(i);
           if (!colorMapRef.current[name]) {
             colorMapRef.current[name] = PALETTE[i % PALETTE.length];
             i++;
@@ -59,7 +77,7 @@ export default function CzechRegionMap() {
   }, []);
 
   const getStyle = (feature) => {
-    const name = feature.properties?.NUTS_NAME || feature.properties?.name || feature.properties?.NAM_1;
+    const name = NUTS_ID_TO_NAME[feature.properties?.NUTS_ID] || feature.properties?.name || feature.properties?.NAM_1;
     return {
       fillColor: colorMapRef.current[name] || '#3A5728',
       fillOpacity: 0.55,
@@ -69,7 +87,7 @@ export default function CzechRegionMap() {
   };
 
   const onEachFeature = (feature, layer) => {
-    const name = feature.properties?.NUTS_NAME || feature.properties?.name || feature.properties?.NAM_1 || '';
+    const name = NUTS_ID_TO_NAME[feature.properties?.NUTS_ID] || feature.properties?.name || feature.properties?.NAM_1 || '';
 
     layer.on({
       mouseover: (e) => {
