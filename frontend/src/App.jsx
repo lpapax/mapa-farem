@@ -21,6 +21,7 @@ const SeasonalGuidePage = lazy(() => import('./pages/SeasonalGuidePage'));
 const AdminPage         = lazy(() => import('./pages/AdminPage'));
 const AboutPage         = lazy(() => import('./pages/AboutPage'));
 const PricingPage       = lazy(() => import('./pages/PricingPage'));
+const ProfileSetupPage  = lazy(() => import('./pages/ProfileSetupPage'));
 const NotFoundPageLazy  = lazy(() => import('./pages/OtherPages').then(m => ({ default: m.NotFoundPage })));
 
 export default function App() {
@@ -45,6 +46,7 @@ export default function App() {
           <Route path="/registrace" element={<RegisterPage />} />
           <Route path="/pridat-farmu" element={<RegisterFarmPage />} />
           <Route path="/profil" element={<ProfilePage />} />
+          <Route path="/profil-setup" element={<ProfileSetupPage />} />
           <Route path="/oblibene" element={<FavoritesPage />} />
           <Route path="/pokladna" element={<CheckoutPage />} />
           <Route path="/objednavky" element={<OrdersPage />} />

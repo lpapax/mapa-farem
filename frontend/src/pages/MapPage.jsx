@@ -7,6 +7,7 @@ import { KRAJ_BOUNDS } from '../components/CzechRegionMap';
 import { Search, Plus, ShoppingCart, Menu, X, Navigation, Moon, Sun } from 'lucide-react';
 import { useAuthStore, useMapStore, useCartStore, useNotificationStore, useFavoritesStore } from '../store/index.js';
 import FARMS_DATA from '../data/farms.json';
+import { supabase } from '../supabase.js';
 
 // ── PWA Service Worker ─────────────────────────────────────────────────────
 if ('serviceWorker' in navigator) {
@@ -515,6 +516,17 @@ function MapboxMap({ farms, selectedId, onSelect, userLocation, radius, dark, ma
   );
 }
 
+// ── PRO TEBE helper ────────────────────────────────────────────────────────
+function isForUser(farm, profile) {
+  if (!profile) return false;
+  let score = 0;
+  if (profile.region && farm.loc === profile.region) score++;
+  if (profile.diet_type === 'vegan' && ['veggie', 'bio', 'herbs'].includes(farm.type)) score++;
+  if (profile.diet_type === 'vegetarian' && ['veggie', 'bio', 'dairy', 'herbs', 'honey'].includes(farm.type)) score++;
+  if (profile.certifications?.includes('bio') && farm.bio) score++;
+  return score >= 2;
+}
+
 // ── HLAVNÍ KOMPONENTA ──────────────────────────────────────────────────────
 export default function MapPage() {
   useSEO({
@@ -557,6 +569,18 @@ export default function MapPage() {
 
   const [dark, setDark] = useState(() => localStorage.getItem('mf-dark') === '1');
   const [mapStyle, setMapStyle] = useState(() => localStorage.getItem('mf-style') || 'outdoors');
+  const [userProfile, setUserProfile] = useState(null);
+
+  useEffect(() => {
+    supabase.auth.getUser().then(({ data: { user: su } }) => {
+      if (!su) return;
+      supabase.from('profiles')
+        .select('diet_type,allergies,certifications,region')
+        .eq('user_id', su.id)
+        .single()
+        .then(({ data }) => { if (data) setUserProfile(data); });
+    });
+  }, []);
   const [stylePickerOpen, setStylePickerOpen] = useState(false);
   const [suggestions, setSuggestions] = useState([]);
   const [showSug, setShowSug] = useState(false);
@@ -966,8 +990,20 @@ export default function MapPage() {
                   {nearbyMode ? `Žádné farmy do ${radius} km. Zkuste zvýšit radius.` : 'Žádné farmy neodpovídají filtru.'}
                 </div>
               ) : filtered.map((farm, i) => (
-                <div key={farm.id} id={'card-'+farm.id} className="farm-card-anim" style={{ animationDelay: `${Math.min(i*0.03, 0.3)}s` }}>
+                <div key={farm.id} id={'card-'+farm.id} className="farm-card-anim" style={{ animationDelay: `${Math.min(i*0.03, 0.3)}s`, position:'relative' }}>
                   <FarmCard farm={farm} selected={selectedFarmId===farm.id} onClick={handleSelect} userLocation={userLocation} dark={dark}/>
+                  {isForUser(farm, userProfile) && (
+                    <div style={{
+                      position:'absolute', top:8, right:8,
+                      background:'#C8963E', color:'white',
+                      fontSize:9, fontWeight:700,
+                      padding:'2px 7px', borderRadius:9999,
+                      pointerEvents:'none',
+                      zIndex:2,
+                    }}>
+                      Pro tebe ✓
+                    </div>
+                  )}
                 </div>
               ))}
             </div>
