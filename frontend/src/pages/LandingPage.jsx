@@ -111,21 +111,24 @@ const HERO_PHOTOS = [
   { id: '1444681961742-3aef9e307b37', alt: 'Vinice na slunci', label: 'Rodinné vinařství · Jižní Morava' },
 ];
 
-// Pool of diverse farm/field photos — assigned by index so every card looks different
-const FARM_PHOTO_POOL = [
-  '1488459716781-31db52582fe9', // fresh produce colorful
-  '1416879595882-3373a0480b5b', // farmers market vegetables
-  '1464226184884-fa280b87c399', // countryside field aerial
-  '1523741543316-beb7fc7023d8', // fresh harvest vegetables
-  '1550583724-b2692b85b150', // rustic farm stand
-  '1488459716781-31db52582fe9', // fresh produce colorful
-  '1592150621744-aca64f7b0b63', // mushrooms forest floor
-  '1444681961742-3aef9e307b37', // vineyard rows
-  '1508361001754-c570fa45e7c5', // beehive honey
-  '1562517520-1d5e3c7543ed', // farm cattle meadow
-  '1440342359983-0e7c98b2e50e', // orchard apple trees
-  '1574943320219-553eb213f72d', // sunflower field
-];
+// Type-specific photo pools — each farm type gets a matching image
+const FARM_TYPE_PHOTOS = {
+  veggie:   ['1488459716781-31db52582fe9', '1523741543316-beb7fc7023d8', '1416879595882-3373a0480b5b', '1592194996308-7b43878e84a6'],
+  honey:    ['1508361001754-c570fa45e7c5', '1558642452-9d2a7deb7f62', '1471193945509-9dbc701b65a8', '1504198458310-9d5e7b6cb0de'],
+  meat:     ['1562517520-1d5e3c7543ed', '1546548969-d7e67cb08fd3', '1529692236671-f1f6cf9683ba', '1547592166-23ac45744acd'],
+  dairy:    ['1550583724-b2692b85b150', '1563636619-e9143da7f09e', '1607623814075-a51fd91e09f0', '1466692476868-9ee5a3a3e29b'],
+  fruit:    ['1440342359983-0e7c98b2e50e', '1574943320219-553eb213f72d', '1506794778202-cad84cf45f1d', '1528821128474-27f963b062bf'],
+  grain:    ['1574943320219-553eb213f72d', '1464226184884-fa280b87c399', '1625246333195-cbfcaabedf55', '1500595046743-cd271d694d30'],
+  mushroom: ['1592150621744-aca64f7b0b63', '1504509546545-a91cb1a99747', '1573246123716-6b1782bfc499', '1518977676895-ea5028ec7b97'],
+  herb:     ['1416879595882-3373a0480b5b', '1500375592081-dd40c5c8ee6a', '1599598425947-5202edd56fea', '1466193498717-c5b7cf4ccc55'],
+  market:   ['1488459716781-31db52582fe9', '1416879595882-3373a0480b5b', '1488900128323-21503983a8c2', '1523741543316-beb7fc7023d8'],
+  bio:      ['1464226184884-fa280b87c399', '1500595046743-cd271d694d30', '1444681961742-3aef9e307b37', '1416879595882-3373a0480b5b'],
+  default:  ['1464226184884-fa280b87c399', '1500595046743-cd271d694d30', '1416879595882-3373a0480b5b', '1488459716781-31db52582fe9'],
+};
+function farmPhoto(farm, idx = 0) {
+  const pool = FARM_TYPE_PHOTOS[farm.type] || FARM_TYPE_PHOTOS.default;
+  return pool[idx % pool.length];
+}
 
 /* ─── Category grid data ─── */
 const CATEGORIES = [
@@ -463,7 +466,7 @@ export default function LandingPage() {
           </div>
           <div className="farms-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 24 }}>
             {featuredFarms.map((farm, i) => {
-              const photoId = FARM_PHOTO_POOL[i % FARM_PHOTO_POOL.length];
+              const photoId = farmPhoto(farm, i);
               return (
                 <motion.div
                   key={farm.id}
