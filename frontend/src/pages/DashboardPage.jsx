@@ -1,12 +1,18 @@
 // frontend/src/pages/DashboardPage.jsx
 // Farmer dashboard — MapaFarem.cz
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../store/index.js';
 import {
   Eye, ShoppingBag, Heart, Star,
-  PlusCircle, Leaf, Edit, Package,
+  PlusCircle, Leaf, Edit, Package, Camera,
 } from 'lucide-react';
+import { createClient } from '@supabase/supabase-js';
+
+const supabase = createClient(
+  import.meta.env.VITE_SUPABASE_URL,
+  import.meta.env.VITE_SUPABASE_ANON_KEY
+);
 
 // ── Design tokens ────────────────────────────────────────────────────────────
 const C = {
@@ -181,6 +187,104 @@ export default function DashboardPage() {
 
   // Seasonal offers state
   const [seasonalOffers, setSeasonalOffers] = useState(MOCK_SEASONAL);
+
+  // Farm photos state
+  const [farmPhotos, setFarmPhotos] = useState([]);
+  const [uploading, setUploading] = useState(false);
+  const [uploadError, setUploadError] = useState('');
+  const photoInputRef = useRef(null);
+
+  // Derive a stable farm ID from the logged-in user's id
+  const farmId = user?.farmId || user?.id || 'demo';
+
+  // Load existing photos from Supabase Storage on mount / when farmId changes
+  useEffect(() => {
+    async function loadPhotos() {
+      try {
+        const { data, error } = await supabase.storage
+          .from('farm-photos')
+          .list(`farm-${farmId}/`);
+        if (error) throw error;
+        if (data) {
+          setFarmPhotos(
+            data
+              .filter(f => f.name && f.name !== '.emptyFolderPlaceholder')
+              .map(f =>
+                supabase.storage
+                  .from('farm-photos')
+                  .getPublicUrl(`farm-${farmId}/${f.name}`).data.publicUrl
+              )
+          );
+        }
+      } catch (err) {
+        // Silently ignore load errors — bucket may not exist yet
+      }
+    }
+    loadPhotos();
+  }, [farmId]);
+
+  async function handlePhotoUpload(e) {
+    const files = Array.from(e.target.files || []);
+    if (!files.length) return;
+    if (farmPhotos.length + files.length > 12) {
+      setUploadError('Maximálně 12 fotek. Nejdříve smažte stávající fotky.');
+      return;
+    }
+    setUploadError('');
+    setUploading(true);
+    try {
+      for (let i = 0; i < files.length; i++) {
+        const file = files[i];
+        // Update progress label via a temporary state trick — we reuse uploadError as progress text
+        setUploadError(`Nahrávám ${i + 1}/${files.length}…`);
+        const path = `farm-${farmId}/${Date.now()}-${file.name}`;
+        const { error } = await supabase.storage
+          .from('farm-photos')
+          .upload(path, file, { upsert: false });
+        if (error) throw error;
+      }
+      setUploadError('');
+      // Reload the photo list
+      const { data, error: listErr } = await supabase.storage
+        .from('farm-photos')
+        .list(`farm-${farmId}/`);
+      if (listErr) throw listErr;
+      if (data) {
+        setFarmPhotos(
+          data
+            .filter(f => f.name && f.name !== '.emptyFolderPlaceholder')
+            .map(f =>
+              supabase.storage
+                .from('farm-photos')
+                .getPublicUrl(`farm-${farmId}/${f.name}`).data.publicUrl
+            )
+        );
+      }
+    } catch (err) {
+      setUploadError(err.message || 'Nahrávání selhalo. Zkuste to znovu.');
+    } finally {
+      setUploading(false);
+      // Reset input so the same file can be re-selected after a failure
+      if (photoInputRef.current) photoInputRef.current.value = '';
+    }
+  }
+
+  async function deletePhoto(photoUrl) {
+    // Extract the storage path from the public URL
+    const marker = `/farm-photos/`;
+    const idx = photoUrl.indexOf(marker);
+    if (idx === -1) return;
+    const path = decodeURIComponent(photoUrl.slice(idx + marker.length));
+    try {
+      const { error } = await supabase.storage
+        .from('farm-photos')
+        .remove([path]);
+      if (error) throw error;
+      setFarmPhotos(prev => prev.filter(u => u !== photoUrl));
+    } catch (err) {
+      setUploadError(err.message || 'Smazání selhalo.');
+    }
+  }
 
   const { pct, missing } = calcCompletion(user, products);
 
@@ -835,7 +939,120 @@ export default function DashboardPage() {
           )}
         </Card>
 
-        {/* ── 8. Recent Activity Feed ────────────────────────────────────── */}
+        {/* ── 8. Farm Photos ─────────────────────────────────────────────── */}
+        <Card style={{ marginBottom: 24 }}>
+          <SectionTitle>
+            <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}>
+              <Camera size={18} color={C.gold} strokeWidth={2} />
+              Fotky farmy
+            </span>
+          </SectionTitle>
+
+          {/* Max-photo warning */}
+          {farmPhotos.length >= 12 && (
+            <div style={{
+              marginBottom: 14, padding: '8px 14px',
+              background: 'rgba(191,91,61,.10)', borderRadius: 8,
+              fontSize: 13, fontWeight: 600, color: C.terra,
+            }}>
+              Maximálně 12 fotek — smažte stávající foto, abyste mohli přidat nové.
+            </div>
+          )}
+
+          {/* Drop zone */}
+          {farmPhotos.length < 12 && (
+            <div style={{
+              border: `2px dashed ${C.gold}`, borderRadius: 12,
+              padding: '32px 20px', textAlign: 'center',
+              marginBottom: 16,
+              background: 'rgba(200,150,62,.04)',
+            }}>
+              <Camera size={32} color={C.gold} strokeWidth={1.5} style={{ marginBottom: 12, opacity: .7 }} />
+              <div style={{ fontSize: 14, color: C.sub, marginBottom: 14 }}>
+                Přetáhněte fotky sem nebo
+              </div>
+              <Btn
+                variant="filled"
+                color={C.gold}
+                onClick={() => photoInputRef.current && photoInputRef.current.click()}
+                style={{ fontSize: 13, padding: '9px 22px' }}
+              >
+                Vybrat soubory
+              </Btn>
+              <input
+                ref={photoInputRef}
+                type="file"
+                accept="image/*"
+                multiple
+                style={{ display: 'none' }}
+                onChange={handlePhotoUpload}
+              />
+            </div>
+          )}
+
+          {/* Progress / error pill */}
+          {(uploadError || uploading) && (
+            <div style={{
+              display: 'inline-block', marginBottom: 16,
+              padding: '6px 16px', borderRadius: 99,
+              background: uploading
+                ? 'rgba(45,80,22,.10)'
+                : 'rgba(191,91,61,.12)',
+              color: uploading ? C.green : C.terra,
+              fontSize: 13, fontWeight: 600,
+            }}>
+              {uploading && !uploadError ? 'Nahrávám…' : uploadError}
+            </div>
+          )}
+
+          {/* Photo grid */}
+          {farmPhotos.length > 0 && (
+            <div style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(3, 1fr)',
+              gap: 12,
+            }}>
+              {farmPhotos.map((url, i) => (
+                <div key={url} style={{ position: 'relative', borderRadius: 8, overflow: 'hidden' }}>
+                  <img
+                    src={url}
+                    alt={`Fotka farmy ${i + 1}`}
+                    style={{
+                      width: '100%', height: 120,
+                      objectFit: 'cover', display: 'block',
+                    }}
+                  />
+                  {/* Delete button */}
+                  <button
+                    onClick={() => deletePhoto(url)}
+                    title="Smazat fotku"
+                    style={{
+                      position: 'absolute', top: 6, right: 6,
+                      width: 24, height: 24, borderRadius: '50%',
+                      background: 'rgba(191,91,61,.90)',
+                      border: 'none', cursor: 'pointer',
+                      display: 'flex', alignItems: 'center', justifyContent: 'center',
+                      color: '#fff', fontSize: 13, fontWeight: 700,
+                      lineHeight: 1,
+                    }}
+                    onMouseEnter={e => e.currentTarget.style.background = C.terra}
+                    onMouseLeave={e => e.currentTarget.style.background = 'rgba(191,91,61,.90)'}
+                  >
+                    ✕
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {farmPhotos.length === 0 && !uploading && (
+            <div style={{ textAlign: 'center', color: C.sub, fontSize: 13, paddingTop: 4 }}>
+              Zatím žádné fotky. Nahrajte první fotografii vaší farmy.
+            </div>
+          )}
+        </Card>
+
+        {/* ── 9. Recent Activity Feed ─────────────────────────────────────── */}
         <Card style={{ marginBottom: 24 }}>
           <SectionTitle>Nedávná aktivita</SectionTitle>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 0 }}>

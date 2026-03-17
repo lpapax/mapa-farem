@@ -1,5 +1,8 @@
 // frontend/src/pages/BlogPage.jsx
+// Requires Supabase table: newsletter_subscribers (id uuid, email text unique, source text, created_at timestamptz default now())
 import { useState, useMemo } from 'react';
+import { createClient } from '@supabase/supabase-js';
+const supabase = createClient(import.meta.env.VITE_SUPABASE_URL, import.meta.env.VITE_SUPABASE_ANON_KEY);
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ChevronLeft, Clock, MapPin } from 'lucide-react';
@@ -35,7 +38,21 @@ export default function BlogPage() {
 
   const navigate = useNavigate();
   const [activeCategory, setActiveCategory] = useState('Vše');
-  const [email, setEmail] = useState('');
+  const [nlEmail, setNlEmail] = useState('');
+  const [nlStatus, setNlStatus] = useState(null);
+
+  async function handleNewsletter(e) {
+    e.preventDefault();
+    if (!nlEmail.includes('@')) return;
+    setNlStatus('loading');
+    try {
+      const { error } = await supabase.from('newsletter_subscribers').insert({ email: nlEmail.trim().toLowerCase(), source: 'blog' });
+      if (error?.code === '23505') { setNlStatus('duplicate'); return; }
+      if (error) throw error;
+      setNlStatus('success');
+      setNlEmail('');
+    } catch { setNlStatus('error'); }
+  }
 
   const categories = useMemo(() => {
     const cats = [...new Set(BLOG_POSTS.map((p) => p.category))];
@@ -205,25 +222,43 @@ export default function BlogPage() {
           <p style={{ color: 'rgba(255,255,255,0.75)', fontSize: 15, margin: '0 0 28px' }}>
             Každý měsíc nejlepší recepty a tipy přímo do schránky.
           </p>
-          <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', justifyContent: 'center' }}>
+          <form
+            onSubmit={handleNewsletter}
+            style={{ display: 'flex', gap: 10, flexWrap: 'wrap', justifyContent: 'center' }}
+          >
             <input
               type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
+              value={nlEmail}
+              onChange={(e) => setNlEmail(e.target.value)}
               placeholder="vas@email.cz"
+              required
               style={{
                 flex: '1 1 220px', padding: '12px 16px', borderRadius: 8,
                 border: 'none', fontSize: 14, outline: 'none',
               }}
             />
-            <button style={{
-              background: GOLD, color: 'white', border: 'none',
-              padding: '12px 24px', borderRadius: 8, fontSize: 14,
-              fontWeight: 700, cursor: 'pointer', whiteSpace: 'nowrap',
-            }}>
-              Přihlásit se
+            <button
+              type="submit"
+              disabled={nlStatus === 'loading'}
+              style={{
+                background: GOLD, color: 'white', border: 'none',
+                padding: '12px 24px', borderRadius: 8, fontSize: 14,
+                fontWeight: 700, cursor: nlStatus === 'loading' ? 'not-allowed' : 'pointer',
+                whiteSpace: 'nowrap', opacity: nlStatus === 'loading' ? 0.7 : 1,
+              }}
+            >
+              {nlStatus === 'loading' ? 'Přihlašuji...' : 'Přihlásit se'}
             </button>
-          </div>
+          </form>
+          {nlStatus === 'success' && (
+            <p style={{ marginTop: 14, fontSize: 14, fontWeight: 700, color: '#4ADE80' }}>Přihlášeno! Těšte se na tipy z farem.</p>
+          )}
+          {nlStatus === 'duplicate' && (
+            <p style={{ marginTop: 14, fontSize: 14, fontWeight: 700, color: GOLD }}>Tento e-mail je již přihlášen.</p>
+          )}
+          {nlStatus === 'error' && (
+            <p style={{ marginTop: 14, fontSize: 14, fontWeight: 700, color: '#F87171' }}>Chyba, zkuste znovu.</p>
+          )}
         </div>
       </div>
     </div>

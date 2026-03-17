@@ -1,5 +1,8 @@
 // frontend/src/pages/LandingPage.jsx
+// Requires Supabase table: newsletter_subscribers (id uuid, email text unique, source text, created_at timestamptz default now())
 import { useState, useEffect, useRef } from 'react';
+import { createClient } from '@supabase/supabase-js';
+const supabase = createClient(import.meta.env.VITE_SUPABASE_URL, import.meta.env.VITE_SUPABASE_ANON_KEY);
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence, useInView } from 'framer-motion';
 import {
@@ -167,8 +170,8 @@ export default function LandingPage() {
   const navigate = useNavigate();
   const { user } = useAuthStore();
   const [searchQ, setSearchQ] = useState('');
-  const [newsletterEmail, setNewsletterEmail] = useState('');
-  const [newsletterOk, setNewsletterOk] = useState(false);
+  const [nlEmail, setNlEmail] = useState('');
+  const [nlStatus, setNlStatus] = useState(null);
   const [featuredFarms] = useState(() => pickFeaturedFarms());
   const [heroPhoto] = useState(() => HERO_PHOTOS[Math.floor(Math.random() * HERO_PHOTOS.length)]);
 
@@ -185,10 +188,18 @@ export default function LandingPage() {
     else navigate('/mapa');
   };
 
-  const handleNewsletter = (e) => {
+  async function handleNewsletter(e) {
     e.preventDefault();
-    if (newsletterEmail.trim()) setNewsletterOk(true);
-  };
+    if (!nlEmail.includes('@')) return;
+    setNlStatus('loading');
+    try {
+      const { error } = await supabase.from('newsletter_subscribers').insert({ email: nlEmail.trim().toLowerCase(), source: 'landing' });
+      if (error?.code === '23505') { setNlStatus('duplicate'); return; }
+      if (error) throw error;
+      setNlStatus('success');
+      setNlEmail('');
+    } catch { setNlStatus('error'); }
+  }
 
   return (
     <div style={{ fontFamily: "'Inter','DM Sans',sans-serif", background: '#FAF7F2', color: '#1A1A1A', overflowX: 'hidden' }}>
@@ -605,38 +616,35 @@ export default function LandingPage() {
           <p style={{ fontSize: 15, color: 'rgba(250,247,242,0.6)', lineHeight: 1.75, marginBottom: 40 }}>
             Každý týden newsletter s tím, co právě dozrává ve vašem regionu.
           </p>
-          <AnimatePresence mode="wait">
-            {newsletterOk ? (
-              <motion.div
-                key="ok"
-                initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0 }}
-                style={{ display: 'inline-flex', alignItems: 'center', gap: 12, padding: '18px 32px', background: 'rgba(200,150,62,0.15)', border: '1px solid rgba(200,150,62,0.4)', borderRadius: 12 }}
-              >
-                <Check size={20} color="#C8963E" />
-                <span style={{ fontSize: 15, fontWeight: 700, color: '#FAF7F2' }}>Děkujeme! Brzy se ozveme.</span>
-              </motion.div>
-            ) : (
-              <motion.form key="form" onSubmit={handleNewsletter} initial={{ opacity: 1 }} exit={{ opacity: 0 }}>
-                <div style={{ display: 'flex', gap: 0, maxWidth: 460, margin: '0 auto 12px' }}>
-                  <input
-                    type="email"
-                    value={newsletterEmail}
-                    onChange={e => setNewsletterEmail(e.target.value)}
-                    placeholder="váš@email.cz"
-                    required
-                    style={{ flex: 1, padding: '14px 18px', background: '#FAF7F2', border: 'none', borderRadius: '9999px 0 0 9999px', fontSize: 14, color: '#1A1A1A', fontFamily: "'Inter',sans-serif", outline: 'none' }}
-                  />
-                  <button type="submit"
-                    style={{ padding: '14px 24px', background: '#C8963E', color: 'white', border: 'none', borderRadius: '0 9999px 9999px 0', fontWeight: 700, fontSize: 14, cursor: 'pointer', fontFamily: "'Inter',sans-serif", whiteSpace: 'nowrap', transition: 'background .15s', flexShrink: 0 }}
-                    onMouseEnter={e => e.currentTarget.style.background = '#B8853A'}
-                    onMouseLeave={e => e.currentTarget.style.background = '#C8963E'}>
-                    Odebírat zdarma
-                  </button>
-                </div>
-                <p style={{ fontSize: 12, color: 'rgba(250,247,242,0.35)' }}>Žádný spam. Odhlásit se lze kdykoliv.</p>
-              </motion.form>
+          <motion.form onSubmit={handleNewsletter} initial={{ opacity: 1 }}>
+            <div style={{ display: 'flex', gap: 0, maxWidth: 460, margin: '0 auto 12px' }}>
+              <input
+                type="email"
+                value={nlEmail}
+                onChange={e => setNlEmail(e.target.value)}
+                placeholder="váš@email.cz"
+                required
+                style={{ flex: 1, padding: '14px 18px', background: '#FAF7F2', border: 'none', borderRadius: '9999px 0 0 9999px', fontSize: 14, color: '#1A1A1A', fontFamily: "'Inter',sans-serif", outline: 'none' }}
+              />
+              <button type="submit"
+                disabled={nlStatus === 'loading'}
+                style={{ padding: '14px 24px', background: '#C8963E', color: 'white', border: 'none', borderRadius: '0 9999px 9999px 0', fontWeight: 700, fontSize: 14, cursor: nlStatus === 'loading' ? 'not-allowed' : 'pointer', fontFamily: "'Inter',sans-serif", whiteSpace: 'nowrap', transition: 'background .15s', flexShrink: 0, opacity: nlStatus === 'loading' ? 0.7 : 1 }}
+                onMouseEnter={e => { if (nlStatus !== 'loading') e.currentTarget.style.background = '#B8853A'; }}
+                onMouseLeave={e => e.currentTarget.style.background = '#C8963E'}>
+                {nlStatus === 'loading' ? 'Přihlašuji...' : 'Odebírat zdarma'}
+              </button>
+            </div>
+            <p style={{ fontSize: 12, color: 'rgba(250,247,242,0.35)' }}>Žádný spam. Odhlásit se lze kdykoliv.</p>
+            {nlStatus === 'success' && (
+              <p style={{ marginTop: 12, fontSize: 14, fontWeight: 700, color: '#4ADE80' }}>Přihlášeno! Těšte se na tipy z farem.</p>
             )}
-          </AnimatePresence>
+            {nlStatus === 'duplicate' && (
+              <p style={{ marginTop: 12, fontSize: 14, fontWeight: 700, color: '#C8963E' }}>Tento e-mail je již přihlášen.</p>
+            )}
+            {nlStatus === 'error' && (
+              <p style={{ marginTop: 12, fontSize: 14, fontWeight: 700, color: '#F87171' }}>Chyba, zkuste znovu.</p>
+            )}
+          </motion.form>
         </div>
       </section>
 

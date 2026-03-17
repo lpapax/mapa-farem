@@ -1,5 +1,8 @@
 // frontend/src/pages/SeasonalGuidePage.jsx
+// Requires Supabase table: newsletter_subscribers (id uuid, email text unique, source text, created_at timestamptz default now())
 import { useState } from 'react';
+import { createClient } from '@supabase/supabase-js';
+const supabase = createClient(import.meta.env.VITE_SUPABASE_URL, import.meta.env.VITE_SUPABASE_ANON_KEY);
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useSEO } from '../hooks/useSEO';
@@ -292,8 +295,8 @@ export default function SeasonalGuidePage() {
   const [selectedMonth, setSelectedMonth] = useState(currentMonth);
   const [selectedRecipe, setSelectedRecipe] = useState(null);
   const [selectedRecipeProduct, setSelectedRecipeProduct] = useState(null);
-  const [email, setEmail] = useState('');
-  const [subscribed, setSubscribed] = useState(false);
+  const [nlEmail, setNlEmail] = useState('');
+  const [nlStatus, setNlStatus] = useState(null);
 
   useSEO({
     title: `Sezónní kalendář — ${MONTHS[currentMonth - 1]}`,
@@ -307,9 +310,17 @@ export default function SeasonalGuidePage() {
     setSelectedRecipeProduct(product);
   }
 
-  function handleSubscribe(e) {
+  async function handleSubscribe(e) {
     e.preventDefault();
-    if (email.trim()) setSubscribed(true);
+    if (!nlEmail.includes('@')) return;
+    setNlStatus('loading');
+    try {
+      const { error } = await supabase.from('newsletter_subscribers').insert({ email: nlEmail.trim().toLowerCase(), source: 'sezona' });
+      if (error?.code === '23505') { setNlStatus('duplicate'); return; }
+      if (error) throw error;
+      setNlStatus('success');
+      setNlEmail('');
+    } catch { setNlStatus('error'); }
   }
 
   return (
@@ -545,52 +556,53 @@ export default function SeasonalGuidePage() {
           Sezónní tipy každý měsíc
         </h2>
 
-        {subscribed ? (
-          <motion.p
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            style={{ color: C.gold, fontSize: 16, fontWeight: 700 }}
+        <form
+          onSubmit={handleSubscribe}
+          style={{ display: 'flex', gap: 10, justifyContent: 'center', flexWrap: 'wrap' }}
+        >
+          <input
+            type="email"
+            placeholder="váš@email.cz"
+            value={nlEmail}
+            onChange={e => setNlEmail(e.target.value)}
+            required
+            style={{
+              padding: '12px 20px',
+              borderRadius: 9999,
+              border: 'none',
+              fontSize: 15,
+              fontFamily: "'Inter', sans-serif",
+              width: 280,
+              outline: 'none',
+            }}
+          />
+          <button
+            type="submit"
+            disabled={nlStatus === 'loading'}
+            style={{
+              background: C.gold,
+              color: 'white',
+              border: 'none',
+              borderRadius: 9999,
+              padding: '12px 28px',
+              fontSize: 15,
+              fontWeight: 700,
+              cursor: nlStatus === 'loading' ? 'not-allowed' : 'pointer',
+              fontFamily: "'Inter', sans-serif",
+              opacity: nlStatus === 'loading' ? 0.7 : 1,
+            }}
           >
-            Díky! Brzy se ozveme.
-          </motion.p>
-        ) : (
-          <form
-            onSubmit={handleSubscribe}
-            style={{ display: 'flex', gap: 10, justifyContent: 'center', flexWrap: 'wrap' }}
-          >
-            <input
-              type="email"
-              placeholder="váš@email.cz"
-              value={email}
-              onChange={e => setEmail(e.target.value)}
-              required
-              style={{
-                padding: '12px 20px',
-                borderRadius: 9999,
-                border: 'none',
-                fontSize: 15,
-                fontFamily: "'Inter', sans-serif",
-                width: 280,
-                outline: 'none',
-              }}
-            />
-            <button
-              type="submit"
-              style={{
-                background: C.gold,
-                color: 'white',
-                border: 'none',
-                borderRadius: 9999,
-                padding: '12px 28px',
-                fontSize: 15,
-                fontWeight: 700,
-                cursor: 'pointer',
-                fontFamily: "'Inter', sans-serif",
-              }}
-            >
-              Přihlásit odběr
-            </button>
-          </form>
+            {nlStatus === 'loading' ? 'Přihlašuji...' : 'Přihlásit odběr'}
+          </button>
+        </form>
+        {nlStatus === 'success' && (
+          <p style={{ marginTop: 14, fontSize: 15, fontWeight: 700, color: '#4ADE80' }}>Přihlášeno! Těšte se na tipy z farem.</p>
+        )}
+        {nlStatus === 'duplicate' && (
+          <p style={{ marginTop: 14, fontSize: 15, fontWeight: 700, color: C.gold }}>Tento e-mail je již přihlášen.</p>
+        )}
+        {nlStatus === 'error' && (
+          <p style={{ marginTop: 14, fontSize: 15, fontWeight: 700, color: '#F87171' }}>Chyba, zkuste znovu.</p>
         )}
       </div>
 
