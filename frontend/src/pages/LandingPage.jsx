@@ -4,8 +4,9 @@ import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence, useInView } from 'framer-motion';
 import {
   Search, Navigation, MapPin, ShoppingBag, Heart, Carrot,
-  Milk, Leaf, Sprout, Wine, Star, ExternalLink, Instagram, Facebook, Check
+  Milk, Leaf, Sprout, Wine, Star, ExternalLink, Instagram, Facebook, Check, User
 } from 'lucide-react';
+import { useAuthStore } from '../store/index.js';
 import FARMS_DATA from '../data/farms.json';
 import CzechRegionMap from '../components/CzechRegionMap';
 import { useSEO } from '../hooks/useSEO';
@@ -161,6 +162,7 @@ function AnimatedCounter({ target, suffix = '' }) {
 /* ═══════════════════════════════════════════════════════════ */
 export default function LandingPage() {
   const navigate = useNavigate();
+  const { user } = useAuthStore();
   const [searchQ, setSearchQ] = useState('');
   const [newsletterEmail, setNewsletterEmail] = useState('');
   const [newsletterOk, setNewsletterOk] = useState(false);
@@ -218,6 +220,17 @@ export default function LandingPage() {
             onMouseEnter={e => e.currentTarget.style.background = '#B8853A'}
             onMouseLeave={e => e.currentTarget.style.background = '#C8963E'}>
             Otevřít mapu
+          </button>
+          {/* User profile / login icon */}
+          <button
+            onClick={() => navigate(user ? '/profil' : '/prihlaseni')}
+            title={user ? 'Můj profil' : 'Přihlásit se'}
+            style={{ marginLeft: 8, width: 40, height: 40, borderRadius: '50%', border: '2px solid rgba(200,150,62,0.5)',
+              background: user ? 'rgba(200,150,62,0.15)' : 'transparent', cursor: 'pointer',
+              display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'all .15s' }}
+            onMouseEnter={e => { e.currentTarget.style.borderColor = '#C8963E'; e.currentTarget.style.background = 'rgba(200,150,62,0.25)'; }}
+            onMouseLeave={e => { e.currentTarget.style.borderColor = 'rgba(200,150,62,0.5)'; e.currentTarget.style.background = user ? 'rgba(200,150,62,0.15)' : 'transparent'; }}>
+            <User size={18} color="#C8963E" />
           </button>
         </div>
       </nav>
