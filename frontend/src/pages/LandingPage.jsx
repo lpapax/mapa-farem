@@ -1,37 +1,26 @@
 // frontend/src/pages/LandingPage.jsx
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { motion, useInView, useScroll, useTransform } from 'framer-motion';
+import { motion, useScroll, useTransform, AnimatePresence } from 'framer-motion';
 import FARMS_DATA from '../data/farms.json';
 import CzechRegionMap from '../components/CzechRegionMap';
 
-/* ─── Mapbox Static map ─── */
-const MAPBOX_TOKEN = import.meta.env.VITE_MAPBOX_TOKEN;
-const TOP_MAP_FARMS = FARMS_DATA
-  .filter(f => f.lat && f.lng && f.rating >= 4.8
-    && f.lat > 48.5 && f.lat < 51.1
-    && f.lng > 12.0 && f.lng < 19.0)
-  .sort((a, b) => b.rating - a.rating)
-  .slice(0, 14);
+/* ─── Ticker farms — high-rating sample for marquee strip ─── */
+const TICKER_FARMS = FARMS_DATA
+  .filter(f => f.rating >= 4.7)
+  .sort(() => Math.random() - 0.5)
+  .slice(0, 24)
+  .map(f => `${f.emoji || '🌿'} ${f.name}`);
 
-const MAP_PINS_STR = TOP_MAP_FARMS
-  .map(f => {
-    const lng = parseFloat(f.lng);
-    const lat = parseFloat(f.lat);
-    if (!isNaN(lng) && !isNaN(lat)) return `pin-s+c8973a(${lng.toFixed(4)},${lat.toFixed(4)})`;
-    return '';
-  }).filter(Boolean).join(',');
-
-const MAPBOX_IMG = MAPBOX_TOKEN
-  ? `https://api.mapbox.com/styles/v1/mapbox/satellite-v9/static/15.5,49.8,6.2,0,0/1200x500@2x?access_token=${MAPBOX_TOKEN}&logo=false&attribution=false`
-  : null;
-
-const BOHEMIA_FARM = FARMS_DATA
-  .filter(f => f.lat && f.lng && f.rating >= 4.8 && f.lng < 15.5)
-  .sort((a, b) => b.rating - a.rating)[0];
-const MORAVIA_FARM = FARMS_DATA
-  .filter(f => f.lat && f.lng && f.rating >= 4.8 && f.lng >= 16.0)
-  .sort((a, b) => b.rating - a.rating)[0];
+/* ─── Current season helper ─── */
+const getSeason = () => {
+  const m = new Date().getMonth() + 1;
+  if (m >= 3 && m <= 5) return { label: 'Jaro', emoji: '🌱', path: '/sezona/jaro' };
+  if (m >= 6 && m <= 8) return { label: 'Léto', emoji: '☀️', path: '/sezona/leto' };
+  if (m >= 9 && m <= 11) return { label: 'Podzim', emoji: '🍂', path: '/sezona/podzim' };
+  return { label: 'Zima', emoji: '❄️', path: '/sezona/zima' };
+};
+const CURRENT_SEASON = getSeason();
 
 /* ─── Design tokens — Premium Organic + Rustic Editorial ─── */
 const C = {
@@ -59,36 +48,6 @@ const CAT_PHOTOS = [
   { label:'Víno & nápoje',    filter:'wine',   emoji:'🍷',
     img:'https://images.unsplash.com/photo-1506377247377-2a5b3b417ebb?w=700&q=80&fit=crop' },
 ];
-
-function FarmCard({ farm, navigate, style }) {
-  if (!farm) return null;
-  return (
-    <div style={{
-      position:'absolute', background:'rgba(17,29,16,.97)', backdropFilter:'blur(12px)',
-      borderRadius:2, padding:'12px 16px',
-      boxShadow:'0 12px 40px rgba(0,0,0,.4)',
-      minWidth:196, border:'1px solid rgba(200,151,58,.25)', ...style,
-    }}>
-      <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:6 }}>
-        <div style={{ fontSize:10, color:'rgba(245,237,224,.4)', textTransform:'uppercase', letterSpacing:1 }}>Ověřená farma</div>
-        <div style={{ fontSize:9, fontWeight:700, color:C.gold, background:'rgba(200,151,58,.12)', borderRadius:2, padding:'2px 7px' }}>🌿 BIO</div>
-      </div>
-      <div style={{ display:'flex', alignItems:'center', gap:10, marginBottom:8 }}>
-        <div style={{ width:34, height:34, borderRadius:'50%', background:'rgba(200,151,58,.1)', display:'flex', alignItems:'center', justifyContent:'center', fontSize:18, flexShrink:0 }}>
-          {farm.emoji}
-        </div>
-        <div>
-          <div style={{ fontWeight:700, fontSize:13, color:C.cream, lineHeight:1.2 }}>{farm.name?.slice(0,22)}</div>
-          <div style={{ fontSize:11, color:'rgba(245,237,224,.4)' }}>📍 {farm.loc}</div>
-        </div>
-      </div>
-      <div style={{ fontSize:12, color:C.gold, fontWeight:700, marginBottom:8 }}>⭐ {farm.rating}</div>
-      <button onClick={() => navigate(`/farma/${farm.id}`)} style={{ width:'100%', padding:'6px', background:C.gold, color:'white', border:'none', borderRadius:2, fontSize:11, fontWeight:700, cursor:'pointer', fontFamily:"'DM Sans',sans-serif" }}>
-        Zobrazit farmu →
-      </button>
-    </div>
-  );
-}
 
 /* ══════════════════════════════════════════════════════════ */
 export default function LandingPage() {
@@ -137,19 +96,43 @@ export default function LandingPage() {
 
   return (
     <div style={{ fontFamily:"'DM Sans',sans-serif", background:C.dark, color:C.cream, overflowX:'hidden' }}>
+      <a href="#main-content" className="skip-link">Přeskočit na obsah</a>
       <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;0,900;1,700&family=DM+Sans:wght@300;400;500;700&display=swap" rel="stylesheet"/>
       <style>{`
         *{box-sizing:border-box;margin:0;padding:0;}
         html{scroll-behavior:smooth;}
-        .cat-card{overflow:hidden;cursor:pointer;position:relative;transition:transform .35s;}
-        .cat-card:hover{transform:scale(1.015);}
-        .cat-card img{width:100%;height:320px;object-fit:cover;display:block;transition:transform .5s,filter .35s;}
-        .cat-card:hover img{transform:scale(1.07);filter:brightness(.8);}
-        .cat-overlay{position:absolute;inset:0;background:linear-gradient(to top,rgba(17,29,16,.88) 0%,rgba(17,29,16,.15) 55%,transparent 100%);display:flex;flex-direction:column;justify-content:flex-end;padding:28px;}
+
+        /* ── Skip link (accessibility) ── */
+        .skip-link{position:absolute;top:-100px;left:16px;z-index:9999;padding:8px 16px;background:${C.gold};color:white;font-weight:700;font-size:14px;border-radius:4px;transition:top .15s;}
+        .skip-link:focus{top:8px;}
+
+        /* ── Focus visible ── */
+        :focus-visible{outline:2px solid ${C.gold};outline-offset:3px;border-radius:2px;}
+
+        /* ── Category cards ── */
+        .cat-card{overflow:hidden;cursor:pointer;position:relative;transition:transform .35s cubic-bezier(.34,1.56,.64,1);}
+        .cat-card:hover{transform:scale(1.018);}
+        .cat-card img{width:100%;height:320px;object-fit:cover;display:block;transition:transform .55s,filter .35s;}
+        .cat-card:hover img{transform:scale(1.09);filter:brightness(.75);}
+        .cat-overlay{position:absolute;inset:0;background:linear-gradient(to top,rgba(17,29,16,.92) 0%,rgba(17,29,16,.1) 55%,transparent 100%);display:flex;flex-direction:column;justify-content:flex-end;padding:28px;}
+        .cat-label{font-family:'Playfair Display',serif;font-size:22px;font-weight:700;color:white;line-height:1.2;transition:transform .3s;}
+        .cat-card:hover .cat-label{transform:translateY(-4px);}
+        .cat-arrow{font-size:12px;color:rgba(255,255,255,.5);margin-top:6px;transition:opacity .3s,transform .3s;opacity:0;transform:translateX(-6px);}
+        .cat-card:hover .cat-arrow{opacity:1;transform:translateX(0);}
+
+        /* ── Step & review cards ── */
         .step-card{background:white;padding:40px 32px;position:relative;border:1px solid rgba(44,24,16,.06);transition:box-shadow .25s,transform .25s;}
-        .step-card:hover{box-shadow:0 12px 40px rgba(44,24,16,.12);transform:translateY(-4px);}
-        .review-card{background:rgba(255,255,255,.04);border:1px solid rgba(200,151,58,.1);padding:32px;transition:border-color .25s;}
-        .review-card:hover{border-color:rgba(200,151,58,.3);}
+        .step-card:hover{box-shadow:0 16px 48px rgba(44,24,16,.13);transform:translateY(-5px);}
+        .review-card{background:rgba(255,255,255,.04);border:1px solid rgba(200,151,58,.1);padding:32px;transition:border-color .25s,transform .25s;}
+        .review-card:hover{border-color:rgba(200,151,58,.35);transform:translateY(-3px);}
+
+        /* ── Ticker marquee ── */
+        @keyframes ticker{from{transform:translateX(0)}to{transform:translateX(-50%)}}
+        @keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+        .ticker-track{display:flex;gap:0;animation:ticker 40s linear infinite;width:max-content;}
+        .ticker-track:hover{animation-play-state:paused;}
+
+        /* ── Responsive ── */
         @media(max-width:900px){
           .hero-grid{grid-template-columns:1fr!important;}
           .hero-img{display:none!important;}
@@ -197,7 +180,7 @@ export default function LandingPage() {
       </nav>
 
       {/* ── HERO ── */}
-      <section style={{ minHeight:'100vh', background:C.dark, paddingTop:64, position:'relative', overflow:'hidden', display:'flex', alignItems:'center' }}>
+      <section id="main-content" style={{ minHeight:'100vh', background:C.dark, paddingTop:64, position:'relative', overflow:'hidden', display:'flex', alignItems:'center' }}>
         <div style={{ position:'absolute', inset:0, backgroundImage:'radial-gradient(rgba(200,151,58,.05) 1px,transparent 1px)', backgroundSize:'32px 32px', pointerEvents:'none' }}/>
         <div style={{ position:'absolute', top:-100, right:-60, width:500, height:500, background:'radial-gradient(circle, rgba(200,151,58,.07) 0%, transparent 65%)', pointerEvents:'none' }}/>
         <div style={{ position:'absolute', bottom:-100, left:-80, width:480, height:480, background:'radial-gradient(circle, rgba(58,87,40,.14) 0%, transparent 65%)', pointerEvents:'none' }}/>
@@ -206,9 +189,20 @@ export default function LandingPage() {
           <div className="hero-grid" style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:64, alignItems:'center' }}>
 
             <div>
-              <div style={{ display:'inline-flex', alignItems:'center', gap:8, background:'rgba(200,151,58,.12)', border:'1px solid rgba(200,151,58,.3)', padding:'5px 16px', borderRadius:2, fontSize:11, fontWeight:700, color:C.gold, marginBottom:28, letterSpacing:2, textTransform:'uppercase' }}>
-                <span style={{ width:5, height:5, borderRadius:'50%', background:C.gold, display:'inline-block' }}/>
-                {FARMS_DATA.length.toLocaleString('cs-CZ')} ověřených farem
+              <div style={{ display:'flex', gap:10, marginBottom:28, flexWrap:'wrap' }}>
+                <div style={{ display:'inline-flex', alignItems:'center', gap:8, background:'rgba(200,151,58,.12)', border:'1px solid rgba(200,151,58,.3)', padding:'5px 16px', borderRadius:2, fontSize:11, fontWeight:700, color:C.gold, letterSpacing:2, textTransform:'uppercase' }}>
+                  <span style={{ width:5, height:5, borderRadius:'50%', background:C.gold, display:'inline-block', animation:'pulse 2s ease-in-out infinite' }}/>
+                  {FARMS_DATA.length.toLocaleString('cs-CZ')} ověřených farem
+                </div>
+                <button
+                  onClick={() => navigate(CURRENT_SEASON.path)}
+                  aria-label={`Sezónní průvodce – ${CURRENT_SEASON.label}`}
+                  style={{ display:'inline-flex', alignItems:'center', gap:6, background:'rgba(58,87,40,.2)', border:'1px solid rgba(58,87,40,.5)', padding:'5px 14px', borderRadius:2, fontSize:11, fontWeight:700, color:'rgba(245,237,224,.75)', letterSpacing:1, textTransform:'uppercase', cursor:'pointer', fontFamily:"'DM Sans',sans-serif", transition:'background .15s' }}
+                  onMouseEnter={e=>e.currentTarget.style.background='rgba(58,87,40,.4)'}
+                  onMouseLeave={e=>e.currentTarget.style.background='rgba(58,87,40,.2)'}
+                >
+                  {CURRENT_SEASON.emoji} Právě roste — {CURRENT_SEASON.label}
+                </button>
               </div>
 
               <motion.div
@@ -228,14 +222,19 @@ export default function LandingPage() {
               </p>
 
               {/* Hero search */}
-              <form onSubmit={handleSearch} style={{ display:'flex', gap:0, marginBottom:28, maxWidth:440 }}>
+              <form onSubmit={handleSearch} role="search" style={{ display:'flex', gap:0, marginBottom:28, maxWidth:440 }}>
+                <label htmlFor="hero-search" style={{ position:'absolute', width:1, height:1, overflow:'hidden', clip:'rect(0,0,0,0)' }}>
+                  Hledat farmu nebo produkt
+                </label>
                 <input
+                  id="hero-search"
                   value={searchQ}
                   onChange={e => setSearchQ(e.target.value)}
                   placeholder="Hledat farmu nebo produkt…"
+                  autoComplete="off"
                   style={{ flex:1, padding:'13px 18px', background:'rgba(255,255,255,.08)', border:'1px solid rgba(200,151,58,.3)', borderRight:'none', borderRadius:'2px 0 0 2px', fontSize:14, color:C.cream, fontFamily:"'DM Sans',sans-serif", outline:'none' }}
                 />
-                <button type="submit" style={{ padding:'13px 20px', background:C.gold, color:'white', border:'none', borderRadius:'0 2px 2px 0', fontWeight:700, fontSize:14, cursor:'pointer', fontFamily:"'DM Sans',sans-serif", whiteSpace:'nowrap', transition:'background .15s' }}
+                <button type="submit" aria-label="Vyhledat" style={{ padding:'13px 20px', background:C.gold, color:'white', border:'none', borderRadius:'0 2px 2px 0', fontWeight:700, fontSize:14, cursor:'pointer', fontFamily:"'DM Sans',sans-serif", whiteSpace:'nowrap', transition:'background .15s' }}
                   onMouseEnter={e=>e.currentTarget.style.background=C.goldLight}
                   onMouseLeave={e=>e.currentTarget.style.background=C.gold}>
                   Hledat →
@@ -281,7 +280,9 @@ export default function LandingPage() {
                 <motion.div style={{ y: parallaxY, width:'100%', height:'100%' }}>
                   <img
                     src="https://images.unsplash.com/photo-1523741543316-beb7fc7023d8?w=900&q=85&fit=crop&crop=faces,top"
-                    alt="Farmářka s čerstvou sklizní"
+                    alt="Farmářka s čerstvou sklizní zeleniny"
+                    fetchpriority="high"
+                    decoding="async"
                     style={{ width:'100%', height:'100%', objectFit:'cover', objectPosition:'center 20%' }}
                   />
                 </motion.div>
@@ -300,6 +301,17 @@ export default function LandingPage() {
           </div>
         </div>
       </section>
+
+      {/* ── TICKER STRIP ── */}
+      <div aria-hidden="true" style={{ background:C.gold, overflow:'hidden', padding:'11px 0', borderTop:'1px solid rgba(0,0,0,.1)' }}>
+        <div className="ticker-track">
+          {[...TICKER_FARMS, ...TICKER_FARMS].map((name, i) => (
+            <span key={i} style={{ whiteSpace:'nowrap', padding:'0 32px', fontSize:13, fontWeight:700, color:'white', letterSpacing:.5, opacity:.92 }}>
+              {name} <span style={{ opacity:.4, marginLeft:16 }}>·</span>
+            </span>
+          ))}
+        </div>
+      </div>
 
       {/* ── KATEGORIE — Cream editorial ── */}
       <motion.section
@@ -323,15 +335,27 @@ export default function LandingPage() {
             </button>
           </div>
           <div className="cat-grid" style={{ display:'grid', gridTemplateColumns:'repeat(3,1fr)', gap:3 }}>
-            {CAT_PHOTOS.map((c) => (
-              <div key={c.filter} className="cat-card" onClick={() => navigate(`/mapa?filter=${c.filter}`)}>
-                <img src={c.img} alt={c.label}/>
+            {CAT_PHOTOS.map((c, i) => (
+              <motion.div
+                key={c.filter}
+                className="cat-card"
+                role="button"
+                tabIndex={0}
+                aria-label={`Filtrovat ${c.label}`}
+                onClick={() => navigate(`/mapa?filter=${c.filter}`)}
+                onKeyDown={e => e.key === 'Enter' && navigate(`/mapa?filter=${c.filter}`)}
+                initial={{ opacity:0, y:24 }}
+                whileInView={{ opacity:1, y:0 }}
+                viewport={{ once:true, margin:'-60px' }}
+                transition={{ duration:0.45, delay: i * 0.08 }}
+              >
+                <img src={c.img} alt={c.label} loading="lazy" decoding="async"/>
                 <div className="cat-overlay">
                   <div style={{ fontSize:11, fontWeight:700, color:C.gold, letterSpacing:3, textTransform:'uppercase', marginBottom:6 }}>{c.emoji} {c.filter}</div>
-                  <div style={{ fontFamily:"'Playfair Display',serif", fontSize:22, fontWeight:700, color:'white', lineHeight:1.2 }}>{c.label}</div>
-                  <div style={{ fontSize:12, color:'rgba(255,255,255,.5)', marginTop:6 }}>Zobrazit na mapě →</div>
+                  <div className="cat-label">{c.label}</div>
+                  <div className="cat-arrow">Zobrazit na mapě →</div>
                 </div>
-              </div>
+              </motion.div>
             ))}
           </div>
         </div>
@@ -449,13 +473,22 @@ export default function LandingPage() {
               { name:'Marie Horáková', farm:'Včelí farma Horáků', region:'Vysočina', role:'Včelařka od roku 2015', rating:5,
                 text:'Med teď prodávám přímo spotřebitelům — bez zprostředkovatelů, za férovou cenu. Zákazníci oceňují přímý kontakt.', photo:'photo-1507003211169-0a1dd7228f2d' },
             ].map((r,i) => (
-              <div key={i} className="review-card">
-                <div style={{ fontFamily:"'Playfair Display',serif", fontSize:52, color:C.gold, lineHeight:.8, marginBottom:16, opacity:.5 }}>"</div>
-                <p style={{ fontSize:14, color:'rgba(245,237,224,.65)', lineHeight:1.85, marginBottom:24, fontStyle:'italic' }}>{r.text}</p>
+              <motion.div
+                key={i}
+                className="review-card"
+                initial={{ opacity:0, y:20 }}
+                whileInView={{ opacity:1, y:0 }}
+                viewport={{ once:true, margin:'-60px' }}
+                transition={{ duration:0.5, delay: i * 0.12 }}
+              >
+                <div style={{ fontFamily:"'Playfair Display',serif", fontSize:52, color:C.gold, lineHeight:.8, marginBottom:16, opacity:.4 }}>"</div>
+                <p style={{ fontSize:14, color:'rgba(245,237,224,.7)', lineHeight:1.9, marginBottom:24, fontStyle:'italic' }}>{r.text}</p>
                 <div style={{ display:'flex', alignItems:'center', gap:12, paddingTop:20, borderTop:'1px solid rgba(200,151,58,.1)' }}>
                   <img
                     src={`https://images.unsplash.com/${r.photo}?w=80&h=80&fit=crop&crop=faces`}
                     alt={r.name}
+                    loading="lazy"
+                    decoding="async"
                     style={{ width:44, height:44, borderRadius:'50%', objectFit:'cover', flexShrink:0, border:'2px solid rgba(200,151,58,.4)' }}
                   />
                   <div>
@@ -463,7 +496,7 @@ export default function LandingPage() {
                     <div style={{ fontSize:11, color:C.gold, marginTop:2 }}>{'★'.repeat(r.rating)} <span style={{ color:'rgba(245,237,224,.25)', fontWeight:400 }}>{r.farm} · {r.region}</span></div>
                   </div>
                 </div>
-              </div>
+              </motion.div>
             ))}
           </div>
 
@@ -501,10 +534,13 @@ export default function LandingPage() {
           <p style={{ fontSize:15, color:'rgba(245,237,224,.45)', lineHeight:1.75, marginBottom:36 }}>
             Každý měsíc recepty, sezónní tipy a nové farmy ve vašem kraji
           </p>
+          <AnimatePresence mode="wait">
           {newsletterOk ? (
             <motion.div
-              initial={{ opacity:0, scale:0.9 }}
-              animate={{ opacity:1, scale:1 }}
+              key="ok"
+              initial={{ opacity:0, scale:0.9, y:8 }}
+              animate={{ opacity:1, scale:1, y:0 }}
+              exit={{ opacity:0 }}
               transition={{ duration:0.4 }}
               style={{ display:'inline-flex', alignItems:'center', gap:12, padding:'18px 32px', background:'rgba(58,87,40,.2)', border:'1px solid rgba(58,87,40,.4)', borderRadius:2 }}
             >
@@ -512,7 +548,7 @@ export default function LandingPage() {
               <span style={{ fontSize:15, fontWeight:700, color:C.cream }}>Děkujeme! Brzy se ozveme.</span>
             </motion.div>
           ) : (
-            <form onSubmit={handleNewsletterSubmit}>
+            <motion.form key="form" onSubmit={handleNewsletterSubmit} initial={{ opacity:1 }} exit={{ opacity:0 }}>
               <div style={{ display:'flex', gap:0, maxWidth:460, margin:'0 auto 12px' }}>
                 <input
                   type="email"
@@ -532,8 +568,9 @@ export default function LandingPage() {
                 </button>
               </div>
               <p style={{ fontSize:12, color:'rgba(245,237,224,.2)', letterSpacing:.3 }}>Žádný spam. Odhlásit se lze kdykoliv.</p>
-            </form>
+            </motion.form>
           )}
+          </AnimatePresence>
         </div>
       </motion.section>
 
