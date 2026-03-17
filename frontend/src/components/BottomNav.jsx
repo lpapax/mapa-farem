@@ -1,13 +1,13 @@
 // frontend/src/components/BottomNav.jsx
 import { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { Home, Map, Leaf, Heart, User } from 'lucide-react';
+import { Home, Map, Store, Heart, User } from 'lucide-react';
 import { useAuthStore } from '../store/index.js';
 
 const NAV_ITEMS = [
   { label: 'Domů',     Icon: Home,  path: '/' },
   { label: 'Mapa',     Icon: Map,   path: '/mapa' },
-  { label: 'Sezóna',   Icon: Leaf,  path: '/sezona' },
+  { label: 'Trhy',     Icon: Store, path: '/trhy' },
   { label: 'Oblíbené', Icon: Heart, path: '/oblibene' },
   { label: 'Profil',   Icon: User,  path: null }, // resolved dynamically
 ];

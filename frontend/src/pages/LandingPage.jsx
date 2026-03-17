@@ -207,7 +207,7 @@ export default function LandingPage() {
           </div>
         </div>
         <div className="nav-links" style={{ display: 'flex', gap: 4, alignItems: 'center' }}>
-          {[['Produkty','/mapa'],['O nás','/o-nas'],['Ceník','/cenik'],['Farmáři','/pridat-farmu']].map(([l,h]) => (
+          {[['Produkty','/mapa'],['Trhy','/trhy'],['Blog','/blog'],['O nás','/o-nas'],['Ceník','/cenik'],['Farmáři','/pridat-farmu']].map(([l,h]) => (
             <button key={l} onClick={() => navigate(h)}
               style={{ padding: '8px 15px', background: 'none', border: 'none', fontSize: 14, fontWeight: 500, cursor: 'pointer',
                 color: 'rgba(250,247,242,0.65)', fontFamily: "'Inter',sans-serif", borderRadius: 4, transition: 'color .15s' }}
