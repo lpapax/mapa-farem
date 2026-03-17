@@ -23,6 +23,9 @@ const AboutPage         = lazy(() => import('./pages/AboutPage'));
 const PricingPage       = lazy(() => import('./pages/PricingPage'));
 const ProfileSetupPage  = lazy(() => import('./pages/ProfileSetupPage'));
 const NotFoundPageLazy  = lazy(() => import('./pages/OtherPages').then(m => ({ default: m.NotFoundPage })));
+const BlogPage          = lazy(() => import('./pages/BlogPage'));
+const BlogPostPage      = lazy(() => import('./pages/BlogPostPage'));
+const MarketsPage       = lazy(() => import('./pages/MarketsPage'));
 
 export default function App() {
   useEffect(() => { useAuthStore.getState().init(); }, []);
@@ -56,6 +59,9 @@ export default function App() {
           <Route path="/o-nas" element={<AboutPage />} />
           <Route path="/cenik" element={<PricingPage />} />
           <Route path="/admin" element={<AdminPage />} />
+          <Route path="/blog" element={<BlogPage />} />
+          <Route path="/blog/:slug" element={<BlogPostPage />} />
+          <Route path="/trhy" element={<MarketsPage />} />
           {/* Stará URL přesměruje na mapu */}
           <Route path="/zeměplocha" element={<Navigate to="/mapa" replace />} />
           <Route path="*" element={<NotFoundPageLazy />} />

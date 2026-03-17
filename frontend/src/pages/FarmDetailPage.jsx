@@ -2,6 +2,7 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { ArrowLeft, Phone, ExternalLink, MapPin, Heart, Share2 } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
 import toast from 'react-hot-toast';
 import { useAuthStore, useFavoritesStore } from '../store/index.js';
 import { supabase } from '../supabase';
@@ -104,6 +105,7 @@ export default function FarmDetailPage() {
   const [tab, setTab] = useState('products');
   const [reviewText, setReviewText] = useState('');
   const [reviewRating, setReviewRating] = useState(5);
+  const [reviewTags, setReviewTags] = useState([]);
   const [submittingReview, setSubmittingReview] = useState(false);
   const [reviews, setReviews] = useState([]);
   const [reviewsLoading, setReviewsLoading] = useState(true);
@@ -113,6 +115,14 @@ export default function FarmDetailPage() {
   const [offerForm, setOfferForm] = useState({ title:'', description:'', price_czk:'', valid_until:'' });
   const [submittingOffer, setSubmittingOffer] = useState(false);
   const [galleryIdx, setGalleryIdx] = useState(0);
+  // Feature A — share
+  const [showShare, setShowShare] = useState(false);
+  const [copied, setCopied] = useState(false);
+  // Feature B — check-in
+  const [showCheckin, setShowCheckin] = useState(false);
+  const [checkinNote, setCheckinNote] = useState('');
+  const [checkinRating, setCheckinRating] = useState(5);
+  const [checkinDone, setCheckinDone] = useState(false);
 
   const farm = FARMS_DATA.find(f => String(f.id) === String(id));
 
@@ -185,11 +195,12 @@ export default function FarmDetailPage() {
       farm_id: String(farm.id), user_id: user.id,
       user_name: user.name || user.email?.split('@')[0] || 'Uživatel',
       rating: reviewRating, text: reviewText.trim(),
+      tags: reviewTags.length > 0 ? reviewTags : null,
     });
     if (error) { toast.error('Nepodařilo se odeslat recenzi'); }
     else {
       toast.success('Hodnocení odesláno, díky!');
-      setReviewText(''); setReviewRating(5);
+      setReviewText(''); setReviewRating(5); setReviewTags([]);
       const { data } = await supabase.from('farm_reviews').select('*').eq('farm_id', String(farm.id)).order('created_at', { ascending: false });
       setReviews(data || []);
     }
@@ -233,6 +244,15 @@ export default function FarmDetailPage() {
 
   const TABS = ['products','seasonal','reviews','info'];
   const TAB_LABELS = { products:'Produkty', seasonal:'Sezónní nabídka', reviews:`Recenze${reviewCount > 0 ? ` (${reviewCount})` : ''}`, info:'O farmě' };
+
+  const REVIEW_TAGS = [
+    { emoji:'👍', label:'Skvělá kvalita', value:'quality' },
+    { emoji:'🚀', label:'Rychlé vyzvednutí', value:'fast' },
+    { emoji:'😊', label:'Přátelský farmář', value:'friendly' },
+    { emoji:'🌿', label:'Opravdu BIO', value:'bio' },
+    { emoji:'💰', label:'Férová cena', value:'price' },
+    { emoji:'🔄', label:'Určitě se vrátím', value:'return' },
+  ];
 
   // Similar farms (haversine)
   const similarFarms = farm.lat && farm.lng
@@ -327,6 +347,16 @@ export default function FarmDetailPage() {
           <a href={mapy_cz_url} target="_blank" rel="noopener noreferrer" style={{ flex:1, display:'flex', alignItems:'center', justifyContent:'center', gap:8, padding:'10px 16px', background:'#FAF7F2', color:'#2D5016', border:'2px solid #2D5016', borderRadius:9999, textDecoration:'none', fontFamily:"'Inter',sans-serif", fontWeight:700, fontSize:13, minWidth:120 }}>
             <MapPin size={15} /> Navigovat
           </a>
+          {/* Share button */}
+          <button onClick={() => setShowShare(true)}
+            style={{ display:'flex', alignItems:'center', gap:6, padding:'10px 18px', border:'1.5px solid #E8E0D0', borderRadius:9999, background:'white', cursor:'pointer', fontSize:13, fontWeight:600, fontFamily:"'Inter',sans-serif" }}>
+            <Share2 size={15} color="#2D5016" /> Sdílet
+          </button>
+          {/* Check-in button */}
+          <button onClick={() => user ? setShowCheckin(true) : navigate('/prihlaseni')}
+            style={{ display:'flex', alignItems:'center', gap:6, padding:'10px 18px', border:'none', borderRadius:9999, background:'#C8963E', color:'white', cursor:'pointer', fontSize:13, fontWeight:700, fontFamily:"'Inter',sans-serif" }}>
+            📍 Byl jsem tu
+          </button>
         </div>
       </div>
 
@@ -520,6 +550,23 @@ export default function FarmDetailPage() {
                     ))}
                   </div>
                   <textarea className="fi" value={reviewText} onChange={e => setReviewText(e.target.value)} placeholder="Popište vaši zkušenost…" style={{ width:'100%', resize:'vertical', minHeight:80 }} />
+                  {/* Feature C — review tags */}
+                  <div style={{ marginBottom:12 }}>
+                    <div style={{ fontSize:13, fontWeight:600, color:'#1A1A1A', marginBottom:8 }}>Označit recenzi:</div>
+                    <div style={{ display:'flex', flexWrap:'wrap', gap:6 }}>
+                      {REVIEW_TAGS.map(tag => {
+                        const sel = reviewTags.includes(tag.value);
+                        return (
+                          <button key={tag.value} type="button"
+                            onClick={() => setReviewTags(prev => sel ? prev.filter(t => t !== tag.value) : [...prev, tag.value])}
+                            style={{ padding:'6px 12px', borderRadius:9999, border:`1.5px solid ${sel ? '#2D5016' : '#E8E0D0'}`,
+                              background: sel ? '#2D5016' : 'white', color: sel ? 'white' : '#1A1A1A', fontSize:12, fontWeight:600, cursor:'pointer', fontFamily:"'Inter',sans-serif" }}>
+                            {tag.emoji} {tag.label}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
                   <button type="submit" disabled={submittingReview} style={{ marginTop:10, padding:'9px 20px', background:submittingReview?'#aaa':'#2D5016', color:'white', border:'none', borderRadius:9999, fontFamily:"'Inter',sans-serif", fontWeight:700, fontSize:13, cursor:'pointer' }}>
                     {submittingReview ? 'Odesílám…' : 'Odeslat hodnocení'}
                   </button>
@@ -551,6 +598,18 @@ export default function FarmDetailPage() {
                       </div>
                       <div style={{ color:'#C8963E', fontSize:15 }}>{'★'.repeat(r.rating)}</div>
                     </div>
+                    {r.tags?.length > 0 && (
+                      <div style={{ display:'flex', flexWrap:'wrap', gap:4, marginBottom:8 }}>
+                        {r.tags.map(t => {
+                          const tag = REVIEW_TAGS.find(rt => rt.value === t);
+                          return tag ? (
+                            <span key={t} style={{ padding:'2px 8px', borderRadius:9999, background:'#FAF7F2', border:'1px solid #E8E0D0', fontSize:11 }}>
+                              {tag.emoji} {tag.label}
+                            </span>
+                          ) : null;
+                        })}
+                      </div>
+                    )}
                     <div style={{ fontSize:13, color:'#6B7280', lineHeight:1.6 }}>{r.text}</div>
                   </div>
                 ))}
@@ -635,6 +694,92 @@ export default function FarmDetailPage() {
           </div>
         </div>
       )}
+
+      {/* ── FEATURE A: Share Modal ── */}
+      <AnimatePresence>
+        {showShare && (
+          <motion.div initial={{ opacity:0 }} animate={{ opacity:1 }} exit={{ opacity:0 }}
+            style={{ position:'fixed', inset:0, background:'rgba(0,0,0,0.6)', zIndex:500, display:'flex', alignItems:'center', justifyContent:'center', padding:20 }}
+            onClick={() => setShowShare(false)}>
+            <motion.div initial={{ scale:0.9, opacity:0 }} animate={{ scale:1, opacity:1 }} exit={{ scale:0.9, opacity:0 }}
+              style={{ background:'white', borderRadius:20, padding:32, maxWidth:400, width:'100%' }}
+              onClick={e => e.stopPropagation()}>
+              <div style={{ fontFamily:"'Playfair Display',serif", fontSize:22, fontWeight:700, marginBottom:8 }}>Sdílet farmu</div>
+              <div style={{ fontSize:13, color:'#6B7280', marginBottom:24 }}>{farm.name} · {farm.loc}</div>
+              {[
+                { label:'WhatsApp', color:'#25D366', icon:'💬', url:`https://wa.me/?text=${encodeURIComponent(farm.name + ' — ' + window.location.href)}` },
+                { label:'Facebook', color:'#1877F2', icon:'📘', url:`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(window.location.href)}` },
+                { label:'Twitter / X', color:'#000', icon:'🐦', url:`https://twitter.com/intent/tweet?text=${encodeURIComponent(farm.name)}&url=${encodeURIComponent(window.location.href)}` },
+              ].map(({ label, color, icon, url }) => (
+                <a key={label} href={url} target="_blank" rel="noreferrer"
+                  style={{ display:'flex', alignItems:'center', gap:12, padding:'12px 16px', borderRadius:10, background:color, color:'white', textDecoration:'none', fontWeight:600, marginBottom:8, fontFamily:"'Inter',sans-serif" }}>
+                  <span>{icon}</span> Sdílet na {label}
+                </a>
+              ))}
+              <button onClick={() => { navigator.clipboard.writeText(window.location.href); setCopied(true); setTimeout(() => setCopied(false), 2000); }}
+                style={{ width:'100%', padding:'12px 16px', borderRadius:10, border:'2px solid #E8E0D0', background:'white', fontWeight:600, cursor:'pointer', marginTop:4, fontFamily:"'Inter',sans-serif", fontSize:14 }}>
+                {copied ? '✓ Zkopírováno!' : '🔗 Kopírovat odkaz'}
+              </button>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* ── FEATURE B: Check-in Modal ── */}
+      <AnimatePresence>
+        {showCheckin && (
+          <motion.div initial={{ opacity:0 }} animate={{ opacity:1 }} exit={{ opacity:0 }}
+            style={{ position:'fixed', inset:0, background:'rgba(0,0,0,0.6)', zIndex:500, display:'flex', alignItems:'center', justifyContent:'center', padding:20 }}
+            onClick={() => setShowCheckin(false)}>
+            <motion.div initial={{ scale:0.9, opacity:0 }} animate={{ scale:1, opacity:1 }} exit={{ scale:0.9, opacity:0 }}
+              style={{ background:'white', borderRadius:20, padding:32, maxWidth:440, width:'100%' }}
+              onClick={e => e.stopPropagation()}>
+              {checkinDone ? (
+                <div style={{ textAlign:'center', padding:'20px 0' }}>
+                  <div style={{ fontSize:64 }}>🎉</div>
+                  <div style={{ fontFamily:"'Playfair Display',serif", fontSize:24, fontWeight:700, color:'#2D5016', marginTop:12 }}>Check-in úspěšný!</div>
+                  <div style={{ color:'#6B7280', marginTop:8 }}>Byl jsi zaznamenán jako návštěvník</div>
+                  <button onClick={() => { setShowCheckin(false); setCheckinDone(false); }}
+                    style={{ marginTop:20, padding:'12px 24px', background:'#C8963E', color:'white', border:'none', borderRadius:9999, fontWeight:700, cursor:'pointer', fontFamily:"'Inter',sans-serif", fontSize:14 }}>
+                    Zavřít
+                  </button>
+                </div>
+              ) : (
+                <div>
+                  <div style={{ fontFamily:"'Playfair Display',serif", fontSize:22, fontWeight:700, marginBottom:4 }}>Byl jsem tu!</div>
+                  <div style={{ color:'#6B7280', fontSize:13, marginBottom:24 }}>{farm.name}</div>
+                  <div style={{ marginBottom:16 }}>
+                    <div style={{ fontWeight:600, marginBottom:8, fontFamily:"'Inter',sans-serif" }}>Hodnocení:</div>
+                    <div style={{ display:'flex', gap:8 }}>
+                      {[1,2,3,4,5].map(n => (
+                        <span key={n} onClick={() => setCheckinRating(n)}
+                          style={{ fontSize:32, cursor:'pointer', color: n <= checkinRating ? '#C8963E' : '#E8E0D0', transition:'color 0.1s', userSelect:'none' }}>★</span>
+                      ))}
+                    </div>
+                  </div>
+                  <div style={{ marginBottom:20 }}>
+                    <div style={{ fontWeight:600, marginBottom:8, fontFamily:"'Inter',sans-serif" }}>Poznámka (nepovinné):</div>
+                    <textarea value={checkinNote} onChange={e => setCheckinNote(e.target.value)}
+                      placeholder="Co jsi koupil? Jak se ti líbilo? 🥕"
+                      style={{ width:'100%', padding:'10px 12px', border:'1.5px solid #E8E0D0', borderRadius:10, fontSize:14, fontFamily:"'Inter',sans-serif", resize:'vertical', minHeight:80, outline:'none', boxSizing:'border-box' }} />
+                  </div>
+                  <button onClick={async () => {
+                    try {
+                      const { data: { user: supaUser } } = await supabase.auth.getUser();
+                      if (supaUser) {
+                        await supabase.from('checkins').insert({ farm_id: String(farm.id), user_id: supaUser.id, rating: checkinRating, note: checkinNote });
+                      }
+                    } catch {}
+                    setCheckinDone(true);
+                  }} style={{ width:'100%', padding:'14px', background:'#C8963E', color:'white', border:'none', borderRadius:9999, fontWeight:700, fontSize:16, cursor:'pointer', fontFamily:"'Inter',sans-serif" }}>
+                    ✓ Potvrdit návštěvu
+                  </button>
+                </div>
+              )}
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Sticky bottom CTA */}
       {(farm.phone || farm.website || farm.lat) && (
