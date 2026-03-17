@@ -99,6 +99,17 @@ function pickFeaturedFarms() {
   return shuffled.slice(0, 6);
 }
 
+/* ─── Hero image pool — different beautiful farm photo each load ─── */
+const HERO_PHOTOS = [
+  { id: '1500595046743-cd271d694d30', alt: 'Zelené kopce a pole', label: 'Jihomoravský kraj · Přímý prodej' },
+  { id: '1488459716781-31db52582fe9', alt: 'Čerstvá zelenina z farmy', label: 'Čerstvá sklizeň · BIO' },
+  { id: '1464226184884-fa280b87c399', alt: 'Farmářská krajina z výšky', label: 'Lokální zemědělství · ČR' },
+  { id: '1416879595882-3373a0480b5b', alt: 'Farmářský trh', label: 'Farmářský trh · Přímý prodej' },
+  { id: '1558642452-9d2a7deb7f62', alt: 'Med a včelařství', label: 'Rodinné včelařství · Moravský kraj' },
+  { id: '1625246333195-cbfcaabedf55', alt: 'BIO farma zelenina', label: 'Certifikovaná BIO farma' },
+  { id: '1444681961742-3aef9e307b37', alt: 'Vinice na slunci', label: 'Rodinné vinařství · Jižní Morava' },
+];
+
 // Pool of diverse farm/field photos — assigned by index so every card looks different
 const FARM_PHOTO_POOL = [
   '1488459716781-31db52582fe9', // fresh produce colorful
@@ -154,6 +165,7 @@ export default function LandingPage() {
   const [newsletterEmail, setNewsletterEmail] = useState('');
   const [newsletterOk, setNewsletterOk] = useState(false);
   const [featuredFarms] = useState(() => pickFeaturedFarms());
+  const [heroPhoto] = useState(() => HERO_PHOTOS[Math.floor(Math.random() * HERO_PHOTOS.length)]);
 
   useSEO({
     title: 'Lokální farmy v České republice',
@@ -297,17 +309,17 @@ export default function LandingPage() {
             <div className="hero-img-col" style={{ position: 'relative' }}>
               <div style={{ transform: 'rotate(2deg)', borderRadius: 16, overflow: 'hidden', border: '4px solid white', boxShadow: '0 32px 80px rgba(0,0,0,0.4)', aspectRatio: '4/5', position: 'relative' }}>
                 <img
-                  src="https://images.unsplash.com/photo-1488459716781-31db52582fe9?w=600&q=80&fit=crop"
-                  alt="Čerstvá zelenina z lokální farmy"
+                  src={`https://images.unsplash.com/photo-${heroPhoto.id}?w=600&q=80&fit=crop`}
+                  alt={heroPhoto.alt}
                   fetchpriority="high"
                   style={{ width: '100%', height: '100%', objectFit: 'cover' }}
                 />
                 {/* Bottom overlay */}
                 <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, padding: '20px 18px', background: 'linear-gradient(to top, rgba(26,26,26,0.8) 0%, transparent 100%)' }}>
                   <div style={{ color: 'white', fontWeight: 700, fontSize: 14, fontFamily: "'Inter',sans-serif" }}>
-                    Čerstvá sklizeň · přímo od farmáře
+                    {heroPhoto.label}
                   </div>
-                  <div style={{ color: '#C8963E', fontSize: 12, marginTop: 4 }}>⭐ 4.9 · Přímý prodej · BIO</div>
+                  <div style={{ color: '#C8963E', fontSize: 12, marginTop: 4 }}>⭐ 4.9 · Přímý prodej</div>
                 </div>
               </div>
               {/* Floating badge */}
