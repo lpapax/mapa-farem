@@ -640,9 +640,23 @@ export default function DashboardPage() {
 
         {/* ── 8. Mini Analytics Chart ─────────────────────────────────────── */}
         <Card>
-          <SectionTitle>Návštěvnost tento měsíc</SectionTitle>
-          <div style={{ fontSize: 13, color: C.sub, marginBottom: 20 }}>
-            Posledních 7 dní — počet zobrazení profilu
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 20 }}>
+            <div>
+              <SectionTitle>Návštěvnost tento měsíc</SectionTitle>
+              <div style={{ fontSize: 13, color: C.sub }}>
+                Posledních 7 dní — počet zobrazení profilu
+              </div>
+            </div>
+            <Btn 
+              color={C.gold} 
+              onClick={() => {
+                alert('Tato funkce je dostupná pouze v tarifech Professional a Enterprise. Upgradujte svůj profil pro odemčení.');
+                navigate('/cenik');
+              }}
+              style={{ fontSize: 13, padding: '7px 14px', borderRadius: 8 }}
+            >
+              📄 Exportovat do PDF
+            </Btn>
           </div>
           <div style={{
             display: 'flex', gap: 10, alignItems: 'flex-end',

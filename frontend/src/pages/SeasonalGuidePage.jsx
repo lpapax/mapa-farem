@@ -1,5 +1,6 @@
 // frontend/src/pages/SeasonalGuidePage.jsx
 import { useNavigate, useParams } from 'react-router-dom';
+import { useSEO } from '../hooks/useSEO';
 
 const SEASONS = {
   jaro: {
@@ -120,6 +121,12 @@ export default function SeasonalGuidePage() {
   const { season: seasonParam } = useParams();
   const activeSeason = SEASONS[seasonParam] ? seasonParam : currentSeason;
   const season = SEASONS[activeSeason];
+
+  useSEO({
+    title: `Sezónní průvodce — ${season?.label || 'Sezóna'}`,
+    description: 'Co je právě v sezóně v ČR. Průvodce lokálními sezonními produkty od jara do zimy.',
+    canonical: `https://mapafarem.cz/sezona/${activeSeason}`,
+  });
 
   const C = {
     cream: '#F5EDE0',

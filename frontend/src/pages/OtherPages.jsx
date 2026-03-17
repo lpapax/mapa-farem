@@ -402,7 +402,7 @@ export function NotFoundPage() {
             Tato stránka utekla na pole
           </h1>
           <p style={{ color:'#777', fontSize:15, lineHeight:1.75, marginBottom:36 }}>
-            Stránka, kterou hledáš, neexistuje nebo byla přesunuta.<br/>Zkus to z úvodní stránky nebo rovnou na mapě.
+            Stránka, kterou hledáte, neexistuje nebo byla přesunuta.<br/>Zkuste to z úvodní stránky nebo rovnou na mapě.
           </p>
           <div style={{ display:'flex', gap:12, justifyContent:'center', flexWrap:'wrap' }}>
             <button onClick={() => navigate('/')}

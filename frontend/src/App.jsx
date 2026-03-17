@@ -3,6 +3,7 @@
 import { useEffect, lazy, Suspense } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { useAuthStore } from './store/index.js';
+import BottomNav from './components/BottomNav';
 
 // All pages lazy-loaded for optimal code splitting
 const LandingPage       = lazy(() => import('./pages/LandingPage'));
@@ -57,6 +58,7 @@ export default function App() {
           <Route path="/zeměplocha" element={<Navigate to="/mapa" replace />} />
           <Route path="*" element={<NotFoundPageLazy />} />
         </Routes>
+        <BottomNav />
       </Suspense>
     </BrowserRouter>
   );

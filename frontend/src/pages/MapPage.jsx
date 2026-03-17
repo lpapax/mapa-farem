@@ -2,6 +2,7 @@
 // Mapbox GL JS + GPS + Clustering + PWA
 import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useSEO } from '../hooks/useSEO';
 import { KRAJ_BOUNDS } from '../components/CzechRegionMap';
 import { Search, Plus, ShoppingCart, Menu, X, Navigation, Moon, Sun } from 'lucide-react';
 import { useAuthStore, useMapStore, useCartStore, useNotificationStore, useFavoritesStore } from '../store/index.js';
@@ -516,6 +517,12 @@ function MapboxMap({ farms, selectedId, onSelect, userLocation, radius, dark, ma
 
 // ── HLAVNÍ KOMPONENTA ──────────────────────────────────────────────────────
 export default function MapPage() {
+  useSEO({
+    title: 'Mapa farem',
+    description: 'Interaktivní mapa 1 695 lokálních farem v České republice. Najděte farmu ve svém okolí.',
+    canonical: 'https://mapafarem.cz/mapa',
+  });
+
   const navigate = useNavigate();
   const { user, logout } = useAuthStore();
   const { filter, search, selectedFarmId, showSidebar, setFilter, setSearch, selectFarm, toggleSidebar } = useMapStore();
