@@ -322,4 +322,14 @@
   <url><loc>https://mapafarem.cz/farma/199</loc><lastmod>2026-03-17</lastmod><changefreq>monthly</changefreq><priority>0.6</priority></url>
   <url><loc>https://mapafarem.cz/farma/200</loc><lastmod>2026-03-17</lastmod><changefreq>monthly</changefreq><priority>0.6</priority></url>
 
+  <!-- ── New feature pages ── -->
+  <url><loc>https://mapafarem.cz/trhy</loc><lastmod>2026-03-17</lastmod><changefreq>weekly</changefreq><priority>0.7</priority></url>
+  <url><loc>https://mapafarem.cz/blog</loc><lastmod>2026-03-17</lastmod><changefreq>weekly</changefreq><priority>0.7</priority></url>
+  <url><loc>https://mapafarem.cz/zebricky</loc><lastmod>2026-03-17</lastmod><changefreq>weekly</changefreq><priority>0.7</priority></url>
+  <url><loc>https://mapafarem.cz/blog/jak-pestuji-bio-zeleninu</loc><lastmod>2026-03-17</lastmod><changefreq>monthly</changefreq><priority>0.6</priority></url>
+  <url><loc>https://mapafarem.cz/blog/receptura-domaci-chlebek</loc><lastmod>2026-03-17</lastmod><changefreq>monthly</changefreq><priority>0.6</priority></url>
+  <url><loc>https://mapafarem.cz/blog/sezoni-tipy-brezen</loc><lastmod>2026-03-17</lastmod><changefreq>monthly</changefreq><priority>0.6</priority></url>
+  <url><loc>https://mapafarem.cz/blog/jak-skladovat-zeleninu-v-zime</loc><lastmod>2026-03-17</lastmod><changefreq>monthly</changefreq><priority>0.6</priority></url>
+  <url><loc>https://mapafarem.cz/blog/mapafarem-nova-funkce-trhy</loc><lastmod>2026-03-17</lastmod><changefreq>monthly</changefreq><priority>0.6</priority></url>
+
 </urlset>
