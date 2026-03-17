@@ -2,14 +2,22 @@
 import jwt from 'jsonwebtoken';
 import { prisma } from '../db/client.js';
 
-const JWT_SECRET = process.env.JWT_SECRET || 'zemeplocha-secret-change-in-prod';
+const JWT_SECRET = process.env.JWT_SECRET;
+if (!JWT_SECRET) {
+  if (process.env.NODE_ENV === 'production') {
+    throw new Error('JWT_SECRET env var is required in production');
+  }
+  // eslint-disable-next-line no-console
+  console.warn('[SECURITY] JWT_SECRET not set — using insecure dev default. Set JWT_SECRET in .env');
+}
+const _JWT_SECRET = JWT_SECRET || 'dev-only-insecure-secret-do-not-use-in-prod';
 
 export function signToken(payload) {
-  return jwt.sign(payload, JWT_SECRET, { expiresIn: '7d' });
+  return jwt.sign(payload, _JWT_SECRET, { expiresIn: '7d' });
 }
 
 export function verifyToken(token) {
-  return jwt.verify(token, JWT_SECRET);
+  return jwt.verify(token, _JWT_SECRET);
 }
 
 export async function requireAuth(req, res, next) {

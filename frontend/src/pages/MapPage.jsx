@@ -34,10 +34,19 @@ const PIN_COLORS = {
   bio:    '#3A5728',
   wine:   '#8B3A6B',
 };
+// Allowlist of known-safe emoji for map pins (prevents SVG injection via farm data)
+const SAFE_EMOJI_RE = /^\p{Emoji}$/u;
+function sanitizePinEmoji(raw) {
+  if (!raw) return null;
+  // Accept only a single emoji character; strip everything else
+  const candidate = String(raw).trim().slice(0, 2);
+  return SAFE_EMOJI_RE.test(candidate) ? candidate : null;
+}
+
 function createFarmSvgPin(type, emoji, isActive) {
   const color = PIN_COLORS[type] || '#3A5728';
   const scale = isActive ? 1.3 : 1;
-  const pinEmoji = emoji || ({
+  const pinEmoji = sanitizePinEmoji(emoji) || ({
     veggie:'🥕', meat:'🥩', dairy:'🥛', honey:'🍯',
     bio:'🌱', wine:'🍷', herbs:'🌿', market:'🏪',
   }[type] || '🌾');

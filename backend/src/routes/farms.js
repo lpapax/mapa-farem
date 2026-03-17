@@ -179,6 +179,8 @@ farmsRouter.post('/:id/review', requireAuth, async (req, res, next) => {
     const { rating, text } = req.body;
     if (!rating || rating < 1 || rating > 5)
       return res.status(400).json({ error: 'Hodnocení musí být 1-5' });
+    if (text && text.length > 2000)
+      return res.status(400).json({ error: 'Recenze může mít nejvýše 2000 znaků' });
 
     const review = await prisma.review.upsert({
       where: { userId_farmId: { userId: req.user.id, farmId: req.params.id } },
