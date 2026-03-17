@@ -98,15 +98,21 @@ const FEATURED_FARMS = FARMS_DATA
   .sort((a, b) => b.rating - a.rating)
   .slice(0, 6);
 
-const FARM_PHOTOS = {
-  veggie: '1540420773420-3366772f4999',
-  meat:   '1567620905732-37e9c4c4d6ad',
-  dairy:  '1560493676-04071c5f467b',
-  honey:  '1558642452-9d2a7deb7f62',
-  bio:    '1625246333195-cbfcaabedf55',
-  wine:   '1506377247377-96d6b27e1fbb',
-  default:'1500595046743-cd271d694d30',
-};
+// Pool of diverse farm/field photos — assigned by index so every card looks different
+const FARM_PHOTO_POOL = [
+  '1500595046743-cd271d694d30', // rolling green hills farm
+  '1416879595882-3373a0480b5b', // farmers market vegetables
+  '1464226184884-fa280b87c399', // countryside field aerial
+  '1523741543316-beb7fc7023d8', // fresh harvest vegetables
+  '1550583724-b2692b85b150', // rustic farm stand
+  '1488459716781-31db52582fe9', // fresh produce colorful
+  '1592150621744-aca64f7b0b63', // mushrooms forest floor
+  '1444681961742-3aef9e307b37', // vineyard rows
+  '1508361001754-c570fa45e7c5', // beehive honey
+  '1562517520-1d5e3c7543ed', // farm cattle meadow
+  '1440342359983-0e7c98b2e50e', // orchard apple trees
+  '1574943320219-553eb213f72d', // sunflower field
+];
 
 /* ─── Category grid data ─── */
 const CATEGORIES = [
@@ -430,7 +436,7 @@ export default function LandingPage() {
           </div>
           <div className="farms-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 24 }}>
             {FEATURED_FARMS.map((farm, i) => {
-              const photoId = FARM_PHOTOS[farm.type] || FARM_PHOTOS.default;
+              const photoId = FARM_PHOTO_POOL[i % FARM_PHOTO_POOL.length];
               return (
                 <motion.div
                   key={farm.id}
