@@ -7,6 +7,29 @@ import { Elements, PaymentElement, useStripe, useElements } from '@stripe/react-
 import { useAuthStore, useCartStore, useFavoritesStore, useOrdersStore } from '../store/index.js';
 import FARMS_DATA from '../data/farms.json';
 
+// Design system constants
+const DS = {
+  green:  '#2D5016',
+  gold:   '#C8963E',
+  cream:  '#FAF7F2',
+  dark:   '#1A1A1A',
+  muted:  '#6B7280',
+  border: '#E8E0D0',
+  serif:  "'Playfair Display', serif",
+  sans:   "'Inter', sans-serif",
+};
+const btnPrimary = {
+  background: DS.green,
+  color: 'white',
+  border: 'none',
+  borderRadius: 9999,
+  padding: '12px 28px',
+  fontWeight: 700,
+  fontFamily: DS.sans,
+  fontSize: 14,
+  cursor: 'pointer',
+};
+
 const stripePromise = import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY
   ? loadStripe(import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY)
   : null;
@@ -62,10 +85,10 @@ export function CheckoutPage() {
   if (items.length === 0) return (
     <PageShell title="Košík" onBack={() => navigate(-1)}>
       <div style={{ textAlign:'center', padding:'60px 20px' }}>
-        <div style={{ fontSize:48 }}>🛒</div>
-        <div style={{ fontFamily:"'Playfair Display',serif", fontSize:20, margin:'12px 0 6px' }}>Košík je prázdný</div>
-        <p style={{ color:'#888', fontSize:14, marginBottom:20 }}>Přidejte produkty z vaší oblíbené farmy</p>
-        <button onClick={() => navigate('/')} style={{ padding:'10px 24px', background:'#3A5728', color:'white', border:'none', borderRadius:50, fontFamily:"'DM Sans',sans-serif", fontWeight:700, cursor:'pointer' }}>Prozkoumat farmy</button>
+        <div style={{ fontSize:64 }}>🛒</div>
+        <div style={{ fontFamily: DS.serif, fontSize:20, margin:'12px 0 6px', color: DS.dark }}>Košík je prázdný</div>
+        <p style={{ color: DS.muted, fontSize:14, marginBottom:20, fontFamily: DS.sans }}>Přidejte produkty z vaší oblíbené farmy</p>
+        <button onClick={() => navigate('/')} style={btnPrimary}>Prozkoumat farmy</button>
       </div>
     </PageShell>
   );
@@ -94,7 +117,7 @@ export function CheckoutPage() {
         <div>
           {/* Cart items */}
           <div style={{ background:'white', borderRadius:12, padding:'16px', boxShadow:'0 2px 8px rgba(0,0,0,0.06)', marginBottom:16 }}>
-            <div style={{ fontFamily:"'Playfair Display',serif", fontSize:18, fontWeight:700, marginBottom:14 }}>Položky ({items.length})</div>
+            <div style={{ fontFamily: DS.serif, fontSize:18, fontWeight:700, marginBottom:14, color: DS.dark }}>Položky ({items.length})</div>
             {items.map(({ product, quantity }) => (
               <div key={product.id} style={{ display:'flex', gap:12, alignItems:'center', padding:'10px 0', borderBottom:'1px solid #EDE5D0' }}>
                 <div style={{ fontSize:32 }}>{product.emoji}</div>
@@ -115,7 +138,7 @@ export function CheckoutPage() {
 
           {/* Delivery */}
           <div style={{ background:'white', borderRadius:12, padding:'16px', boxShadow:'0 2px 8px rgba(0,0,0,0.06)' }}>
-            <div style={{ fontFamily:"'Playfair Display',serif", fontSize:18, fontWeight:700, marginBottom:14 }}>Způsob doručení</div>
+            <div style={{ fontFamily: DS.serif, fontSize:18, fontWeight:700, marginBottom:14, color: DS.dark }}>Způsob doručení</div>
             <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:10, marginBottom:14 }}>
               {[['pickup','🏪 Osobní odběr','Vyzvednu na farmě, zdarma'],['delivery','🚚 Doručení domů','+ 79 Kč k objednávce']].map(([val, label, sub]) => (
                 <div key={val} onClick={() => setDelivery(val)} style={{ padding:'12px', borderRadius:10, border:`2px solid ${delivery===val?'#3A5728':'#EDE5D0'}`, background: delivery===val ? '#E8F0E4' : 'white', cursor:'pointer', transition:'all 0.15s' }}>
@@ -126,32 +149,32 @@ export function CheckoutPage() {
             </div>
             {delivery === 'delivery' && (
               <input value={address} onChange={e => setAddress(e.target.value)} placeholder="Doručovací adresa"
-                style={{ width:'100%', padding:'10px 14px', borderRadius:9, border:'1.5px solid #EDE5D0', fontFamily:"'DM Sans',sans-serif", fontSize:14, outline:'none', marginBottom:10 }} />
+                style={{ width:'100%', padding:'10px 14px', borderRadius:9, border:'1.5px solid #EDE5D0', fontFamily: DS.sans, fontSize:14, outline:'none', marginBottom:10 }} />
             )}
             <textarea value={note} onChange={e => setNote(e.target.value)} placeholder="Poznámka k objednávce (volitelné)"
-              style={{ width:'100%', padding:'10px 14px', borderRadius:9, border:'1.5px solid #EDE5D0', fontFamily:"'DM Sans',sans-serif", fontSize:14, outline:'none', resize:'vertical', minHeight:60 }} />
+              style={{ width:'100%', padding:'10px 14px', borderRadius:9, border:'1.5px solid #EDE5D0', fontFamily: DS.sans, fontSize:14, outline:'none', resize:'vertical', minHeight:60 }} />
           </div>
         </div>
 
         {/* Summary */}
         <div style={{ background:'white', borderRadius:12, padding:'20px', boxShadow:'0 2px 8px rgba(0,0,0,0.06)', position:'sticky', top:20 }}>
-          <div style={{ fontFamily:"'Playfair Display',serif", fontSize:18, fontWeight:700, marginBottom:14 }}>Shrnutí</div>
-          <div style={{ display:'flex', justifyContent:'space-between', marginBottom:8, fontSize:14 }}>
+          <div style={{ fontFamily: DS.serif, fontSize:18, fontWeight:700, marginBottom:14, color: DS.dark }}>Shrnutí</div>
+          <div style={{ display:'flex', justifyContent:'space-between', marginBottom:8, fontSize:14, fontFamily: DS.sans }}>
             <span>Produkty</span><span>{total.toFixed(0)} Kč</span>
           </div>
-          {delivery === 'delivery' && <div style={{ display:'flex', justifyContent:'space-between', marginBottom:8, fontSize:14 }}><span>Doprava</span><span>79 Kč</span></div>}
-          <div style={{ borderTop:'2px solid #EDE5D0', marginTop:12, paddingTop:12, display:'flex', justifyContent:'space-between', fontWeight:700, fontSize:16, marginBottom:16 }}>
-            <span>Celkem</span><span style={{ color:'#3A5728' }}>{finalTotal.toFixed(0)} Kč</span>
+          {delivery === 'delivery' && <div style={{ display:'flex', justifyContent:'space-between', marginBottom:8, fontSize:14, fontFamily: DS.sans }}><span>Doprava</span><span>79 Kč</span></div>}
+          <div style={{ borderTop:'2px solid #EDE5D0', marginTop:12, paddingTop:12, display:'flex', justifyContent:'space-between', fontWeight:700, fontSize:16, marginBottom:16, fontFamily: DS.sans }}>
+            <span>Celkem</span><span style={{ color: DS.green }}>{finalTotal.toFixed(0)} Kč</span>
           </div>
           {/* Pay with card (Stripe) */}
-          <button onClick={initStripePayment} disabled={stripeLoading} style={{ width:'100%', padding:'13px', background:'#1E120A', color:'white', border:'none', borderRadius:10, fontFamily:"'DM Sans',sans-serif", fontWeight:700, fontSize:15, cursor:'pointer', marginBottom:10, display:'flex', alignItems:'center', justifyContent:'center', gap:8 }}>
+          <button onClick={initStripePayment} disabled={stripeLoading} style={{ ...btnPrimary, width:'100%', padding:'13px 28px', background:'#1A1A1A', borderRadius:9999, marginBottom:10, display:'flex', alignItems:'center', justifyContent:'center', gap:8 }}>
             {stripeLoading ? '⏳ Načítám...' : '💳 Zaplatit kartou'}
           </button>
           {/* Fallback — order without payment */}
-          <button onClick={confirmOrderFallback} style={{ width:'100%', padding:'11px', background:'#3A5728', color:'white', border:'none', borderRadius:10, fontFamily:"'DM Sans',sans-serif", fontWeight:700, fontSize:14, cursor:'pointer' }}>
+          <button onClick={confirmOrderFallback} style={{ ...btnPrimary, width:'100%', padding:'12px 28px' }}>
             ✓ Objednat (platba při převzetí)
           </button>
-          <p style={{ fontSize:11, color:'#aaa', textAlign:'center', marginTop:10, lineHeight:1.5 }}>Farmář bude ihned informován o objednávce.</p>
+          <p style={{ fontSize:11, color: DS.muted, textAlign:'center', marginTop:10, lineHeight:1.5, fontFamily: DS.sans }}>Farmář bude ihned informován o objednávce.</p>
         </div>
       </div>
     </PageShell>
@@ -192,16 +215,16 @@ function StripePaymentForm({ total, farm, delivery, items, farmId, addOrder, cle
   return (
     <form onSubmit={handlePay} style={{ maxWidth: 520, margin: '0 auto' }}>
       <div style={{ background: 'white', borderRadius: 14, padding: 24, boxShadow: '0 2px 8px rgba(0,0,0,.06)', marginBottom: 16 }}>
-        <div style={{ fontFamily: "'Playfair Display',serif", fontSize: 18, fontWeight: 700, marginBottom: 16 }}>Platební údaje</div>
+        <div style={{ fontFamily: DS.serif, fontSize: 18, fontWeight: 700, marginBottom: 16, color: DS.dark }}>Platební údaje</div>
         <PaymentElement />
-        {error && <div style={{ marginTop: 12, padding: '10px 14px', background: '#FEE2E2', color: '#991B1B', borderRadius: 8, fontSize: 13 }}>{error}</div>}
+        {error && <div style={{ marginTop: 12, padding: '10px 14px', background: '#FEE2E2', color: '#991B1B', borderRadius: 8, fontSize: 13, fontFamily: DS.sans }}>{error}</div>}
       </div>
       <div style={{ background: 'white', borderRadius: 14, padding: 20, boxShadow: '0 2px 8px rgba(0,0,0,.06)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <div>
-          <div style={{ fontSize: 13, color: '#888' }}>Celková částka</div>
-          <div style={{ fontFamily: "'Playfair Display',serif", fontSize: 22, fontWeight: 700, color: '#3A5728' }}>{total.toFixed(0)} Kč</div>
+          <div style={{ fontSize: 13, color: DS.muted, fontFamily: DS.sans }}>Celková částka</div>
+          <div style={{ fontFamily: DS.serif, fontSize: 22, fontWeight: 700, color: DS.green }}>{total.toFixed(0)} Kč</div>
         </div>
-        <button type="submit" disabled={paying || !stripe} style={{ padding: '13px 28px', background: '#3A5728', color: 'white', border: 'none', borderRadius: 12, fontFamily: "'DM Sans',sans-serif", fontWeight: 700, fontSize: 15, cursor: 'pointer' }}>
+        <button type="submit" disabled={paying || !stripe} style={{ ...btnPrimary, padding: '13px 28px', fontSize: 15 }}>
           {paying ? '⏳ Zpracovávám...' : '✅ Zaplatit'}
         </button>
       </div>

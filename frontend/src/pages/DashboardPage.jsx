@@ -3,14 +3,19 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../store/index.js';
+import {
+  Eye, ShoppingBag, Heart, Star,
+  PlusCircle, Leaf, Edit, Package,
+} from 'lucide-react';
 
 // ── Design tokens ────────────────────────────────────────────────────────────
 const C = {
-  cream:  '#F5EDE0',
+  cream:  '#FAF7F2',
+  creamDark: '#F5EDE0',
   terra:  '#BF5B3D',
-  green:  '#3A5728',
-  dark:   '#1A2D18',
-  gold:   '#C8973A',
+  green:  '#2D5016',
+  dark:   '#1A1A1A',
+  gold:   '#C8963E',
   brown:  '#2C1810',
   white:  '#FFFFFF',
   sub:    '#7A6A58',
@@ -34,6 +39,20 @@ const MOCK_ACTIVITY = [
   { id: 3, icon: '⭐', text: 'Nová recenze (5★) od Petra M.', time: 'před 3 dny' },
   { id: 4, icon: '🔍', text: 'Nová návštěva z Prahy', time: 'před 4 dny' },
   { id: 5, icon: '❤️', text: 'Martin V. přidal vaši farmu do oblíbených', time: 'před týdnem' },
+];
+
+const MOCK_ORDERS = [
+  { id: 'OBJ-001', customer: 'Jana Nováková', items: 'Mrkev × 2, Brambory × 1', total: '180 Kč', status: 'nova',      date: '15. 3. 2026' },
+  { id: 'OBJ-002', customer: 'Pavel Šimánek', items: 'Med lipový × 1',           total:  '95 Kč', status: 'potvrzena', date: '14. 3. 2026' },
+  { id: 'OBJ-003', customer: 'Lucie Marková',  items: 'Rajčata Cherry × 3',       total: '210 Kč', status: 'dokoncena', date: '12. 3. 2026' },
+  { id: 'OBJ-004', customer: 'Tomáš Blažek',   items: 'Špenát × 2, Mrkev × 1',   total: '140 Kč', status: 'nova',      date: '11. 3. 2026' },
+];
+
+const MOCK_SEASONAL = [
+  { id: 1, emoji: '🌱', title: 'Jarní zelenina',     range: 'Dub – Kvě 2026', discount: '−15%' },
+  { id: 2, emoji: '🍓', title: 'Letní jahody',        range: 'Čvn – Čvc 2026', discount: null   },
+  { id: 3, emoji: '🎃', title: 'Podzimní dýně',       range: 'Zář – Říj 2026', discount: '−10%' },
+  { id: 4, emoji: '🍎', title: 'Jablečná sklizeň',    range: 'Říj – Lis 2026', discount: null   },
 ];
 
 const CHART_DATA = [
@@ -71,21 +90,32 @@ const maxViews = Math.max(...CHART_DATA.map(d => d.views));
 // ── Styles helpers ───────────────────────────────────────────────────────────
 const inputSt = {
   width: '100%', padding: '10px 13px', border: `1.5px solid ${C.border}`,
-  borderRadius: 9, fontSize: 14, fontFamily: "'DM Sans',sans-serif",
+  borderRadius: 9, fontSize: 14, fontFamily: "'Inter',sans-serif",
   outline: 'none', background: C.white, color: C.brown, boxSizing: 'border-box',
 };
 
-function Btn({ children, color = C.green, onClick, style = {} }) {
+function Btn({ children, color = C.green, onClick, style = {}, variant = 'filled' }) {
+  const base = {
+    padding: '10px 20px', borderRadius: 10,
+    fontFamily: "'Inter',sans-serif", fontWeight: 700,
+    fontSize: 14, cursor: 'pointer', transition: 'opacity .15s',
+    display: 'inline-flex', alignItems: 'center', gap: 8,
+  };
+
+  let variantStyles = {};
+  if (variant === 'filled') {
+    variantStyles = { background: color, color: C.white, border: 'none' };
+  } else if (variant === 'outlined-gold') {
+    variantStyles = { background: 'transparent', color: C.gold, border: `2px solid ${C.gold}` };
+  } else if (variant === 'outlined-white') {
+    variantStyles = { background: 'transparent', color: C.dark, border: `2px solid ${C.border}` };
+  }
+
   return (
     <button
       onClick={onClick}
-      style={{
-        padding: '10px 20px', background: color, color: C.white, border: 'none',
-        borderRadius: 10, fontFamily: "'DM Sans',sans-serif", fontWeight: 700,
-        fontSize: 14, cursor: 'pointer', transition: 'opacity .15s',
-        ...style,
-      }}
-      onMouseEnter={e => e.currentTarget.style.opacity = '0.88'}
+      style={{ ...base, ...variantStyles, ...style }}
+      onMouseEnter={e => e.currentTarget.style.opacity = '0.82'}
       onMouseLeave={e => e.currentTarget.style.opacity = '1'}
     >
       {children}
@@ -115,6 +145,27 @@ function SectionTitle({ children }) {
   );
 }
 
+// Status badge for orders
+const ORDER_STATUS = {
+  nova:       { label: 'Nová',      bg: 'rgba(200,150,62,.15)', color: C.gold  },
+  potvrzena:  { label: 'Potvrzená', bg: 'rgba(45,80,22,.13)',   color: C.green },
+  dokoncena:  { label: 'Dokončena', bg: 'rgba(0,0,0,.07)',       color: '#6B7280' },
+};
+
+function StatusBadge({ status }) {
+  const s = ORDER_STATUS[status] || ORDER_STATUS.nova;
+  return (
+    <span style={{
+      display: 'inline-block', padding: '3px 11px', borderRadius: 99,
+      background: s.bg, color: s.color,
+      fontSize: 12, fontWeight: 700, fontFamily: "'Inter',sans-serif",
+      letterSpacing: '.02em',
+    }}>
+      {s.label}
+    </span>
+  );
+}
+
 // ── Main component ────────────────────────────────────────────────────────────
 export default function DashboardPage() {
   const navigate = useNavigate();
@@ -127,6 +178,9 @@ export default function DashboardPage() {
   const [newProduct, setNewProduct] = useState({
     name: '', emoji: '🌿', season: [],
   });
+
+  // Seasonal offers state
+  const [seasonalOffers, setSeasonalOffers] = useState(MOCK_SEASONAL);
 
   const { pct, missing } = calcCompletion(user, products);
 
@@ -174,11 +228,15 @@ export default function DashboardPage() {
     ));
   }
 
+  function deleteSeasonalOffer(id) {
+    setSeasonalOffers(prev => prev.filter(o => o.id !== id));
+  }
+
   return (
-    <div style={{ minHeight: '100vh', background: C.cream, fontFamily: "'DM Sans',sans-serif" }}>
+    <div style={{ minHeight: '100vh', background: C.cream, fontFamily: "'Inter',sans-serif" }}>
       {/* Google Fonts */}
       <link
-        href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=DM+Sans:wght@400;500;700&display=swap"
+        href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=Inter:wght@400;500;600;700&display=swap"
         rel="stylesheet"
       />
       <style>{`
@@ -191,7 +249,7 @@ export default function DashboardPage() {
       {/* ── 1. Header / Nav ─────────────────────────────────────────────── */}
       <header style={{
         position: 'sticky', top: 0, zIndex: 100,
-        background: 'rgba(245,237,224,.96)', backdropFilter: 'blur(16px)',
+        background: 'rgba(250,247,242,.96)', backdropFilter: 'blur(16px)',
         borderBottom: `1px solid ${C.border}`,
         height: 62, display: 'flex', alignItems: 'center',
         padding: '0 28px', gap: 16,
@@ -213,7 +271,7 @@ export default function DashboardPage() {
           style={{
             padding: '7px 16px', background: 'none', border: `1.5px solid ${C.border}`,
             borderRadius: 9, fontSize: 13, fontWeight: 600, color: C.terra, cursor: 'pointer',
-            fontFamily: "'DM Sans',sans-serif",
+            fontFamily: "'Inter',sans-serif",
           }}
         >
           Odhlásit
@@ -276,7 +334,7 @@ export default function DashboardPage() {
                   padding: '5px 13px', background: 'rgba(200,151,58,.12)',
                   border: `1.5px solid rgba(200,151,58,.4)`, borderRadius: 99,
                   fontSize: 12, fontWeight: 600, color: C.gold, cursor: 'pointer',
-                  fontFamily: "'DM Sans',sans-serif",
+                  fontFamily: "'Inter',sans-serif",
                 }}
               >
                 {item.label}
@@ -288,36 +346,58 @@ export default function DashboardPage() {
         {/* ── 3. Stats Cards Row ─────────────────────────────────────────── */}
         <div style={{
           display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fill, minmax(190px, 1fr))',
+          gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))',
           gap: 16, marginBottom: 24,
         }}>
           {[
-            { icon: '👁️', value: '234', label: 'zobrazení profilu', sub: 'tento týden', trend: '+12%' },
-            { icon: '🔗', value: '18',  label: 'kliknutí na web',   sub: 'tento týden', trend: '+7%'  },
-            { icon: '❤️', value: '47',  label: 'oblíbených',        sub: 'celkem',      trend: '+5%'  },
-            { icon: '⭐', value: '4.7', label: 'průměrné hodnocení', sub: '12 recenzí', trend: '+0.2' },
+            {
+              Icon: Eye,
+              value: '247',
+              label: 'Zobrazení',
+              trend: '+12%',
+            },
+            {
+              Icon: ShoppingBag,
+              value: '12',
+              label: 'Objednávky',
+              trend: '+8%',
+            },
+            {
+              Icon: Heart,
+              value: '38',
+              label: 'Oblíbení',
+              trend: '+5%',
+            },
+            {
+              Icon: Star,
+              value: '4.8',
+              label: 'Hodnocení',
+              trend: '+0.3',
+            },
           ].map(card => (
             <div key={card.label} style={{
-              background: C.white, borderRadius: 16, padding: '18px 20px',
+              background: C.cream,
+              border: `1px solid ${C.border}`,
+              borderRadius: 16, padding: '24px',
               boxShadow: C.shadow,
             }}>
-              <div style={{ fontSize: 26, marginBottom: 8 }}>{card.icon}</div>
+              <div style={{ marginBottom: 12 }}>
+                <card.Icon size={22} color={C.gold} strokeWidth={2} />
+              </div>
               <div style={{
-                fontFamily: "'Playfair Display',serif", fontSize: 30, fontWeight: 700,
+                fontFamily: "'Playfair Display',serif", fontSize: 36, fontWeight: 700,
                 color: C.gold, lineHeight: 1,
               }}>
                 {card.value}
               </div>
-              <div style={{ fontSize: 13, color: C.brown, fontWeight: 600, marginTop: 4 }}>
+              <div style={{ fontSize: 13, color: C.sub, marginTop: 6, fontWeight: 500 }}>
                 {card.label}
               </div>
-              <div style={{ fontSize: 12, color: C.sub, marginTop: 2 }}>{card.sub}</div>
               <div style={{
-                fontSize: 11, fontWeight: 700, color: C.green, marginTop: 8,
-                background: 'rgba(58,87,40,.1)', display: 'inline-block',
-                padding: '2px 8px', borderRadius: 99,
+                fontSize: 12, fontWeight: 700, color: C.green, marginTop: 10,
+                display: 'inline-block',
               }}>
-                {card.trend} vs minulý týden
+                {card.trend} oproti minulému měsíci
               </div>
             </div>
           ))}
@@ -327,26 +407,137 @@ export default function DashboardPage() {
         <Card style={{ marginBottom: 24 }}>
           <SectionTitle>Rychlé akce</SectionTitle>
           <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
-            <Btn color={C.green} onClick={() => navigate('/dashboard/profil')}>
-              ✏️ Upravit profil
+            <Btn
+              variant="filled"
+              color={C.green}
+              onClick={() => {
+                setShowAddForm(true);
+                setEditingId(null);
+                setNewProduct({ name: '', emoji: '🌿', season: [] });
+                // Scroll to products section
+                document.getElementById('products-section')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+              }}
+            >
+              <PlusCircle size={16} />
+              Přidat produkt
             </Btn>
-            <Btn color={C.terra} onClick={() => navigate('/dashboard/foto')}>
-              📸 Přidat foto
+            <Btn
+              variant="outlined-gold"
+              onClick={() => {
+                document.getElementById('seasonal-section')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+              }}
+            >
+              <Leaf size={16} color={C.gold} />
+              Nová sezónní nabídka
             </Btn>
-            <Btn color={C.gold} onClick={() => { setShowAddForm(true); setEditingId(null); setNewProduct({ name: '', emoji: '🌿', season: [] }); }}>
-              🛍️ Přidat produkt
-            </Btn>
-            <Btn color={C.brown} onClick={() => navigate('/mapa')} style={{ background: C.brown }}>
-              🗺️ Zobrazit na mapě
+            <Btn
+              variant="outlined-white"
+              onClick={() => navigate('/dashboard/profil')}
+            >
+              <Edit size={16} color={C.dark} />
+              Upravit profil farmy
             </Btn>
           </div>
         </Card>
 
-        {/* ── 5. Products Management Table ──────────────────────────────── */}
+        {/* ── 5. Recent Orders Table ─────────────────────────────────────── */}
         <Card style={{ marginBottom: 24 }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+            <SectionTitle>Poslední objednávky</SectionTitle>
+            {MOCK_ORDERS.length > 0 && (
+              <span style={{
+                fontSize: 12, fontWeight: 600, color: C.sub,
+                background: 'rgba(0,0,0,.05)', padding: '4px 10px', borderRadius: 99,
+              }}>
+                {MOCK_ORDERS.filter(o => o.status === 'nova').length} nové
+              </span>
+            )}
+          </div>
+
+          {MOCK_ORDERS.length === 0 ? (
+            /* Empty state */
+            <div style={{
+              textAlign: 'center', padding: '48px 20px',
+              color: C.sub,
+            }}>
+              <div style={{ marginBottom: 12, opacity: .4 }}>
+                <Package size={48} color={C.sub} strokeWidth={1.5} />
+              </div>
+              <div style={{
+                fontFamily: "'Playfair Display',serif", fontSize: 17, fontWeight: 700,
+                color: C.dark, marginBottom: 8,
+              }}>
+                Zatím žádné objednávky
+              </div>
+              <div style={{ fontSize: 13, marginBottom: 20, maxWidth: 300, margin: '0 auto 20px' }}>
+                Přidejte produkty, aby vás zákazníci mohli snáze najít a objednat.
+              </div>
+              <Btn
+                variant="filled"
+                color={C.green}
+                onClick={() => {
+                  setShowAddForm(true);
+                  setEditingId(null);
+                  setNewProduct({ name: '', emoji: '🌿', season: [] });
+                }}
+              >
+                <PlusCircle size={16} />
+                Přidat produkt
+              </Btn>
+            </div>
+          ) : (
+            <div style={{ overflowX: 'auto' }}>
+              {/* Table header */}
+              <div style={{
+                display: 'grid',
+                gridTemplateColumns: '110px 1fr 1fr 90px 100px',
+                gap: 12, padding: '8px 14px',
+                borderBottom: `1.5px solid ${C.border}`,
+                fontSize: 11, fontWeight: 700, color: C.sub, letterSpacing: '.05em',
+              }}>
+                <div>ČÍSLO</div>
+                <div>ZÁKAZNÍK</div>
+                <div>POLOŽKY</div>
+                <div style={{ textAlign: 'right' }}>CELKEM</div>
+                <div style={{ textAlign: 'center' }}>STAV</div>
+              </div>
+
+              {MOCK_ORDERS.map((order, i) => (
+                <div
+                  key={order.id}
+                  style={{
+                    display: 'grid',
+                    gridTemplateColumns: '110px 1fr 1fr 90px 100px',
+                    gap: 12, padding: '13px 14px', alignItems: 'center',
+                    background: i % 2 === 0 ? C.cream : C.white,
+                    borderBottom: i < MOCK_ORDERS.length - 1 ? `1px solid ${C.border}` : 'none',
+                    borderRadius: i === 0 ? '8px 8px 0 0' : i === MOCK_ORDERS.length - 1 ? '0 0 8px 8px' : 0,
+                  }}
+                >
+                  <div style={{ fontSize: 13, fontWeight: 700, color: C.dark, fontFamily: 'monospace' }}>
+                    {order.id}
+                  </div>
+                  <div>
+                    <div style={{ fontSize: 14, fontWeight: 600, color: C.dark }}>{order.customer}</div>
+                    <div style={{ fontSize: 11, color: C.sub, marginTop: 1 }}>{order.date}</div>
+                  </div>
+                  <div style={{ fontSize: 13, color: C.sub }}>{order.items}</div>
+                  <div style={{ fontSize: 14, fontWeight: 700, color: C.dark, textAlign: 'right' }}>{order.total}</div>
+                  <div style={{ textAlign: 'center' }}>
+                    <StatusBadge status={order.status} />
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </Card>
+
+        {/* ── 6. Products Management Table ──────────────────────────────── */}
+        <Card style={{ marginBottom: 24 }} id="products-section">
+          <div id="products-section" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
             <SectionTitle>Moje produkty</SectionTitle>
             <Btn
+              variant="filled"
               color={showAddForm && !editingId ? C.sub : C.green}
               onClick={() => {
                 if (showAddForm && !editingId) {
@@ -370,7 +561,7 @@ export default function DashboardPage() {
               marginBottom: 18, border: `1.5px solid rgba(200,151,58,.25)`,
             }}>
               <div style={{ fontWeight: 700, fontSize: 15, marginBottom: 14, color: C.dark }}>
-                {editingId ? '✏️ Upravit produkt' : '+ Nový produkt'}
+                {editingId ? 'Upravit produkt' : '+ Nový produkt'}
               </div>
 
               {/* Emoji selector */}
@@ -437,14 +628,14 @@ export default function DashboardPage() {
               </div>
 
               <div style={{ display: 'flex', gap: 10 }}>
-                <Btn color={C.green} onClick={addProduct} style={{ padding: '9px 20px', fontSize: 13 }}>
-                  {editingId ? '💾 Uložit' : '✅ Přidat'}
+                <Btn variant="filled" color={C.green} onClick={addProduct} style={{ padding: '9px 20px', fontSize: 13 }}>
+                  {editingId ? 'Uložit' : 'Přidat'}
                 </Btn>
                 <button
                   onClick={() => { setShowAddForm(false); setEditingId(null); }}
                   style={{
                     padding: '9px 20px', background: 'none', border: `1.5px solid ${C.border}`,
-                    borderRadius: 10, cursor: 'pointer', fontSize: 13, fontFamily: "'DM Sans',sans-serif",
+                    borderRadius: 10, cursor: 'pointer', fontSize: 13, fontFamily: "'Inter',sans-serif",
                     color: C.sub,
                   }}
                 >
@@ -482,6 +673,7 @@ export default function DashboardPage() {
                   style={{
                     display: 'grid', gridTemplateColumns: '48px 1fr 160px 100px 80px',
                     gap: 12, padding: '12px 12px', alignItems: 'center',
+                    background: i % 2 === 0 ? C.cream : C.white,
                     borderBottom: i < products.length - 1 ? `1px solid ${C.border}` : 'none',
                     opacity: p.active ? 1 : 0.5, transition: 'opacity .2s',
                   }}
@@ -495,7 +687,7 @@ export default function DashboardPage() {
                             key={m}
                             style={{
                               fontSize: 10, fontWeight: 700, padding: '2px 6px',
-                              borderRadius: 99, background: 'rgba(58,87,40,.1)', color: C.green,
+                              borderRadius: 99, background: 'rgba(45,80,22,.10)', color: C.green,
                             }}
                           >
                             {m}
@@ -510,8 +702,8 @@ export default function DashboardPage() {
                       style={{
                         padding: '4px 12px', borderRadius: 99, border: 'none',
                         fontSize: 11, fontWeight: 700, cursor: 'pointer',
-                        fontFamily: "'DM Sans',sans-serif",
-                        background: p.active ? 'rgba(58,87,40,.12)' : 'rgba(191,91,61,.12)',
+                        fontFamily: "'Inter',sans-serif",
+                        background: p.active ? 'rgba(45,80,22,.12)' : 'rgba(191,91,61,.12)',
                         color: p.active ? C.green : C.terra,
                       }}
                     >
@@ -548,7 +740,102 @@ export default function DashboardPage() {
           )}
         </Card>
 
-        {/* ── 6. Recent Activity Feed ────────────────────────────────────── */}
+        {/* ── 7. Seasonal Offers Section ────────────────────────────────── */}
+        <Card style={{ marginBottom: 24 }} id="seasonal-section">
+          <div id="seasonal-section" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+            <SectionTitle>Sezónní nabídky</SectionTitle>
+            <Btn
+              variant="outlined-gold"
+              onClick={() => {
+                const title = window.prompt('Název nové sezónní nabídky:');
+                if (title && title.trim()) {
+                  setSeasonalOffers(prev => [...prev, {
+                    id: Date.now(),
+                    emoji: '🌿',
+                    title: title.trim(),
+                    range: 'Brzy',
+                    discount: null,
+                  }]);
+                }
+              }}
+              style={{ padding: '7px 14px', fontSize: 13 }}
+            >
+              <PlusCircle size={15} color={C.gold} />
+              Přidat nabídku
+            </Btn>
+          </div>
+
+          {seasonalOffers.length === 0 ? (
+            <div style={{ textAlign: 'center', padding: '40px 20px', color: C.sub }}>
+              <div style={{ fontSize: 36, marginBottom: 10 }}>🌱</div>
+              <div style={{ fontWeight: 700, marginBottom: 6 }}>Zatím žádné sezónní nabídky</div>
+              <div style={{ fontSize: 13 }}>Přidejte sezónní nabídku pro lepší viditelnost na mapě.</div>
+            </div>
+          ) : (
+            <div style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))',
+              gap: 14,
+            }}>
+              {seasonalOffers.map(offer => (
+                <div
+                  key={offer.id}
+                  style={{
+                    background: C.cream,
+                    border: `1px solid ${C.border}`,
+                    borderRadius: 14,
+                    padding: '18px 16px',
+                    position: 'relative',
+                  }}
+                >
+                  {/* Discount badge */}
+                  {offer.discount && (
+                    <span style={{
+                      position: 'absolute', top: 12, right: 12,
+                      background: C.green, color: C.white,
+                      fontSize: 11, fontWeight: 700,
+                      padding: '2px 8px', borderRadius: 99,
+                    }}>
+                      {offer.discount}
+                    </span>
+                  )}
+
+                  {/* Delete button */}
+                  <button
+                    onClick={() => deleteSeasonalOffer(offer.id)}
+                    title="Odstranit"
+                    style={{
+                      position: 'absolute', bottom: 10, right: 12,
+                      background: 'none', border: 'none',
+                      cursor: 'pointer', fontSize: 14, color: C.sub, opacity: 0.5,
+                      padding: 2,
+                    }}
+                    onMouseEnter={e => e.currentTarget.style.opacity = '1'}
+                    onMouseLeave={e => e.currentTarget.style.opacity = '0.5'}
+                  >
+                    🗑
+                  </button>
+
+                  <div style={{ fontSize: 32, marginBottom: 10 }}>{offer.emoji}</div>
+                  <div style={{
+                    fontFamily: "'Playfair Display',serif", fontSize: 15, fontWeight: 700,
+                    color: C.dark, marginBottom: 6, lineHeight: 1.3,
+                    paddingRight: offer.discount ? 44 : 0,
+                  }}>
+                    {offer.title}
+                  </div>
+                  <div style={{
+                    fontSize: 12, color: C.sub, fontWeight: 500,
+                  }}>
+                    {offer.range}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </Card>
+
+        {/* ── 8. Recent Activity Feed ────────────────────────────────────── */}
         <Card style={{ marginBottom: 24 }}>
           <SectionTitle>Nedávná aktivita</SectionTitle>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 0 }}>
@@ -581,7 +868,7 @@ export default function DashboardPage() {
           </div>
         </Card>
 
-        {/* ── 7. Premium Upsell Banner ───────────────────────────────────── */}
+        {/* ── 9. Premium Upsell Banner ───────────────────────────────────── */}
         <div style={{
           borderRadius: 20, padding: '28px 32px', marginBottom: 24,
           background: `linear-gradient(135deg, ${C.gold} 0%, #A07020 100%)`,
@@ -604,7 +891,7 @@ export default function DashboardPage() {
               fontFamily: "'Playfair Display',serif", fontSize: 22, fontWeight: 900,
               marginBottom: 8,
             }}>
-              ⚡ Získejte 10× více zákazníků s prémiovým profilem
+              Získejte 10× více zákazníků s prémiovým profilem
             </div>
             <div style={{ fontSize: 14, opacity: .9, marginBottom: 16 }}>
               Prémiový profil vám přináší:
@@ -614,21 +901,22 @@ export default function DashboardPage() {
               marginBottom: 20,
             }}>
               {[
-                '✓ Prioritní zobrazení na mapě',
-                '✓ Fotogalerie až 20 fotek',
-                '✓ Vlastní sezónní nabídky',
-                '✓ Statistiky návštěv',
-                '✓ Odznak "Prémiová farma"',
+                'Prioritní zobrazení na mapě',
+                'Fotogalerie až 20 fotek',
+                'Vlastní sezónní nabídky',
+                'Statistiky návštěv',
+                'Odznak "Prémiová farma"',
               ].map(feat => (
                 <li key={feat} style={{
                   fontSize: 13, fontWeight: 600, background: 'rgba(255,255,255,.15)',
                   padding: '4px 12px', borderRadius: 99,
                 }}>
-                  {feat}
+                  ✓ {feat}
                 </li>
               ))}
             </ul>
             <Btn
+              variant="filled"
               color={C.dark}
               onClick={() => navigate('/cenik')}
               style={{ fontSize: 15, padding: '12px 28px', background: C.dark }}
@@ -638,7 +926,7 @@ export default function DashboardPage() {
           </div>
         </div>
 
-        {/* ── 8. Mini Analytics Chart ─────────────────────────────────────── */}
+        {/* ── 10. Mini Analytics Chart ─────────────────────────────────────── */}
         <Card>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 20 }}>
             <div>
@@ -647,22 +935,22 @@ export default function DashboardPage() {
                 Posledních 7 dní — počet zobrazení profilu
               </div>
             </div>
-            <Btn 
-              color={C.gold} 
+            <Btn
+              variant="outlined-gold"
               onClick={() => {
                 alert('Tato funkce je dostupná pouze v tarifech Professional a Enterprise. Upgradujte svůj profil pro odemčení.');
                 navigate('/cenik');
               }}
               style={{ fontSize: 13, padding: '7px 14px', borderRadius: 8 }}
             >
-              📄 Exportovat do PDF
+              Exportovat do PDF
             </Btn>
           </div>
           <div style={{
             display: 'flex', gap: 10, alignItems: 'flex-end',
             height: 120, padding: '0 4px',
           }}>
-            {CHART_DATA.map((d, i) => {
+            {CHART_DATA.map((d) => {
               const barH = Math.round((d.views / maxViews) * 100);
               const isMax = d.views === maxViews;
               return (
@@ -689,7 +977,7 @@ export default function DashboardPage() {
                     borderRadius: '6px 6px 3px 3px',
                     background: isMax
                       ? `linear-gradient(180deg, ${C.gold}, #A07020)`
-                      : `linear-gradient(180deg, rgba(58,87,40,.55), rgba(58,87,40,.35))`,
+                      : `linear-gradient(180deg, rgba(45,80,22,.55), rgba(45,80,22,.35))`,
                     transition: 'height .4s ease',
                     position: 'relative',
                   }} />

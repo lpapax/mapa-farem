@@ -26,6 +26,7 @@ const NotFoundPageLazy  = lazy(() => import('./pages/OtherPages').then(m => ({ d
 const BlogPage          = lazy(() => import('./pages/BlogPage'));
 const BlogPostPage      = lazy(() => import('./pages/BlogPostPage'));
 const MarketsPage       = lazy(() => import('./pages/MarketsPage'));
+const LeaderboardPage   = lazy(() => import('./pages/LeaderboardPage'));
 
 export default function App() {
   useEffect(() => { useAuthStore.getState().init(); }, []);

@@ -517,6 +517,7 @@ function MapboxMap({ farms, selectedId, onSelect, userLocation, radius, dark, ma
 }
 
 // ── PRO TEBE helper ────────────────────────────────────────────────────────
+// Supabase-profile variant (used for sidebar badge when not in proTebe toggle mode)
 function isForUser(farm, profile) {
   if (!profile) return false;
   let score = 0;
@@ -524,6 +525,16 @@ function isForUser(farm, profile) {
   if (profile.diet_type === 'vegan' && ['veggie', 'bio', 'herbs'].includes(farm.type)) score++;
   if (profile.diet_type === 'vegetarian' && ['veggie', 'bio', 'dairy', 'herbs', 'honey'].includes(farm.type)) score++;
   if (profile.certifications?.includes('bio') && farm.bio) score++;
+  return score >= 2;
+}
+
+// localStorage mapafarem_profile variant: { region, diet, categories, bio }
+function isForLocalProfile(farm, profile) {
+  if (!profile) return false;
+  let score = 0;
+  if (profile.region && farm.loc && farm.loc.includes(profile.region)) score++;
+  if (profile.bio === true && farm.bio === true) score++;
+  if (Array.isArray(profile.categories) && profile.categories.includes(farm.type)) score++;
   return score >= 2;
 }
 
@@ -581,6 +592,25 @@ export default function MapPage() {
         .then(({ data }) => { if (data) setUserProfile(data); });
     });
   }, []);
+  // Pro tebe toggle + localStorage profile
+  const [proTebeActive, setProTebeActive] = useState(false);
+  const [proTebeToast, setProTebeToast] = useState(false);
+  const localProfile = useMemo(() => {
+    try {
+      const raw = localStorage.getItem('mapafarem_profile');
+      return raw ? JSON.parse(raw) : null;
+    } catch { return null; }
+  }, [proTebeActive]); // re-read when toggled
+
+  const handleProTebeToggle = () => {
+    if (!proTebeActive && !localProfile) {
+      setProTebeToast(true);
+      setTimeout(() => setProTebeToast(false), 5000);
+      return;
+    }
+    setProTebeActive(v => !v);
+  };
+
   const [stylePickerOpen, setStylePickerOpen] = useState(false);
   const [suggestions, setSuggestions] = useState([]);
   const [showSug, setShowSug] = useState(false);
@@ -701,8 +731,11 @@ export default function MapPage() {
       f.loc.toLowerCase().includes(q) ||
       (f.products||[]).some(p => p.toLowerCase().includes(q))
     );
+    if (proTebeActive && localProfile) {
+      data = data.filter(f => isForLocalProfile(f, localProfile));
+    }
     return data;
-  }, [activeTypes, search, nearbyMode, userLocation, radius, regionFilter, tagFilter, krajFilter]);
+  }, [activeTypes, search, nearbyMode, userLocation, radius, regionFilter, tagFilter, krajFilter, proTebeActive, localProfile]);
 
   // Debounced version of filtered for the map — avoids re-rendering markers on every keystroke
   const [debouncedFiltered, setDebouncedFiltered] = useState(filtered);
