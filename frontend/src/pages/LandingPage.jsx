@@ -92,15 +92,16 @@ const getSeason = () => {
 };
 const CURRENT_SEASON = getSeason();
 
-/* ─── Featured farms ─── */
-const FEATURED_FARMS = FARMS_DATA
-  .filter(f => f.rating >= 4.8)
-  .sort((a, b) => b.rating - a.rating)
-  .slice(0, 6);
+/* ─── Featured farms — shuffled pool, 6 random high-rated picked each load ─── */
+const TOP_FARMS = FARMS_DATA.filter(f => f.rating >= 4.7);
+function pickFeaturedFarms() {
+  const shuffled = [...TOP_FARMS].sort(() => Math.random() - 0.5);
+  return shuffled.slice(0, 6);
+}
 
 // Pool of diverse farm/field photos — assigned by index so every card looks different
 const FARM_PHOTO_POOL = [
-  '1500595046743-cd271d694d30', // rolling green hills farm
+  '1488459716781-31db52582fe9', // fresh produce colorful
   '1416879595882-3373a0480b5b', // farmers market vegetables
   '1464226184884-fa280b87c399', // countryside field aerial
   '1523741543316-beb7fc7023d8', // fresh harvest vegetables
@@ -152,6 +153,7 @@ export default function LandingPage() {
   const [searchQ, setSearchQ] = useState('');
   const [newsletterEmail, setNewsletterEmail] = useState('');
   const [newsletterOk, setNewsletterOk] = useState(false);
+  const [featuredFarms] = useState(() => pickFeaturedFarms());
 
   useSEO({
     title: 'Lokální farmy v České republice',
@@ -295,17 +297,17 @@ export default function LandingPage() {
             <div className="hero-img-col" style={{ position: 'relative' }}>
               <div style={{ transform: 'rotate(2deg)', borderRadius: 16, overflow: 'hidden', border: '4px solid white', boxShadow: '0 32px 80px rgba(0,0,0,0.4)', aspectRatio: '4/5', position: 'relative' }}>
                 <img
-                  src="https://images.unsplash.com/photo-1500595046743-cd271d694d30?w=600&q=80&fit=crop"
-                  alt="Lokální farma — zelené kopce"
+                  src="https://images.unsplash.com/photo-1488459716781-31db52582fe9?w=600&q=80&fit=crop"
+                  alt="Čerstvá zelenina z lokální farmy"
                   fetchpriority="high"
                   style={{ width: '100%', height: '100%', objectFit: 'cover' }}
                 />
                 {/* Bottom overlay */}
                 <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, padding: '20px 18px', background: 'linear-gradient(to top, rgba(26,26,26,0.8) 0%, transparent 100%)' }}>
                   <div style={{ color: 'white', fontWeight: 700, fontSize: 14, fontFamily: "'Inter',sans-serif" }}>
-                    Farma Zeleného kopce · Jihomoravský kraj
+                    Čerstvá sklizeň · přímo od farmáře
                   </div>
-                  <div style={{ color: '#C8963E', fontSize: 12, marginTop: 4 }}>⭐ 4.9 · Přímý prodej</div>
+                  <div style={{ color: '#C8963E', fontSize: 12, marginTop: 4 }}>⭐ 4.9 · Přímý prodej · BIO</div>
                 </div>
               </div>
               {/* Floating badge */}
@@ -435,7 +437,7 @@ export default function LandingPage() {
             </button>
           </div>
           <div className="farms-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 24 }}>
-            {FEATURED_FARMS.map((farm, i) => {
+            {featuredFarms.map((farm, i) => {
               const photoId = FARM_PHOTO_POOL[i % FARM_PHOTO_POOL.length];
               return (
                 <motion.div
@@ -455,7 +457,7 @@ export default function LandingPage() {
                       src={`https://images.unsplash.com/photo-${photoId}?w=400&q=80&fit=crop`}
                       alt={farm.name}
                       loading="lazy"
-                      onError={e => { e.currentTarget.src = `https://images.unsplash.com/photo-1500595046743-cd271d694d30?w=400&q=80&fit=crop`; }}
+                      onError={e => { e.currentTarget.src = `https://images.unsplash.com/photo-1488459716781-31db52582fe9?w=400&q=80&fit=crop`; }}
                       style={{ width: '100%', height: '100%', objectFit: 'cover' }}
                     />
                     <div style={{ position: 'absolute', top: 12, left: 12, background: '#2D5016', color: 'white', fontSize: 10, fontWeight: 700, padding: '4px 10px', borderRadius: 20 }}>
@@ -516,7 +518,7 @@ export default function LandingPage() {
                 src={`https://images.unsplash.com/${CURRENT_SEASON.img}?w=600&q=80&fit=crop`}
                 alt={`Sezóna ${CURRENT_SEASON.label}`}
                 loading="lazy"
-                onError={e => { e.currentTarget.src = 'https://images.unsplash.com/photo-1500595046743-cd271d694d30?w=600&q=80&fit=crop'; }}
+                onError={e => { e.currentTarget.src = 'https://images.unsplash.com/photo-1488459716781-31db52582fe9?w=600&q=80&fit=crop'; }}
                 style={{ width: '100%', height: '100%', objectFit: 'cover', position: 'absolute', inset: 0 }}
               />
               <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to right, rgba(45,80,22,0.3) 0%, transparent 50%)' }} />
