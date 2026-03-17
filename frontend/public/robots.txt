@@ -1,4 +1,20 @@
 User-agent: *
 Allow: /
+Disallow: /dashboard
+Disallow: /admin
+Disallow: /checkout
+Disallow: /prihlaseni
+Disallow: /registrace
+Disallow: /oblibene
+Disallow: /objednavky
+Disallow: /profil
+Disallow: /api/
+
+# Allow bots to crawl important pages
+Allow: /mapa
+Allow: /sezona
+Allow: /cenik
+Allow: /o-nas
+Allow: /farma/
 
 Sitemap: https://mapafarem.cz/sitemap.xml

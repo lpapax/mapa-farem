@@ -1,36 +1,102 @@
 <!DOCTYPE html>
-<html lang="cs">
+<html lang="cs" dir="ltr">
   <head>
     <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><circle cx='50' cy='50' r='50' fill='%233A5728'/><text y='.9em' font-size='65' x='12'>🌾</text></svg>" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+    <!-- ── Primary SEO ── -->
     <title>MapaFarem.cz — Lokální farmy v České republice</title>
     <meta name="description" content="Největší databáze lokálních farem v České republice. Přes 1 695 ověřených farem na jedné mapě — zelenina, mléčné výrobky, maso, med a BIO produkty přímo od farmáře." />
-    <meta name="keywords" content="lokální farmy, farmy ČR, čerstvé potraviny, farmářský trh, BIO produkty, mapa farem, česká republika" />
-    <link rel="canonical" href="https://mapafarem.cz" />
-    <!-- Open Graph -->
+    <meta name="keywords" content="lokální farmy, farmy ČR, čerstvé potraviny, farmářský trh, BIO produkty, mapa farem, česká republika, zelenina farmáři" />
+    <meta name="author" content="MapaFarem.cz" />
+    <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1" />
+    <meta name="language" content="cs" />
+    <meta name="geo.region" content="CZ" />
+    <meta name="geo.placename" content="Česká republika" />
+    <link rel="canonical" href="https://mapafarem.cz/" />
+    <link rel="alternate" hreflang="cs" href="https://mapafarem.cz/" />
+
+    <!-- ── Open Graph ── -->
     <meta property="og:type" content="website" />
-    <meta property="og:url" content="https://mapafarem.cz" />
+    <meta property="og:site_name" content="MapaFarem.cz" />
+    <meta property="og:url" content="https://mapafarem.cz/" />
     <meta property="og:title" content="MapaFarem.cz — Lokální farmy v České republice" />
     <meta property="og:description" content="Přes 1 695 ověřených farem na jedné mapě. Podpořte lokální zemědělství a kupujte čerstvé produkty přímo od farmáře." />
     <meta property="og:image" content="https://mapafarem.cz/og-image.jpg" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content="MapaFarem.cz — mapa lokálních farem v ČR" />
     <meta property="og:locale" content="cs_CZ" />
-    <!-- Twitter / X -->
+
+    <!-- ── Twitter / X ── -->
     <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:site" content="@mapafarem" />
     <meta name="twitter:title" content="MapaFarem.cz — Lokální farmy v ČR" />
-    <meta name="twitter:description" content="Přes 1 695 ověřených farem. Nakupujte přímo od farmáře." />
-    <!-- JSON-LD -->
-    <script type="application/ld+json">{"@context":"https://schema.org","@type":"WebSite","name":"MapaFarem.cz","url":"https://mapafarem.cz","description":"Největší databáze lokálních farem v České republice","inLanguage":"cs","potentialAction":{"@type":"SearchAction","target":"https://mapafarem.cz/mapa?q={search_term_string}","query-input":"required name=search_term_string"}}</script>
-    <!-- PWA -->
-    <link rel="manifest" href="/manifest.json">
-    <meta name="theme-color" content="#3A5728">
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="default">
-    <meta name="apple-mobile-web-app-title" content="MapaFarem">
-    <!-- Performance hints -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="dns-prefetch" href="https://api.mapbox.com">
-    <link rel="dns-prefetch" href="https://images.unsplash.com">
+    <meta name="twitter:description" content="Přes 1 695 ověřených farem. Nakupujte přímo od farmáře — zelenina, maso, med, BIO." />
+    <meta name="twitter:image" content="https://mapafarem.cz/og-image.jpg" />
+    <meta name="twitter:image:alt" content="MapaFarem.cz — mapa lokálních farem" />
+
+    <!-- ── Schema.org JSON-LD ── -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@graph": [
+        {
+          "@type": "WebSite",
+          "@id": "https://mapafarem.cz/#website",
+          "name": "MapaFarem.cz",
+          "url": "https://mapafarem.cz/",
+          "description": "Největší databáze lokálních farem v České republice",
+          "inLanguage": "cs",
+          "potentialAction": {
+            "@type": "SearchAction",
+            "target": {
+              "@type": "EntryPoint",
+              "urlTemplate": "https://mapafarem.cz/mapa?search={search_term_string}"
+            },
+            "query-input": "required name=search_term_string"
+          }
+        },
+        {
+          "@type": "Organization",
+          "@id": "https://mapafarem.cz/#organization",
+          "name": "MapaFarem.cz",
+          "url": "https://mapafarem.cz/",
+          "logo": {
+            "@type": "ImageObject",
+            "url": "https://mapafarem.cz/og-image.jpg",
+            "width": 1200,
+            "height": 630
+          },
+          "description": "Platforma propojující lokální farmy s konečnými zákazníky v České republice",
+          "areaServed": {
+            "@type": "Country",
+            "name": "Česká republika"
+          }
+        }
+      ]
+    }
+    </script>
+
+    <!-- ── PWA ── -->
+    <link rel="manifest" href="/manifest.json" />
+    <meta name="theme-color" content="#3A5728" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <meta name="apple-mobile-web-app-title" content="MapaFarem" />
+
+    <!-- ── Favicon ── -->
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><circle cx='50' cy='50' r='50' fill='%233A5728'/><text y='.9em' font-size='65' x='12'>🌾</text></svg>" />
+
+    <!-- ── Performance: preconnect + font preload ── -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" crossorigin />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;0,900;1,700&family=DM+Sans:wght@400;500;700&display=swap" />
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;0,900;1,700&family=DM+Sans:wght@400;500;700&display=swap" media="print" onload="this.media='all'" />
+    <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;0,900;1,700&family=DM+Sans:wght@400;500;700&display=swap" /></noscript>
+    <link rel="dns-prefetch" href="https://api.mapbox.com" />
+    <link rel="dns-prefetch" href="https://images.unsplash.com" />
+    <link rel="preconnect" href="https://images.unsplash.com" crossorigin />
   </head>
   <body>
     <div id="root"></div>
