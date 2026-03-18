@@ -138,6 +138,7 @@ export default function FarmDetailPage() {
     title: farm.name,
     description: farm.description || `${farm.name} — lokální farma v ${farm.loc}`,
     canonical: `https://mapafarem.cz/farma/${farm.id}`,
+    ogImage: TYPE_HERO[farm.type] || TYPE_HERO.bio,
   } : {});
 
   const galleryImages = farm ? (GALLERY_IMAGES[farm.type] || GALLERY_IMAGES.bio) : [];
@@ -717,11 +718,12 @@ export default function FarmDetailPage() {
               {[
                 { label:'WhatsApp', color:'#25D366', icon:'💬', url:`https://wa.me/?text=${encodeURIComponent(farm.name + ' — ' + window.location.href)}` },
                 { label:'Facebook', color:'#1877F2', icon:'📘', url:`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(window.location.href)}` },
+                { label:'Instagram', color:'#E1306C', icon:'📸', url:`https://www.instagram.com/mapafarem` },
                 { label:'Twitter / X', color:'#000', icon:'🐦', url:`https://twitter.com/intent/tweet?text=${encodeURIComponent(farm.name)}&url=${encodeURIComponent(window.location.href)}` },
               ].map(({ label, color, icon, url }) => (
                 <a key={label} href={url} target="_blank" rel="noreferrer"
                   style={{ display:'flex', alignItems:'center', gap:12, padding:'12px 16px', borderRadius:10, background:color, color:'white', textDecoration:'none', fontWeight:600, marginBottom:8, fontFamily:"'Inter',sans-serif" }}>
-                  <span>{icon}</span> Sdílet na {label}
+                  <span>{icon}</span> {label === 'Instagram' ? 'Sledovat na Instagramu' : `Sdílet na ${label}`}
                 </a>
               ))}
               <button onClick={() => { navigator.clipboard.writeText(window.location.href); setCopied(true); setTimeout(() => setCopied(false), 2000); }}

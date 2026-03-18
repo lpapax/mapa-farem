@@ -75,6 +75,7 @@ export default function BlogPostPage() {
   }
 
   const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(post.title + ' ' + window.location.href)}`;
+  const facebookUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(window.location.href)}`;
 
   return (
     <div style={{ minHeight: '100vh', background: CREAM, fontFamily: "'Inter',sans-serif" }}>
@@ -202,6 +203,18 @@ export default function BlogPostPage() {
             }}
           >
             WhatsApp
+          </a>
+          <a
+            href={facebookUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            style={{
+              background: '#1877F2', color: 'white', padding: '8px 16px',
+              borderRadius: 8, fontSize: 13, fontWeight: 600,
+              textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: 6,
+            }}
+          >
+            Facebook
           </a>
           <button
             onClick={handleShare}
