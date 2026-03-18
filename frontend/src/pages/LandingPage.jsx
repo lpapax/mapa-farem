@@ -1,12 +1,11 @@
 // frontend/src/pages/LandingPage.jsx
 // Requires Supabase table: newsletter_subscribers (id uuid, email text unique, source text, created_at timestamptz default now())
 import { useState, useEffect, useRef } from 'react';
-import { createClient } from '@supabase/supabase-js';
-const supabase = createClient(import.meta.env.VITE_SUPABASE_URL, import.meta.env.VITE_SUPABASE_ANON_KEY);
+import { supabase } from '../supabase';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence, useInView } from 'framer-motion';
 import {
-  Search, Navigation, MapPin, ShoppingBag, Heart, Carrot,
+  Search, Navigation, MapPin, Heart, Carrot,
   Milk, Leaf, Sprout, Wine, Star, ExternalLink, Instagram, Facebook, Check, User
 } from 'lucide-react';
 import { useAuthStore } from '../store/index.js';
@@ -114,23 +113,56 @@ const HERO_PHOTOS = [
   { id: '1444681961742-3aef9e307b37', alt: 'Vinice na slunci', label: 'Rodinné vinařství · Jižní Morava' },
 ];
 
-// Type-specific photo pools — each farm type gets a matching image
+// Type-specific photo pools — large enough so consecutive same-type farms get unique images.
+// Uses farm.id * 11 (coprime with all pool sizes) for deterministic, non-repeating spread.
 const FARM_TYPE_PHOTOS = {
-  veggie:   ['1488459716781-31db52582fe9', '1523741543316-beb7fc7023d8', '1416879595882-3373a0480b5b', '1592194996308-7b43878e84a6'],
-  honey:    ['1508361001754-c570fa45e7c5', '1558642452-9d2a7deb7f62', '1471193945509-9dbc701b65a8', '1504198458310-9d5e7b6cb0de'],
-  meat:     ['1562517520-1d5e3c7543ed', '1546548969-d7e67cb08fd3', '1529692236671-f1f6cf9683ba', '1547592166-23ac45744acd'],
-  dairy:    ['1550583724-b2692b85b150', '1563636619-e9143da7f09e', '1607623814075-a51fd91e09f0', '1466692476868-9ee5a3a3e29b'],
-  fruit:    ['1440342359983-0e7c98b2e50e', '1574943320219-553eb213f72d', '1506794778202-cad84cf45f1d', '1528821128474-27f963b062bf'],
-  grain:    ['1574943320219-553eb213f72d', '1464226184884-fa280b87c399', '1625246333195-cbfcaabedf55', '1500595046743-cd271d694d30'],
-  mushroom: ['1592150621744-aca64f7b0b63', '1504509546545-a91cb1a99747', '1573246123716-6b1782bfc499', '1518977676895-ea5028ec7b97'],
-  herb:     ['1416879595882-3373a0480b5b', '1500375592081-dd40c5c8ee6a', '1599598425947-5202edd56fea', '1466193498717-c5b7cf4ccc55'],
-  market:   ['1488459716781-31db52582fe9', '1416879595882-3373a0480b5b', '1488900128323-21503983a8c2', '1523741543316-beb7fc7023d8'],
-  bio:      ['1464226184884-fa280b87c399', '1500595046743-cd271d694d30', '1444681961742-3aef9e307b37', '1416879595882-3373a0480b5b'],
-  default:  ['1464226184884-fa280b87c399', '1500595046743-cd271d694d30', '1416879595882-3373a0480b5b', '1488459716781-31db52582fe9'],
+  veggie:   ['1488459716781-31db52582fe9','1523741543316-beb7fc7023d8','1416879595882-3373a0480b5b','1592194996308-7b43878e84a6','1540420773420-3366772f4999','1592924357228-91a4daadcfea','1530836369250-ef72a3f5cda8','1574943320219-553eb213f72d','1506794778202-cad84cf45f1d','1625246333195-cbfcaabedf55','1464226184884-fa280b87c399','1500595046743-cd271d694d30'],
+  honey:    ['1508361001754-c570fa45e7c5','1558642452-9d2a7deb7f62','1471193945509-9dbc701b65a8','1504198458310-9d5e7b6cb0de','1471943311424-646960669fbc','1444681961742-3aef9e307b37'],
+  meat:     ['1562517520-1d5e3c7543ed','1546548969-d7e67cb08fd3','1529692236671-f1f6cf9683ba','1547592166-23ac45744acd','1607623814075-e51df1bdc82f'],
+  dairy:    ['1550583724-b2692b85b150','1563636619-e9143da7f09e','1607623814075-a51fd91e09f0','1466692476868-9ee5a3a3e29b','1589985270826-4b7bb135bc9d'],
+  wine:     ['1506377247377-2a5b3b417ebb','1510812431401-41d2bd2722f3','1444681961742-3aef9e307b37'],
+  fruit:    ['1440342359983-0e7c98b2e50e','1574943320219-553eb213f72d','1506794778202-cad84cf45f1d','1528821128474-27f963b062bf'],
+  grain:    ['1464226184884-fa280b87c399','1625246333195-cbfcaabedf55','1500595046743-cd271d694d30','1574943320219-553eb213f72d'],
+  mushroom: ['1592150621744-aca64f7b0b63','1504509546545-a91cb1a99747','1573246123716-6b1782bfc499','1518977676895-ea5028ec7b97'],
+  herb:     ['1515586000433-45406d8e6662','1466193498717-c5b7cf4ccc55','1500375592081-dd40c5c8ee6a','1599598425947-5202edd56fea'],
+  herbs:    ['1515586000433-45406d8e6662','1466193498717-c5b7cf4ccc55','1500375592081-dd40c5c8ee6a','1599598425947-5202edd56fea'],
+  market:   ['1488459716781-31db52582fe9','1416879595882-3373a0480b5b','1488900128323-21503983a8c2','1608686207856-001b95cf60ca','1523741543316-beb7fc7023d8'],
+  bio:      ['1464226184884-fa280b87c399','1500595046743-cd271d694d30','1625246333195-cbfcaabedf55','1530836369250-ef72a3f5cda8','1523741543316-beb7fc7023d8','1416879595882-3373a0480b5b'],
+  default:  ['1464226184884-fa280b87c399','1500595046743-cd271d694d30','1416879595882-3373a0480b5b','1488459716781-31db52582fe9','1625246333195-cbfcaabedf55'],
 };
-function farmPhoto(farm, idx = 0) {
+
+// Gradient colors per type for the onError fallback
+const TYPE_GRADIENT = {
+  veggie:'135deg,#3A7D44,#5FA85B', meat:'135deg,#8B3A2A,#BF5B3D',
+  dairy:'135deg,#2A7AB8,#4A90C4', honey:'135deg,#9A6B1A,#C8973A',
+  wine:'135deg,#6B2A5A,#8B4A7A', fruit:'135deg,#C25A2A,#D4804A',
+  grain:'135deg,#7A6230,#9A8040', mushroom:'135deg,#5A4A3A,#7A6A5A',
+  herb:'135deg,#3A6040,#5A8060', herbs:'135deg,#3A6040,#5A8060',
+  market:'135deg,#5D4037,#8D6E63', bio:'135deg,#2D5016,#4A7A28',
+  default:'135deg,#3A5728,#5F8050',
+};
+
+function farmPhoto(farm) {
   const pool = FARM_TYPE_PHOTOS[farm.type] || FARM_TYPE_PHOTOS.default;
-  return pool[idx % pool.length];
+  // Multiplier 11 is coprime with all pool sizes (3–12), giving full-cycle spread
+  return pool[(farm.id * 11) % pool.length];
+}
+
+function farmPhotoOnError(e, farm) {
+  const img = e.currentTarget;
+  const wrap = img.parentElement;
+  const gradient = TYPE_GRADIENT[farm.type] || TYPE_GRADIENT.default;
+  const initial = (farm.name || '?')[0].toUpperCase();
+  img.style.display = 'none';
+  wrap.style.background = `linear-gradient(${gradient})`;
+  // Only inject if fallback not already shown
+  if (!wrap.querySelector('.photo-fallback')) {
+    const fb = document.createElement('div');
+    fb.className = 'photo-fallback';
+    fb.style.cssText = 'width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:40px;font-weight:900;color:rgba(255,255,255,.7);font-family:serif;position:absolute;inset:0';
+    fb.textContent = initial;
+    wrap.appendChild(fb);
+  }
 }
 
 /* ─── Category grid data ─── */
@@ -339,6 +371,7 @@ export default function LandingPage() {
                   src={`https://images.unsplash.com/photo-${heroPhoto.id}?w=600&q=80&fit=crop`}
                   alt={heroPhoto.alt}
                   fetchpriority="high"
+                  onError={e => { e.currentTarget.style.display = 'none'; }}
                   style={{ width: '100%', height: '100%', objectFit: 'cover' }}
                 />
                 {/* Bottom overlay */}
@@ -382,8 +415,8 @@ export default function LandingPage() {
           <div className="steps-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 24 }}>
             {[
               { num: '01', Icon: MapPin, iconColor: '#2D5016', title: 'Najdi farmu', desc: 'Prohledej mapu 1 695 lokálních farem v celé ČR. Filtruj podle produktu, regionu nebo vzdálenosti.' },
-              { num: '02', Icon: ShoppingBag, iconColor: '#C8963E', title: 'Objednej online', desc: 'Přímý kontakt s farmářem. Žádní prostředníci, férové ceny, čerstvé produkty.' },
-              { num: '03', Icon: Heart, iconColor: '#2D5016', title: 'Podpoř lokální', desc: 'Každý nákup podporuje lokální zemědělce a udržitelné hospodaření v ČR.' },
+              { num: '02', Icon: Navigation, iconColor: '#C8963E', title: 'Zajeď nebo kontaktuj', desc: 'Vyber si farmu v okolí, zavolej farmáři nebo napiš objednávku přímo jemu. Žádní prostředníci.' },
+              { num: '03', Icon: Heart, iconColor: '#2D5016', title: 'Podpoř lokální', desc: 'Každý nákup přímo od farmáře podporuje lokální zemědělce a udržitelné hospodaření v ČR.' },
             ].map((s, i) => (
               <motion.div
                 key={i} className="step-card"
@@ -477,7 +510,7 @@ export default function LandingPage() {
           </div>
           <div className="farms-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 24 }}>
             {featuredFarms.map((farm, i) => {
-              const photoId = farmPhoto(farm, i);
+              const photoId = farmPhoto(farm);
               return (
                 <motion.div
                   key={farm.id}
@@ -496,7 +529,7 @@ export default function LandingPage() {
                       src={`https://images.unsplash.com/photo-${photoId}?w=400&q=80&fit=crop`}
                       alt={farm.name}
                       loading="lazy"
-                      onError={e => { e.currentTarget.src = `https://images.unsplash.com/photo-1488459716781-31db52582fe9?w=400&q=80&fit=crop`; }}
+                      onError={e => farmPhotoOnError(e, farm)}
                       style={{ width: '100%', height: '100%', objectFit: 'cover' }}
                     />
                     <div style={{ position: 'absolute', top: 12, left: 12, background: '#2D5016', color: 'white', fontSize: 10, fontWeight: 700, padding: '4px 10px', borderRadius: 20 }}>
@@ -504,7 +537,7 @@ export default function LandingPage() {
                     </div>
                   </div>
                   <div style={{ padding: '20px' }}>
-                    <h3 style={{ fontFamily: "'Playfair Display',serif", fontSize: 18, fontWeight: 700, color: '#1A1A1A', marginBottom: 8 }}>{farm.name}</h3>
+                    <h3 style={{ fontFamily: "'Playfair Display',serif", fontSize: 18, fontWeight: 700, color: '#1A1A1A', marginBottom: 8, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }} title={farm.name}>{farm.name}</h3>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 10 }}>
                       <Star size={14} color="#C8963E" fill="#C8963E" />
                       <span style={{ fontWeight: 700, fontSize: 13, color: '#1A1A1A' }}>{farm.rating}</span>
@@ -663,13 +696,16 @@ export default function LandingPage() {
                 Největší mapa lokálních farem a přírodních produktů v České republice.
               </p>
               <div style={{ display: 'flex', gap: 12 }}>
-                {[Instagram, Facebook].map((Icon, i) => (
-                  <div key={i} style={{ width: 36, height: 36, borderRadius: 8, background: 'rgba(250,247,242,0.06)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', transition: 'background .15s' }}
-                    onMouseEnter={e => e.currentTarget.style.background = 'rgba(200,150,62,0.2)'}
-                    onMouseLeave={e => e.currentTarget.style.background = 'rgba(250,247,242,0.06)'}>
-                    <Icon size={16} color="rgba(250,247,242,0.5)" />
-                  </div>
-                ))}
+                <a href="https://instagram.com/mapafarem" target="_blank" rel="noopener noreferrer" style={{ width: 36, height: 36, borderRadius: 8, background: 'rgba(250,247,242,0.06)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', transition: 'background .15s' }}
+                  onMouseEnter={e => e.currentTarget.style.background = 'rgba(200,150,62,0.2)'}
+                  onMouseLeave={e => e.currentTarget.style.background = 'rgba(250,247,242,0.06)'}>
+                  <Instagram size={16} color="rgba(250,247,242,0.5)" />
+                </a>
+                <a href="https://facebook.com/mapafarem" target="_blank" rel="noopener noreferrer" style={{ width: 36, height: 36, borderRadius: 8, background: 'rgba(250,247,242,0.06)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', transition: 'background .15s' }}
+                  onMouseEnter={e => e.currentTarget.style.background = 'rgba(200,150,62,0.2)'}
+                  onMouseLeave={e => e.currentTarget.style.background = 'rgba(250,247,242,0.06)'}>
+                  <Facebook size={16} color="rgba(250,247,242,0.5)" />
+                </a>
               </div>
             </div>
             {[

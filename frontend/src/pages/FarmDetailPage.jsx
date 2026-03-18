@@ -18,25 +18,33 @@ const CSS_VARS = `
 `;
 
 const TYPE_HERO = {
-  veggie: 'https://images.unsplash.com/photo-1540420773420-3366772f4999?w=1200&q=80&fit=crop',
-  meat:   'https://images.unsplash.com/photo-1529692236671-f1f6cf9683ba?w=1200&q=80&fit=crop',
-  dairy:  'https://images.unsplash.com/photo-1550583724-b2692b85b150?w=1200&q=80&fit=crop',
-  honey:  'https://images.unsplash.com/photo-1558642452-9d2a7deb7f62?w=1200&q=80&fit=crop',
-  wine:   'https://images.unsplash.com/photo-1506377247377-2a5b3b417ebb?w=1200&q=80&fit=crop',
-  herbs:  'https://images.unsplash.com/photo-1465226388285-0adb1a0a3ba0?w=1200&q=80&fit=crop',
-  market: 'https://images.unsplash.com/photo-1488459716781-31db52582fe9?w=1200&q=80&fit=crop',
-  bio:    'https://images.unsplash.com/photo-1523741543316-beb7fc7023d8?w=1200&q=80&fit=crop',
+  veggie:   'https://images.unsplash.com/photo-1540420773420-3366772f4999?w=1200&q=80&fit=crop',
+  meat:     'https://images.unsplash.com/photo-1529692236671-f1f6cf9683ba?w=1200&q=80&fit=crop',
+  dairy:    'https://images.unsplash.com/photo-1550583724-b2692b85b150?w=1200&q=80&fit=crop',
+  honey:    'https://images.unsplash.com/photo-1558642452-9d2a7deb7f62?w=1200&q=80&fit=crop',
+  wine:     'https://images.unsplash.com/photo-1506377247377-2a5b3b417ebb?w=1200&q=80&fit=crop',
+  herbs:    'https://images.unsplash.com/photo-1515586000433-45406d8e6662?w=1200&q=80&fit=crop',
+  herb:     'https://images.unsplash.com/photo-1515586000433-45406d8e6662?w=1200&q=80&fit=crop',
+  market:   'https://images.unsplash.com/photo-1488459716781-31db52582fe9?w=1200&q=80&fit=crop',
+  bio:      'https://images.unsplash.com/photo-1523741543316-beb7fc7023d8?w=1200&q=80&fit=crop',
+  fruit:    'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=1200&q=80&fit=crop',
+  grain:    'https://images.unsplash.com/photo-1464226184884-fa280b87c399?w=1200&q=80&fit=crop',
+  mushroom: 'https://images.unsplash.com/photo-1504509546545-a91cb1a99747?w=1200&q=80&fit=crop',
 };
 
 const GALLERY_IMAGES = {
-  veggie: ['https://images.unsplash.com/photo-1540420773420-3366772f4999?w=800&q=80&fit=crop','https://images.unsplash.com/photo-1416879595882-3373a0480b5b?w=800&q=80&fit=crop','https://images.unsplash.com/photo-1592924357228-91a4daadcfea?w=800&q=80&fit=crop'],
-  meat:   ['https://images.unsplash.com/photo-1529692236671-f1f6cf9683ba?w=800&q=80&fit=crop','https://images.unsplash.com/photo-1607623814075-e51df1bdc82f?w=800&q=80&fit=crop'],
-  dairy:  ['https://images.unsplash.com/photo-1550583724-b2692b85b150?w=800&q=80&fit=crop','https://images.unsplash.com/photo-1589985270826-4b7bb135bc9d?w=800&q=80&fit=crop'],
-  honey:  ['https://images.unsplash.com/photo-1558642452-9d2a7deb7f62?w=800&q=80&fit=crop','https://images.unsplash.com/photo-1471943311424-646960669fbc?w=800&q=80&fit=crop'],
-  wine:   ['https://images.unsplash.com/photo-1506377247377-2a5b3b417ebb?w=800&q=80&fit=crop','https://images.unsplash.com/photo-1510812431401-41d2bd2722f3?w=800&q=80&fit=crop'],
-  herbs:  ['https://images.unsplash.com/photo-1465226388285-0adb1a0a3ba0?w=800&q=80&fit=crop','https://images.unsplash.com/photo-1515586000433-45406d8e6662?w=800&q=80&fit=crop'],
-  bio:    ['https://images.unsplash.com/photo-1523741543316-beb7fc7023d8?w=800&q=80&fit=crop','https://images.unsplash.com/photo-1530836369250-ef72a3f5cda8?w=800&q=80&fit=crop'],
-  market: ['https://images.unsplash.com/photo-1488459716781-31db52582fe9?w=800&q=80&fit=crop','https://images.unsplash.com/photo-1608686207856-001b95cf60ca?w=800&q=80&fit=crop'],
+  veggie:   ['https://images.unsplash.com/photo-1540420773420-3366772f4999?w=800&q=80&fit=crop','https://images.unsplash.com/photo-1416879595882-3373a0480b5b?w=800&q=80&fit=crop','https://images.unsplash.com/photo-1592924357228-91a4daadcfea?w=800&q=80&fit=crop'],
+  meat:     ['https://images.unsplash.com/photo-1529692236671-f1f6cf9683ba?w=800&q=80&fit=crop','https://images.unsplash.com/photo-1607623814075-e51df1bdc82f?w=800&q=80&fit=crop'],
+  dairy:    ['https://images.unsplash.com/photo-1550583724-b2692b85b150?w=800&q=80&fit=crop','https://images.unsplash.com/photo-1589985270826-4b7bb135bc9d?w=800&q=80&fit=crop'],
+  honey:    ['https://images.unsplash.com/photo-1558642452-9d2a7deb7f62?w=800&q=80&fit=crop','https://images.unsplash.com/photo-1471943311424-646960669fbc?w=800&q=80&fit=crop'],
+  wine:     ['https://images.unsplash.com/photo-1506377247377-2a5b3b417ebb?w=800&q=80&fit=crop','https://images.unsplash.com/photo-1510812431401-41d2bd2722f3?w=800&q=80&fit=crop'],
+  herbs:    ['https://images.unsplash.com/photo-1515586000433-45406d8e6662?w=800&q=80&fit=crop','https://images.unsplash.com/photo-1466193498717-c5b7cf4ccc55?w=800&q=80&fit=crop'],
+  herb:     ['https://images.unsplash.com/photo-1515586000433-45406d8e6662?w=800&q=80&fit=crop','https://images.unsplash.com/photo-1466193498717-c5b7cf4ccc55?w=800&q=80&fit=crop'],
+  bio:      ['https://images.unsplash.com/photo-1523741543316-beb7fc7023d8?w=800&q=80&fit=crop','https://images.unsplash.com/photo-1530836369250-ef72a3f5cda8?w=800&q=80&fit=crop'],
+  market:   ['https://images.unsplash.com/photo-1488459716781-31db52582fe9?w=800&q=80&fit=crop','https://images.unsplash.com/photo-1608686207856-001b95cf60ca?w=800&q=80&fit=crop'],
+  fruit:    ['https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=800&q=80&fit=crop','https://images.unsplash.com/photo-1440342359983-0e7c98b2e50e?w=800&q=80&fit=crop'],
+  grain:    ['https://images.unsplash.com/photo-1464226184884-fa280b87c399?w=800&q=80&fit=crop','https://images.unsplash.com/photo-1625246333195-cbfcaabedf55?w=800&q=80&fit=crop'],
+  mushroom: ['https://images.unsplash.com/photo-1504509546545-a91cb1a99747?w=800&q=80&fit=crop','https://images.unsplash.com/photo-1573246123716-6b1782bfc499?w=800&q=80&fit=crop'],
 };
 
 /* ─── Parse hours to determine if currently open ─── */
@@ -269,7 +277,7 @@ export default function FarmDetailPage() {
       {/* ── HERO ── */}
       <div style={{ position:'relative', overflow:'hidden' }}>
         {TYPE_HERO[farm.type] && (
-          <img src={TYPE_HERO[farm.type]} alt="" aria-hidden style={{ position:'absolute', inset:0, width:'100%', height:'100%', objectFit:'cover', objectPosition:'center', opacity:.3 }} />
+          <img src={TYPE_HERO[farm.type]} alt="" aria-hidden loading="eager" style={{ position:'absolute', inset:0, width:'100%', height:'100%', objectFit:'cover', objectPosition:'center', opacity:.3 }} />
         )}
         {/* Green overlay (design system) */}
         <div style={{ position:'absolute', inset:0, background:'linear-gradient(135deg, rgba(45,80,22,0.92) 0%, rgba(45,80,22,0.75) 100%)' }} />
@@ -379,7 +387,7 @@ export default function FarmDetailPage() {
           <div style={{ display:'flex', transition:'transform 0.4s ease', transform:`translateX(-${galleryIdx * 100}%)`, height:'100%' }}>
             {galleryImages.map((img, i) => (
               <div key={i} style={{ minWidth:'100%', height:'100%', flexShrink:0 }}>
-                <img src={img} alt={`Foto ${i+1}`} style={{ width:'100%', height:'100%', objectFit:'cover' }} loading="lazy" />
+                <img src={img} alt={`Foto ${i+1}`} style={{ width:'100%', height:'100%', objectFit:'cover' }} />
               </div>
             ))}
           </div>
@@ -639,7 +647,7 @@ export default function FarmDetailPage() {
                   <div key={label} style={{ display:'flex', gap:8 }}>
                     <span style={{ fontSize:13, color:'#6B7280', minWidth:130 }}>{label}:</span>
                     {href ? <a href={href} target={href.startsWith('http') ? '_blank' : undefined} rel="noreferrer" style={{ fontSize:13, color:'#2D5016', fontWeight:500, wordBreak:'break-all' }}>{val}</a>
-                    : <span style={{ fontSize:13, color:'#1A1A1A', fontWeight:500 }}>{val}</span>}
+                    : <span style={{ fontSize:13, color:'#1A1A1A', fontWeight:500, whiteSpace:'pre-line' }}>{val}</span>}
                   </div>
                 ))}
               </div>
@@ -677,7 +685,7 @@ export default function FarmDetailPage() {
                       <div style={{ fontSize:36 }}>{f.emoji}</div>
                       {distKm && <div style={{ fontSize:11, fontWeight:700, color:'#2D5016', background:'rgba(45,80,22,0.08)', borderRadius:9999, padding:'2px 8px' }}>{distKm} km</div>}
                     </div>
-                    <div style={{ fontWeight:700, fontSize:14, marginBottom:2, color:'#1A1A1A' }}>{f.name}</div>
+                    <div style={{ fontWeight:700, fontSize:14, marginBottom:2, color:'#1A1A1A', whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis' }} title={f.name}>{f.name}</div>
                     <div style={{ fontSize:12, color:'#6B7280', marginBottom:8 }}>📍 {f.loc}</div>
                     <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between' }}>
                       <div style={{ fontSize:12, color:'#C8963E', fontWeight:700 }}>⭐ {f.rating}</div>

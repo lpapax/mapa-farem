@@ -4,6 +4,7 @@ import { useEffect, lazy, Suspense } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { useAuthStore } from './store/index.js';
 import BottomNav from './components/BottomNav';
+import PrivateRoute from './components/PrivateRoute';
 
 // All pages lazy-loaded for optimal code splitting
 const LandingPage       = lazy(() => import('./pages/LandingPage'));
@@ -48,18 +49,18 @@ export default function App() {
           <Route path="/prihlaseni" element={<LoginPage />} />
           <Route path="/login" element={<Navigate to="/prihlaseni" replace />} />
           <Route path="/registrace" element={<RegisterPage />} />
-          <Route path="/pridat-farmu" element={<RegisterFarmPage />} />
-          <Route path="/profil" element={<ProfilePage />} />
-          <Route path="/profil-setup" element={<ProfileSetupPage />} />
-          <Route path="/oblibene" element={<FavoritesPage />} />
-          <Route path="/pokladna" element={<CheckoutPage />} />
-          <Route path="/objednavky" element={<OrdersPage />} />
-          <Route path="/dashboard" element={<DashboardPage />} />
+          <Route path="/pridat-farmu" element={<PrivateRoute role="FARMER"><RegisterFarmPage /></PrivateRoute>} />
+          <Route path="/profil" element={<PrivateRoute><ProfilePage /></PrivateRoute>} />
+          <Route path="/profil-setup" element={<PrivateRoute><ProfileSetupPage /></PrivateRoute>} />
+          <Route path="/oblibene" element={<PrivateRoute><FavoritesPage /></PrivateRoute>} />
+          <Route path="/pokladna" element={<PrivateRoute><CheckoutPage /></PrivateRoute>} />
+          <Route path="/objednavky" element={<PrivateRoute><OrdersPage /></PrivateRoute>} />
+          <Route path="/dashboard" element={<PrivateRoute role="FARMER"><DashboardPage /></PrivateRoute>} />
           <Route path="/sezona" element={<SeasonalGuidePage />} />
           <Route path="/sezona/:season" element={<SeasonalGuidePage />} />
           <Route path="/o-nas" element={<AboutPage />} />
           <Route path="/cenik" element={<PricingPage />} />
-          <Route path="/admin" element={<AdminPage />} />
+          <Route path="/admin" element={<PrivateRoute role="ADMIN"><AdminPage /></PrivateRoute>} />
           <Route path="/blog" element={<BlogPage />} />
           <Route path="/blog/:slug" element={<BlogPostPage />} />
           <Route path="/trhy" element={<MarketsPage />} />

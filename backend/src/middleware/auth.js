@@ -12,6 +12,10 @@ if (!JWT_SECRET) {
 }
 const _JWT_SECRET = JWT_SECRET || 'dev-only-insecure-secret-do-not-use-in-prod';
 
+// Optional: Supabase JWT secret for verifying frontend Supabase tokens.
+// Found in Supabase dashboard → Settings → API → JWT Secret.
+const SUPABASE_JWT_SECRET = process.env.SUPABASE_JWT_SECRET;
+
 export function signToken(payload) {
   return jwt.sign(payload, _JWT_SECRET, { expiresIn: '7d' });
 }
@@ -20,6 +24,8 @@ export function verifyToken(token) {
   return jwt.verify(token, _JWT_SECRET);
 }
 
+const USER_SELECT = { id: true, email: true, name: true, role: true };
+
 export async function requireAuth(req, res, next) {
   try {
     const header = req.headers.authorization;
@@ -27,12 +33,33 @@ export async function requireAuth(req, res, next) {
       return res.status(401).json({ error: 'Přístup odepřen — chybí token' });
     }
     const token = header.slice(7);
-    const payload = verifyToken(token);
-    const user = await prisma.user.findUnique({
-      where: { id: payload.userId },
-      select: { id: true, email: true, name: true, role: true },
-    });
-    if (!user) return res.status(401).json({ error: 'Uživatel nenalezen' });
+
+    // Try custom JWT first (payload has { userId })
+    try {
+      const payload = verifyToken(token);
+      const user = await prisma.user.findUnique({
+        where: { id: payload.userId },
+        select: USER_SELECT,
+      });
+      if (!user) return res.status(401).json({ error: 'Uživatel nenalezen' });
+      req.user = user;
+      return next();
+    } catch {
+      // Fall through to Supabase JWT verification below
+    }
+
+    // Try Supabase JWT (payload has { sub, email, user_metadata })
+    if (!SUPABASE_JWT_SECRET) {
+      return res.status(401).json({ error: 'Neplatný nebo expirovaný token' });
+    }
+    const payload = jwt.verify(token, SUPABASE_JWT_SECRET);
+    const email = payload.email;
+    if (!email) return res.status(401).json({ error: 'Neplatný token — chybí email' });
+
+    const user = await prisma.user.findUnique({ where: { email }, select: USER_SELECT });
+    if (!user) {
+      return res.status(401).json({ error: 'Účet nenalezen — dokončete registraci' });
+    }
     req.user = user;
     next();
   } catch (err) {

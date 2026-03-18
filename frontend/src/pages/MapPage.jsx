@@ -107,7 +107,7 @@ function FarmCard({ farm, selected, onClick, userLocation, dark }) {
     }}>
       <div style={{ position:'absolute', left:0, top:0, bottom:0, width:4, background:color }} />
       <div style={{ display:'flex', justifyContent:'space-between', alignItems:'flex-start', gap:6 }}>
-        <div style={{ fontFamily:"'Playfair Display',serif", fontSize:14, fontWeight:700, lineHeight:1.3, color:T.cardText }}>
+        <div style={{ fontFamily:"'Playfair Display',serif", fontSize:14, fontWeight:700, lineHeight:1.3, color:T.cardText, display:'-webkit-box', WebkitLineClamp:2, WebkitBoxOrient:'vertical', overflow:'hidden' }} title={farm.name}>
           {farm.emoji} {farm.name}
         </div>
         <div style={{ fontSize:11, fontWeight:700, color:'#3A2210', display:'flex', gap:2, flexShrink:0 }}>
@@ -130,9 +130,9 @@ function FarmCard({ farm, selected, onClick, userLocation, dark }) {
             </span>
           : <span style={{ color:'#5F8050', display:'flex', alignItems:'center' }}>{farm.dist ? `📏 ${farm.dist}` : ''}</span>
         }
-        <span style={{ color:color, background:`${color}15`, padding:'4px 10px', borderRadius:50, display:'flex', alignItems:'center', gap:4 }}>
+        <button onClick={(e) => { e.stopPropagation(); window.__goToFarm(farm.id); }} style={{ color:color, background:`${color}15`, padding:'4px 10px', borderRadius:50, display:'flex', alignItems:'center', gap:4, border:'none', cursor:'pointer', fontFamily:"'DM Sans',sans-serif" }}>
           Detail <span style={{fontSize:13}}>→</span>
-        </span>
+        </button>
       </div>
     </div>
   );
@@ -336,8 +336,8 @@ function MapboxMap({ farms, selectedId, onSelect, userLocation, radius, dark, ma
                   ${isFav ? '❤️' : '🤍'}
                 </button>
                 <div style="font-size:28px;line-height:1">${farm.emoji}</div>
-                <div style="font-size:15px;font-weight:700;margin-top:4px;line-height:1.2">${farm.name}</div>
-                <div style="font-size:11px;opacity:.85;margin-top:3px">📍 ${farm.loc || 'Česká republika'}</div>
+                <div style="font-size:15px;font-weight:700;margin-top:4px;line-height:1.2;white-space:nowrap;overflow:hidden;text-overflow:ellipsis" title="${farm.name.replace(/"/g, '&quot;')}">${farm.name}</div>
+                <div style="font-size:11px;opacity:.85;margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">📍 ${farm.loc || 'Česká republika'}</div>
                 <div style="margin-top:6px;display:flex;gap:4px;flex-wrap:wrap">
                   ${farm.bio?'<span style="font-size:10px;font-weight:700;background:rgba(255,255,255,.25);border-radius:50px;padding:2px 8px">🌱 BIO</span>':''}
                   ${farm.eshop?'<span style="font-size:10px;font-weight:700;background:rgba(255,255,255,.25);border-radius:50px;padding:2px 8px">🛒 E-shop</span>':''}
@@ -579,7 +579,6 @@ export default function MapPage() {
   }, []); // eslint-disable-line
 
   const [dark, setDark] = useState(() => localStorage.getItem('mf-dark') === '1');
-  const [mapStyle, setMapStyle] = useState(() => localStorage.getItem('mf-style') || 'outdoors');
   const [userProfile, setUserProfile] = useState(null);
 
   useEffect(() => {
@@ -611,7 +610,6 @@ export default function MapPage() {
     setProTebeActive(v => !v);
   };
 
-  const [stylePickerOpen, setStylePickerOpen] = useState(false);
   const [suggestions, setSuggestions] = useState([]);
   const [showSug, setShowSug] = useState(false);
   const [recentSearches, setRecentSearches] = useState(() => {
@@ -640,14 +638,7 @@ export default function MapPage() {
     { label:'Domácí maso', q:'maso' },
   ];
 
-  const MAP_STYLES = [
-    { id:'light',    label:'Světlá',    emoji:'☀️', url:'mapbox://styles/mapbox/light-v11' },
-    { id:'outdoors', label:'Příroda',   emoji:'🌿', url:'mapbox://styles/mapbox/outdoors-v12' },
-    { id:'streets',  label:'Ulice',     emoji:'🏙️', url:'mapbox://styles/mapbox/streets-v12' },
-    { id:'satellite',label:'Satelit',   emoji:'🛰️', url:'mapbox://styles/mapbox/satellite-streets-v12' },
-    { id:'dark',     label:'Tmavá',     emoji:'🌙', url:'mapbox://styles/mapbox/dark-v11' },
-  ];
-  const currentStyle = MAP_STYLES.find(s => s.id === mapStyle) || MAP_STYLES[0];
+  const MAP_STYLE_URL = 'mapbox://styles/mapbox/outdoors-v12';
 
   // Téma barvy
   const T = dark ? {
@@ -656,7 +647,6 @@ export default function MapPage() {
     filterBg: '#1A0F07', sidebarBg: '#1A1208', sidebarBorder: 'rgba(255,255,255,.08)',
     cardBg: '#241A0E', cardText: '#F4EDD8', cardSub: '#888', cardBorder: 'rgba(255,255,255,.08)',
     inputBg: 'rgba(255,255,255,.07)', inputColor: '#F4EDD8', inputBorder: 'rgba(255,255,255,.12)',
-    mapStyle: 'mapbox://styles/mapbox/dark-v11',
     bannerBg: '#C99B30', bannerColor: '#1E120A',
     statsBg: 'rgba(255,255,255,.07)', statsColor: '#F4EDD8',
   } : {
@@ -665,7 +655,6 @@ export default function MapPage() {
     filterBg: '#3A2210', sidebarBg: '#EDE5D0', sidebarBorder: 'rgba(0,0,0,.08)',
     cardBg: 'white', cardText: '#1E120A', cardSub: '#999', cardBorder: 'transparent',
     inputBg: 'rgba(255,255,255,.08)', inputColor: '#F4EDD8', inputBorder: 'rgba(255,255,255,.12)',
-    mapStyle: 'mapbox://styles/mapbox/light-v11',
     bannerBg: '#C99B30', bannerColor: '#1E120A',
     statsBg: '#1E120A', statsColor: '#F4EDD8',
   };
@@ -1045,7 +1034,7 @@ export default function MapPage() {
 
         {/* Mapa */}
         <div style={{ flex:1, position:'relative', overflow:'hidden' }}>
-          <MapboxMap farms={debouncedFiltered} selectedId={selectedFarmId} onSelect={handleSelect} userLocation={userLocation} radius={radius} dark={dark} mapStyleUrl={currentStyle.url}/>
+          <MapboxMap farms={debouncedFiltered} selectedId={selectedFarmId} onSelect={handleSelect} userLocation={userLocation} radius={radius} dark={dark} mapStyleUrl={MAP_STYLE_URL}/>
 
           {/* Radius panel */}
           {showRadiusPanel && nearbyMode && (
@@ -1071,50 +1060,6 @@ export default function MapPage() {
             onMouseLeave={e => { e.currentTarget.style.transform='translateX(-50%) scale(1)'; e.currentTarget.style.animation='seasonPulse 2.8s ease-in-out infinite'; }}>
             {(() => { const m = new Date().getMonth()+1; return m>=3&&m<=5?'🌱 Jaro — co je teď v sezóně?':m>=6&&m<=8?'☀️ Léto — co je teď v sezóně?':m>=9&&m<=11?'🍂 Podzim — co je teď v sezóně?':'❄️ Zima — co je teď v sezóně?'; })()}
             <span style={{ opacity:.7 }}>→</span>
-          </div>
-
-          {/* Přepínač stylů mapy */}
-          <div style={{ position:'absolute', bottom:90, left:10, zIndex:500 }}>
-            <button
-              onClick={() => setStylePickerOpen(v => !v)}
-              style={{
-                display:'flex', alignItems:'center', gap:6,
-                background:'white', border:'none', borderRadius:10,
-                padding:'7px 12px', cursor:'pointer',
-                boxShadow:'0 2px 12px rgba(0,0,0,.18)',
-                fontFamily:"'DM Sans',sans-serif", fontSize:12, fontWeight:700, color:'#1E120A',
-              }}>
-              <span style={{ fontSize:15 }}>{currentStyle.emoji}</span>
-              {currentStyle.label}
-              <span style={{ fontSize:10, color:'#aaa', marginLeft:2 }}>{stylePickerOpen ? '▲' : '▼'}</span>
-            </button>
-            {stylePickerOpen && (
-              <div style={{
-                position:'absolute', bottom:42, left:0,
-                background:'white', borderRadius:12, overflow:'hidden',
-                boxShadow:'0 4px 24px rgba(0,0,0,.18)', minWidth:140,
-              }}>
-                {MAP_STYLES.map(s => (
-                  <button key={s.id} onClick={() => {
-                    setMapStyle(s.id);
-                    localStorage.setItem('mf-style', s.id);
-                    setStylePickerOpen(false);
-                  }} style={{
-                    display:'flex', alignItems:'center', gap:8,
-                    width:'100%', padding:'9px 14px', border:'none', cursor:'pointer',
-                    background: s.id === mapStyle ? '#F0EAD6' : 'white',
-                    fontFamily:"'DM Sans',sans-serif", fontSize:13, fontWeight: s.id===mapStyle ? 700 : 500,
-                    color:'#1E120A', textAlign:'left',
-                    borderLeft: s.id===mapStyle ? '3px solid #3A5728' : '3px solid transparent',
-                  }}
-                  onMouseEnter={e => e.currentTarget.style.background='#F8F4EC'}
-                  onMouseLeave={e => e.currentTarget.style.background = s.id===mapStyle ? '#F0EAD6' : 'white'}
-                  >
-                    <span style={{ fontSize:16 }}>{s.emoji}</span> {s.label}
-                  </button>
-                ))}
-              </div>
-            )}
           </div>
 
           {/* Plovoucí tlačítko Filtry — pouze mobile */}

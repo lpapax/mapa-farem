@@ -1,6 +1,6 @@
 // frontend/src/pages/LoginPage.jsx
 import { useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate, useSearchParams, Link } from 'react-router-dom';
 import { supabase } from '../supabase';
 
 const PERKS = [
@@ -12,6 +12,8 @@ const PERKS = [
 
 export default function LoginPage() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const redirectTo = searchParams.get('from') || '/mapa';
   const [mode, setMode] = useState('login');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -31,7 +33,7 @@ export default function LoginPage() {
       } else {
         const { error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) throw error;
-        navigate('/mapa');
+        navigate(redirectTo);
       }
     } catch (err) {
       setError(
@@ -46,7 +48,7 @@ export default function LoginPage() {
     setLoading(true);
     const { error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
-      options: { redirectTo: window.location.origin + '/mapa' },
+      options: { redirectTo: window.location.origin + redirectTo },
     });
     if (error) { setError(error.message); setLoading(false); }
   }
@@ -168,8 +170,8 @@ export default function LoginPage() {
             )}
             <input className="ai" type="email" placeholder="Email" value={email}
               onChange={e => setEmail(e.target.value)} required />
-            <input className="ai" type="password" placeholder="Heslo (min. 6 znaků)" value={password}
-              onChange={e => setPassword(e.target.value)} required minLength={6} />
+            <input className="ai" type="password" placeholder="Heslo (min. 8 znaků)" value={password}
+              onChange={e => setPassword(e.target.value)} required minLength={8} />
 
             {error && (
               <div style={{ background:'#FEE2E2', border:'1px solid #FCA5A5', borderRadius:9, padding:'10px 14px', fontSize:13, color:'#991B1B' }}>

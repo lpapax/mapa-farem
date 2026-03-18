@@ -3,13 +3,18 @@ import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { supabase } from '../supabase.js';
 
-// Map Supabase user → app user shape { name, email, role }
+// Map Supabase user → app user shape { id, name, email, role }
 function mapUser(u) {
   if (!u) return null;
+  // user_metadata.role is set on email signup (RegisterPage passes it);
+  // Google OAuth users and older accounts default to CUSTOMER.
+  const role = u.user_metadata?.role;
+  const validRole = ['CUSTOMER', 'FARMER', 'ADMIN'].includes(role) ? role : 'CUSTOMER';
   return {
+    id: u.id,
     name: u.user_metadata?.name || u.email?.split('@')[0] || 'Uživatel',
     email: u.email,
-    role: u.user_metadata?.role || 'CUSTOMER',
+    role: validRole,
   };
 }
 

@@ -1,5 +1,6 @@
 // frontend/src/utils/api.js
 import axios from 'axios';
+import { supabase } from '../supabase.js';
 
 const api = axios.create({
   baseURL: '/api',
@@ -7,16 +8,11 @@ const api = axios.create({
   headers: { 'Content-Type': 'application/json' },
 });
 
-// Attach stored token on every request
-api.interceptors.request.use((config) => {
-  const stored = localStorage.getItem('zemeplocha-auth');
-  if (stored) {
-    try {
-      const { state } = JSON.parse(stored);
-      if (state?.token) {
-        config.headers.Authorization = `Bearer ${state.token}`;
-      }
-    } catch {}
+// Attach current Supabase session token on every request
+api.interceptors.request.use(async (config) => {
+  const { data: { session } } = await supabase.auth.getSession();
+  if (session?.access_token) {
+    config.headers.Authorization = `Bearer ${session.access_token}`;
   }
   return config;
 });
@@ -26,8 +22,7 @@ api.interceptors.response.use(
   (res) => res,
   (err) => {
     if (err.response?.status === 401) {
-      localStorage.removeItem('zemeplocha-auth');
-      window.location.href = '/login';
+      window.location.href = '/prihlaseni';
     }
     return Promise.reject(err);
   }
