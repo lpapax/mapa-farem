@@ -389,13 +389,13 @@ export default function LandingPage() {
 
             {/* RIGHT — Farm photo card */}
             <div className="hero-img-col" style={{ position: 'relative' }}>
-              <div style={{ transform: 'rotate(2deg)', borderRadius: 16, overflow: 'hidden', border: '4px solid white', boxShadow: '0 32px 80px rgba(0,0,0,0.4)', aspectRatio: '4/5', position: 'relative' }}>
+              <div style={{ transform: 'rotate(2deg)', borderRadius: 16, overflow: 'hidden', border: '4px solid white', boxShadow: '0 32px 80px rgba(0,0,0,0.4)', aspectRatio: '4/5', position: 'relative', background: 'linear-gradient(135deg,#2D5016,#4A7A28)' }}>
                 <img
-                  src={`https://images.unsplash.com/photo-${heroPhoto.id}?w=600&q=80&fit=crop`}
+                  src={`https://images.unsplash.com/photo-${heroPhoto.id}?w=600&q=80&fit=crop&auto=format`}
                   alt={heroPhoto.alt}
-                  fetchpriority="high"
-                  onError={e => { e.currentTarget.style.display = 'none'; }}
-                  style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                  fetchPriority="high"
+                  onError={e => { e.currentTarget.style.opacity = '0'; }}
+                  style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
                 />
                 {/* Bottom overlay */}
                 <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, padding: '20px 18px', background: 'linear-gradient(to top, rgba(26,26,26,0.8) 0%, transparent 100%)' }}>
