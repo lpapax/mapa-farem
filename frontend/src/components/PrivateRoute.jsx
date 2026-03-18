@@ -21,7 +21,8 @@ export default function PrivateRoute({ children, role }) {
   }
 
   if (role && user.role !== role) {
-    return <Navigate to="/" replace />;
+    // Farmer-only pages → send non-farmers to the pricing/info page
+    return <Navigate to={role === 'FARMER' ? '/cenik' : '/'} replace />;
   }
 
   return children;

@@ -64,6 +64,7 @@ export default function App() {
           <Route path="/blog" element={<BlogPage />} />
           <Route path="/blog/:slug" element={<BlogPostPage />} />
           <Route path="/trhy" element={<MarketsPage />} />
+          <Route path="/zebricky" element={<LeaderboardPage />} />
           {/* Stará URL přesměruje na mapu */}
           <Route path="/zeměplocha" element={<Navigate to="/mapa" replace />} />
           <Route path="*" element={<NotFoundPageLazy />} />

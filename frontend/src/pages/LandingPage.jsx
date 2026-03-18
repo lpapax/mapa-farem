@@ -97,9 +97,32 @@ const CURRENT_SEASON = getSeason();
 
 /* ─── Featured farms — shuffled pool, 6 random high-rated picked each load ─── */
 const TOP_FARMS = FARMS_DATA.filter(f => f.rating >= 4.7);
+
 function pickFeaturedFarms() {
   const shuffled = [...TOP_FARMS].sort(() => Math.random() - 0.5);
-  return shuffled.slice(0, 6);
+  const selected = shuffled.slice(0, 6);
+
+  // All unique photo IDs across all type pools (computed here so FARM_TYPE_PHOTOS is already defined)
+  const allPhotoIds = [...new Set(Object.values(FARM_TYPE_PHOTOS).flat())];
+
+  // Assign unique photos — no two cards in the list share the same image
+  const usedPhotos = new Set();
+  return selected.map(farm => {
+    const pool = FARM_TYPE_PHOTOS[farm.type] || FARM_TYPE_PHOTOS.default;
+    const base = (farm.id * 11) % pool.length;
+    // Try each slot in the type pool first (type-appropriate photo)
+    let photoId = null;
+    for (let offset = 0; offset < pool.length; offset++) {
+      const candidate = pool[(base + offset) % pool.length];
+      if (!usedPhotos.has(candidate)) { photoId = candidate; break; }
+    }
+    // If all same-type photos already used, pick any globally unused photo
+    if (!photoId) {
+      photoId = allPhotoIds.find(p => !usedPhotos.has(p)) || pool[base];
+    }
+    usedPhotos.add(photoId);
+    return { ...farm, _photo: photoId };
+  });
 }
 
 /* ─── Hero image pool — different beautiful farm photo each load ─── */
@@ -510,7 +533,7 @@ export default function LandingPage() {
           </div>
           <div className="farms-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 24 }}>
             {featuredFarms.map((farm, i) => {
-              const photoId = farmPhoto(farm);
+              const photoId = farm._photo || farmPhoto(farm);
               return (
                 <motion.div
                   key={farm.id}
@@ -709,14 +732,18 @@ export default function LandingPage() {
               </div>
             </div>
             {[
-              { title: 'Průzkum', links: [['Mapa farem','/mapa'],['Sezónní průvodce','/sezona'],['Blog','/o-nas']] },
+              { title: 'Průzkum', links: [['Mapa farem','/mapa'],['Sezónní průvodce','/sezona'],['Blog','/blog']] },
               { title: 'Pro farmáře', links: [['Registrace farmy','/pridat-farmu'],['Ceník','/cenik'],['Dashboard','/dashboard']] },
               { title: 'Pomoc', links: [['O nás','/o-nas'],['Kontakt','/o-nas'],['Podmínky','/o-nas']] },
             ].map(col => (
               <div key={col.title}>
                 <div style={{ fontWeight: 700, fontSize: 10, color: 'rgba(200,150,62,0.55)', textTransform: 'uppercase', letterSpacing: 3, marginBottom: 18 }}>{col.title}</div>
                 {col.links.map(([l, h]) => (
-                  <div key={l} className="footer-link" onClick={() => navigate(h)}>{l}</div>
+                  <div key={l} className="footer-link" onClick={() => navigate(h)}
+                    style={{ fontSize: 13, color: 'rgba(250,247,242,0.45)', cursor: 'pointer', marginBottom: 10, transition: 'color .15s' }}
+                    onMouseEnter={e => e.currentTarget.style.color = '#C8963E'}
+                    onMouseLeave={e => e.currentTarget.style.color = 'rgba(250,247,242,0.45)'}
+                  >{l}</div>
                 ))}
               </div>
             ))}
