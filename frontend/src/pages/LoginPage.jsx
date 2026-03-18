@@ -86,7 +86,9 @@ export default function LoginPage() {
         <div style={{ position:'absolute', bottom:-40, left:-40, width:200, height:200, borderRadius:'50%', border:'1px solid rgba(201,155,48,.12)' }} />
 
         <Link to="/" style={{ textDecoration:'none', display:'inline-block', marginBottom:48 }}>
-          <img src="/logo.png" alt="MapaFarem.cz" style={{ height: 64, borderRadius: 10, background: 'white', padding: 4 }} />
+          <div style={{ fontFamily:"'Playfair Display',serif", fontSize:26, fontWeight:700, color:'white' }}>
+            <span style={{ color:'#A8C97A' }}>Mapa</span>Farem<span style={{ color:'#A8C97A' }}>.cz</span>
+          </div>
         </Link>
 
         <h2 style={{ fontFamily:"'Playfair Display',serif", fontSize:38, fontWeight:900, color:'white', lineHeight:1.2, marginBottom:16 }}>
@@ -121,7 +123,9 @@ export default function LoginPage() {
           {/* Mobile logo */}
           <div style={{ display:'none' }} className="mobile-logo">
             <Link to="/" style={{ textDecoration:'none' }}>
-              <img src="/logo.png" alt="MapaFarem.cz" style={{ height: 52, borderRadius: 8, marginBottom: 28 }} />
+              <div style={{ fontFamily:"'Playfair Display',serif", fontSize:22, fontWeight:700, color:'#1E120A', marginBottom:28 }}>
+                <span style={{ color:'#3A5728' }}>Mapa</span>Farem<span style={{ color:'#3A5728' }}>.cz</span>
+              </div>
             </Link>
           </div>
 
