@@ -774,8 +774,8 @@ export default function MapPage() {
         <button onClick={toggleSidebar} style={{ background:'none', border:'none', color:'#B8A882', cursor:'pointer', padding:4, display:'flex' }}>
           {showSidebar ? <X size={18}/> : <Menu size={18}/>}
         </button>
-        <div onClick={() => navigate('/')} style={{ fontFamily:"'Playfair Display',serif", fontSize:20, fontWeight:900, color:'#F4EDD8', cursor:'pointer', whiteSpace:'nowrap' }}>
-          Mapa<span style={{ color:'#7DB05A' }}>Farem</span>.cz
+        <div onClick={() => navigate('/')} style={{ cursor:'pointer', flexShrink:0 }}>
+          <img src="/logo.png" alt="MapaFarem.cz" style={{ height: 40, borderRadius: 6, background: 'white', padding: 2 }} />
         </div>
 
         <div className="header-search" style={{ flex:1, maxWidth:360, position:'relative' }}>

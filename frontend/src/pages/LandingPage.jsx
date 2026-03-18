@@ -269,11 +269,8 @@ export default function LandingPage() {
         padding: '0 40px', height: 64,
         display: 'flex', alignItems: 'center', justifyContent: 'space-between',
       }}>
-        <div onClick={() => navigate('/')} style={{ display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer' }}>
-          <span style={{ fontSize: 22 }}>🌾</span>
-          <div style={{ fontFamily: "'Playfair Display',serif", fontWeight: 700, fontSize: 19, color: '#FAF7F2' }}>
-            Mapa<span style={{ color: '#C8963E' }}>Farem</span>.cz
-          </div>
+        <div onClick={() => navigate('/')} style={{ display: 'flex', alignItems: 'center', cursor: 'pointer' }}>
+          <img src="/logo.png" alt="MapaFarem.cz" style={{ height: 48, borderRadius: 8, background: 'white', padding: 3 }} />
         </div>
         <div className="nav-links" style={{ display: 'flex', gap: 4, alignItems: 'center' }}>
           {[['Produkty','/mapa'],['Trhy','/trhy'],['Blog','/blog'],['O nás','/o-nas'],['Ceník','/cenik'],['Farmáři','/pridat-farmu']].map(([l,h]) => (
@@ -709,11 +706,8 @@ export default function LandingPage() {
         <div style={{ maxWidth: 1100, margin: '0 auto' }}>
           <div className="footer-grid" style={{ display: 'grid', gridTemplateColumns: '2fr 1fr 1fr 1fr', gap: 40, marginBottom: 48 }}>
             <div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 16 }}>
-                <span style={{ fontSize: 20 }}>🌾</span>
-                <div style={{ fontFamily: "'Playfair Display',serif", fontWeight: 700, fontSize: 18, color: '#FAF7F2' }}>
-                  Mapa<span style={{ color: '#C8963E' }}>Farem</span>.cz
-                </div>
+              <div style={{ marginBottom: 16 }}>
+                <img src="/logo.png" alt="MapaFarem.cz" style={{ height: 72, borderRadius: 10, background: 'white', padding: 4 }} />
               </div>
               <p style={{ fontSize: 13, color: 'rgba(250,247,242,0.3)', lineHeight: 1.8, maxWidth: 230, marginBottom: 20 }}>
                 Největší mapa lokálních farem a přírodních produktů v České republice.
