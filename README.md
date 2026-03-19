@@ -24,24 +24,46 @@ zemeplocha/
 │   │       └── notifications.js
 │   └── package.json
 │
-└── frontend/                 # React + Vite + Zustand + Leaflet
+└── frontend/                 # React 18 + Vite + Zustand + Mapbox GL JS
+    ├── public/
+    │   ├── logo.png           # Logo MapaFarem.cz
+    │   ├── manifest.json      # PWA manifest
+    │   └── sw.js              # Service Worker
     ├── src/
     │   ├── main.jsx
-    │   ├── App.jsx            # React Router konfigurace
+    │   ├── App.jsx            # React Router + ErrorBoundary + lazy loading
+    │   ├── supabase.js        # Supabase client (newsletter, foto upload)
     │   ├── store/index.js     # Zustand stores (auth, map, cart, notifications)
     │   ├── utils/api.js       # Axios instance
-    │   ├── data/farms.json    # 200 demo farem
+    │   ├── hooks/useSEO.js    # SEO meta tag hook
+    │   ├── components/
+    │   │   ├── ErrorBoundary.jsx   # React error boundary (Czech fallback UI)
+    │   │   ├── PageSkeleton.jsx    # Skeleton loader pro lazy-loaded stránky
+    │   │   ├── BottomNav.jsx       # Mobilní navigace (React.memo)
+    │   │   ├── PrivateRoute.jsx    # Auth guard + role check
+    │   │   └── CzechRegionMap.jsx  # SVG mapa krajů
+    │   ├── data/
+    │   │   ├── farms.json     # 1 695 farem (statická data)
+    │   │   └── blogPosts.js   # Blog posty
     │   └── pages/
-    │       ├── MapPage.jsx         # Hlavní mapa (Leaflet + sidebar)
-    │       ├── FarmDetailPage.jsx  # Detail farmy (produkty, recenze, sezóna)
-    │       ├── LoginPage.jsx
-    │       ├── RegisterPage.jsx
+    │       ├── LandingPage.jsx     # Domovská stránka
+    │       ├── MapPage.jsx         # Interaktivní mapa (Mapbox GL JS + sidebar)
+    │       ├── FarmDetailPage.jsx  # Detail farmy
+    │       ├── LoginPage.jsx       # Přihlášení / registrace
+    │       ├── RegisterPage.jsx    # Registrace s validací
+    │       ├── RegisterFarmPage.jsx # Registrace farmy (multi-step) s validací
+    │       ├── ProfileSetupPage.jsx # Nastavení profilu (multi-step) s validací
     │       ├── DashboardPage.jsx   # Farmářský dashboard
     │       ├── CheckoutPage.jsx    # Košík + objednávka
+    │       ├── ProfilePage.jsx
     │       ├── FavoritesPage.jsx
     │       ├── OrdersPage.jsx
-    │       ├── ProfilePage.jsx
-    │       └── RegisterFarmPage.jsx
+    │       ├── SeasonalGuidePage.jsx
+    │       ├── BlogPage.jsx / BlogPostPage.jsx
+    │       ├── MarketsPage.jsx     # Farmářské trhy
+    │       ├── LeaderboardPage.jsx
+    │       ├── AboutPage.jsx / PricingPage.jsx
+    │       └── AdminPage.jsx
     ├── index.html
     ├── vite.config.js
     └── package.json
@@ -163,12 +185,12 @@ npm run dev
 |--------|-------------|
 | Frontend | React 18 + Vite + React Router v6 |
 | State | Zustand (persist middleware) |
-| Mapa | Leaflet + React-Leaflet |
+| Mapa | Mapbox GL JS |
 | HTTP | Axios |
 | Backend | Node.js + Express |
 | ORM | Prisma |
-| Databáze | PostgreSQL |
-| Auth | JWT (jsonwebtoken + bcryptjs) |
+| Databáze | PostgreSQL (Supabase) |
+| Auth | JWT (jsonwebtoken + bcryptjs) + Supabase Auth |
 | Platby | Stripe |
 | Notifikace | In-app (rozšiřitelné na email/push) |
 | Hosting | Vercel (frontend) + Railway/Render (backend) |

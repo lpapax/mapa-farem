@@ -10,6 +10,7 @@ const CSS_VARS = `
   *{box-sizing:border-box;margin:0;padding:0;}
   @media(max-width:900px){.plans-grid{grid-template-columns:1fr!important;}.compare-grid{grid-template-columns:repeat(2,1fr)!important;}}
   @media(max-width:600px){.nav-links{display:none!important;}.footer-grid-p{grid-template-columns:1fr!important;}}
+  @media(max-width:480px){.prc-nav{padding:0 16px!important;}.prc-section{padding-left:16px!important;padding-right:16px!important;}.compare-grid{grid-template-columns:1fr!important;}}
 `;
 
 const PLANS = [
@@ -103,7 +104,7 @@ export default function PricingPage() {
       <style>{CSS_VARS}</style>
 
       {/* NAV */}
-      <nav style={{ position: 'sticky', top: 0, zIndex: 300, background: 'rgba(45,80,22,0.97)', backdropFilter: 'blur(16px)', borderBottom: '1px solid rgba(200,150,62,0.15)', padding: '0 40px', height: 64, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+      <nav className="prc-nav" style={{ position: 'sticky', top: 0, zIndex: 300, background: 'rgba(45,80,22,0.97)', backdropFilter: 'blur(16px)', borderBottom: '1px solid rgba(200,150,62,0.15)', padding: '0 40px', height: 64, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
         <div onClick={() => navigate('/')} style={{ display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer' }}>
           <span style={{ fontSize: 22 }}>🌾</span>
           <div style={{ fontFamily: "'Playfair Display',serif", fontWeight: 700, fontSize: 19, color: '#FAF7F2' }}>
@@ -158,7 +159,7 @@ export default function PricingPage() {
       </section>
 
       {/* PRICING CARDS */}
-      <section style={{ padding: '0 40px', background: '#FAF7F2' }}>
+      <section className="prc-section" style={{ padding: '0 40px', background: '#FAF7F2' }}>
         <div style={{ maxWidth: 1100, margin: '0 auto', transform: 'translateY(-40px)' }}>
           <div className="plans-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 24 }}>
             {PLANS.map((plan, pi) => (
@@ -225,7 +226,7 @@ export default function PricingPage() {
       </section>
 
       {/* FEATURE COMPARISON */}
-      <section style={{ padding: '60px 40px 88px', background: '#FFFFFF' }}>
+      <section className="prc-section" style={{ padding: '60px 40px 88px', background: '#FFFFFF' }}>
         <div style={{ maxWidth: 1000, margin: '0 auto' }}>
           <div style={{ textAlign: 'center', marginBottom: 56 }}>
             <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: 4, color: '#C8963E', textTransform: 'uppercase', marginBottom: 12 }}>Proč Premium?</div>
@@ -258,7 +259,7 @@ export default function PricingPage() {
       </section>
 
       {/* FAQ */}
-      <section style={{ padding: '88px 40px', background: '#FAF7F2' }}>
+      <section className="prc-section" style={{ padding: '88px 40px', background: '#FAF7F2' }}>
         <div style={{ maxWidth: 700, margin: '0 auto' }}>
           <div style={{ textAlign: 'center', marginBottom: 52 }}>
             <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: 4, color: '#C8963E', textTransform: 'uppercase', marginBottom: 12 }}>FAQ</div>
@@ -290,7 +291,7 @@ export default function PricingPage() {
       </section>
 
       {/* CTA BOTTOM */}
-      <section style={{ padding: '88px 40px', textAlign: 'center', background: '#2D5016', position: 'relative', overflow: 'hidden' }}>
+      <section className="prc-section" style={{ padding: '88px 40px', textAlign: 'center', background: '#2D5016', position: 'relative', overflow: 'hidden' }}>
         <div style={{ position: 'absolute', inset: 0, backgroundImage: 'radial-gradient(rgba(200,150,62,0.06) 1px,transparent 1px)', backgroundSize: '32px 32px', pointerEvents: 'none' }} />
         <div style={{ maxWidth: 600, margin: '0 auto', position: 'relative' }}>
           <h2 style={{ fontFamily: "'Playfair Display',serif", fontSize: 'clamp(28px,3vw,42px)', fontWeight: 700, color: '#FAF7F2', marginBottom: 16 }}>
@@ -317,7 +318,7 @@ export default function PricingPage() {
       </section>
 
       {/* FOOTER mini */}
-      <footer style={{ background: '#1A1A1A', padding: '28px 40px', textAlign: 'center', borderTop: '1px solid rgba(200,150,62,0.06)' }}>
+      <footer className="prc-section" style={{ background: '#1A1A1A', padding: '28px 40px', textAlign: 'center', borderTop: '1px solid rgba(200,150,62,0.06)' }}>
         <p style={{ fontSize: 12, color: 'rgba(250,247,242,0.2)' }}>© 2026 MapaFarem.cz · Ceník se může změnit s předchozím upozorněním 🌱</p>
       </footer>
     </div>

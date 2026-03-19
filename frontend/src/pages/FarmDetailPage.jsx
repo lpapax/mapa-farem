@@ -1,7 +1,7 @@
 // frontend/src/pages/FarmDetailPage.jsx
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Phone, ExternalLink, MapPin, Heart, Share2 } from 'lucide-react';
+import { ArrowLeft, Phone, ExternalLink, MapPin, Share2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import toast from 'react-hot-toast';
 import { useAuthStore, useFavoritesStore } from '../store/index.js';

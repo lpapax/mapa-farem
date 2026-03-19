@@ -343,6 +343,10 @@ export default function DashboardPage() {
         ::-webkit-scrollbar { width: 6px; }
         ::-webkit-scrollbar-track { background: transparent; }
         ::-webkit-scrollbar-thumb { background: rgba(191,91,61,.3); border-radius: 99px; }
+        @media(max-width:480px){
+          .dash-photo-grid{grid-template-columns:repeat(2,1fr)!important;}
+          .dash-stats-grid{grid-template-columns:repeat(2,1fr)!important;}
+        }
       `}</style>
 
       {/* ── 1. Header / Nav ─────────────────────────────────────────────── */}
@@ -1002,7 +1006,7 @@ export default function DashboardPage() {
 
           {/* Photo grid */}
           {farmPhotos.length > 0 && (
-            <div style={{
+            <div className="dash-photo-grid" style={{
               display: 'grid',
               gridTemplateColumns: 'repeat(3, 1fr)',
               gap: 12,

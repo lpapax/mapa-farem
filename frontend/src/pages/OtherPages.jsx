@@ -113,7 +113,7 @@ export function CheckoutPage() {
 
   return (
     <PageShell title="Pokladna" onBack={() => navigate(-1)}>
-      <div style={{ display:'grid', gridTemplateColumns:'1fr 340px', gap:20, alignItems:'start' }}>
+      <div style={{ display:'grid', gridTemplateColumns:'1fr 340px', gap:20, alignItems:'start' }} className="checkout-grid">
         <div>
           {/* Cart items */}
           <div style={{ background:'white', borderRadius:12, padding:'16px', boxShadow:'0 2px 8px rgba(0,0,0,0.06)', marginBottom:16 }}>
@@ -139,7 +139,7 @@ export function CheckoutPage() {
           {/* Delivery */}
           <div style={{ background:'white', borderRadius:12, padding:'16px', boxShadow:'0 2px 8px rgba(0,0,0,0.06)' }}>
             <div style={{ fontFamily: DS.serif, fontSize:18, fontWeight:700, marginBottom:14, color: DS.dark }}>Způsob doručení</div>
-            <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:10, marginBottom:14 }}>
+            <div className="delivery-grid" style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:10, marginBottom:14 }}>
               {[['pickup','🏪 Osobní odběr','Vyzvednu na farmě, zdarma'],['delivery','🚚 Doručení domů','+ 79 Kč k objednávce']].map(([val, label, sub]) => (
                 <div key={val} onClick={() => setDelivery(val)} style={{ padding:'12px', borderRadius:10, border:`2px solid ${delivery===val?'#3A5728':'#EDE5D0'}`, background: delivery===val ? '#E8F0E4' : 'white', cursor:'pointer', transition:'all 0.15s' }}>
                   <div style={{ fontWeight:700, fontSize:14 }}>{label}</div>
@@ -459,7 +459,7 @@ function PageShell({ title, children, onBack }) {
   return (
     <div style={{ minHeight:'100vh', background:'#F5EDE0', fontFamily:"'DM Sans',sans-serif" }}>
       <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet"/>
-      <style>{`*{box-sizing:border-box;margin:0;padding:0}`}</style>
+      <style>{`*{box-sizing:border-box;margin:0;padding:0} @media(max-width:480px){.checkout-grid{grid-template-columns:1fr!important;} .delivery-grid{grid-template-columns:1fr!important;}}`}</style>
       <header style={{ background:'rgba(245,237,224,.96)', backdropFilter:'blur(14px)', borderBottom:'1px solid rgba(191,91,61,.1)', padding:'0 24px', height:60, display:'flex', alignItems:'center', gap:14, position:'sticky', top:0, zIndex:100 }}>
         <button onClick={onBack} style={{ background:'none', border:'none', color:'#6B4F3A', cursor:'pointer', fontSize:20, padding:4, lineHeight:1, display:'flex', alignItems:'center' }}>←</button>
         <span style={{ fontFamily:"'Playfair Display',serif", fontSize:17, fontWeight:700, color:'#2C1810', flex:1 }}>{title}</span>

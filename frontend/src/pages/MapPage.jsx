@@ -75,6 +75,16 @@ const LABELS = {
   bio:'BIO', dairy:'Mléčné výrobky', herbs:'Bylinky & kosmetika',
   zerowaste:'♻️ Zero-waste', bezobaly:'🫙 Bezobalové',
 };
+
+const POPULAR_SEARCHES = [
+  { label:'Bio zelenina', q:'bio' },
+  { label:'Čerstvé mléko', q:'mléko' },
+  { label:'Farmářská vejce', q:'vejce' },
+  { label:'Místní med', q:'med' },
+  { label:'Domácí maso', q:'maso' },
+];
+
+const MAP_STYLE_URL = 'mapbox://styles/mapbox/outdoors-v12';
 const CATEGORY_EMOJI = {
   all:'🗺️', veggie:'🥕', meat:'🥩', dairy:'🥛', honey:'🍯',
   bio:'🌱', wine:'🍷', herbs:'🌿', market:'🏪', zerowaste:'♻️', bezobaly:'🫙',
@@ -99,12 +109,20 @@ function FarmCard({ farm, selected, onClick, userLocation, dark }) {
     : null;
 
   return (
-    <div onClick={() => onClick(farm)} style={{
-      background:T.cardBg, borderRadius:10, padding:'11px 12px 11px 15px',
-      cursor:'pointer', border:`2px solid ${selected ? color : 'transparent'}`,
-      boxShadow: selected ? `0 4px 16px ${color}33` : '0 1px 4px rgba(0,0,0,0.06)',
-      position:'relative', overflow:'hidden', transition:'all 0.18s',
-    }}>
+    <div
+      onClick={() => onClick(farm)}
+      onKeyDown={e => (e.key === 'Enter' || e.key === ' ') && onClick(farm)}
+      role="button"
+      tabIndex={0}
+      aria-label={`Zobrazit farmu ${farm.name} na mapě`}
+      aria-pressed={selected}
+      style={{
+        background:T.cardBg, borderRadius:10, padding:'11px 12px 11px 15px',
+        cursor:'pointer', border:`2px solid ${selected ? color : 'transparent'}`,
+        boxShadow: selected ? `0 4px 16px ${color}33` : '0 1px 4px rgba(0,0,0,0.06)',
+        position:'relative', overflow:'hidden', transition:'all 0.18s',
+      }}
+    >
       <div style={{ position:'absolute', left:0, top:0, bottom:0, width:4, background:color }} />
       <div style={{ display:'flex', justifyContent:'space-between', alignItems:'flex-start', gap:6 }}>
         <div style={{ fontFamily:"'Playfair Display',serif", fontSize:14, fontWeight:700, lineHeight:1.3, color:T.cardText, display:'-webkit-box', WebkitLineClamp:2, WebkitBoxOrient:'vertical', overflow:'hidden' }} title={farm.name}>
@@ -130,8 +148,8 @@ function FarmCard({ farm, selected, onClick, userLocation, dark }) {
             </span>
           : <span style={{ color:'#5F8050', display:'flex', alignItems:'center' }}>{farm.dist ? `📏 ${farm.dist}` : ''}</span>
         }
-        <button onClick={(e) => { e.stopPropagation(); window.__goToFarm(farm.id); }} style={{ color:color, background:`${color}15`, padding:'4px 10px', borderRadius:50, display:'flex', alignItems:'center', gap:4, border:'none', cursor:'pointer', fontFamily:"'DM Sans',sans-serif" }}>
-          Detail <span style={{fontSize:13}}>→</span>
+        <button onClick={(e) => { e.stopPropagation(); window.__goToFarm(farm.id); }} aria-label={`Detail farmy ${farm.name}`} style={{ color:color, background:`${color}15`, padding:'4px 10px', borderRadius:50, display:'flex', alignItems:'center', gap:4, border:'none', cursor:'pointer', fontFamily:"'DM Sans',sans-serif" }}>
+          Detail <span aria-hidden="true" style={{fontSize:13}}>→</span>
         </button>
       </div>
     </div>
@@ -617,31 +635,25 @@ export default function MapPage() {
   });
   const [searchFocused, setSearchFocused] = useState(false);
 
-  const saveRecentSearch = (q) => {
+  const saveRecentSearch = useCallback((q) => {
     if (!q.trim()) return;
-    const updated = [q, ...recentSearches.filter(s => s !== q)].slice(0, 5);
-    setRecentSearches(updated);
-    try { localStorage.setItem('recent-searches', JSON.stringify(updated)); } catch {}
-  };
+    setRecentSearches(prev => {
+      const updated = [q, ...prev.filter(s => s !== q)].slice(0, 5);
+      try { localStorage.setItem('recent-searches', JSON.stringify(updated)); } catch {}
+      return updated;
+    });
+  }, []);
 
-  const removeRecentSearch = (q) => {
-    const updated = recentSearches.filter(s => s !== q);
-    setRecentSearches(updated);
-    try { localStorage.setItem('recent-searches', JSON.stringify(updated)); } catch {}
-  };
+  const removeRecentSearch = useCallback((q) => {
+    setRecentSearches(prev => {
+      const updated = prev.filter(s => s !== q);
+      try { localStorage.setItem('recent-searches', JSON.stringify(updated)); } catch {}
+      return updated;
+    });
+  }, []);
 
-  const POPULAR_SEARCHES = [
-    { label:'Bio zelenina', q:'bio' },
-    { label:'Čerstvé mléko', q:'mléko' },
-    { label:'Farmářská vejce', q:'vejce' },
-    { label:'Místní med', q:'med' },
-    { label:'Domácí maso', q:'maso' },
-  ];
-
-  const MAP_STYLE_URL = 'mapbox://styles/mapbox/outdoors-v12';
-
-  // Téma barvy
-  const T = dark ? {
+  // Téma barvy — memoized so the object reference is stable between renders when dark doesn't change
+  const T = useMemo(() => dark ? {
     // Dark mode
     headerBg: '#0F0A05', headerBorder: 'rgba(255,255,255,.06)',
     filterBg: '#1A0F07', sidebarBg: '#1A1208', sidebarBorder: 'rgba(255,255,255,.08)',
@@ -657,7 +669,7 @@ export default function MapPage() {
     inputBg: 'rgba(255,255,255,.08)', inputColor: '#F4EDD8', inputBorder: 'rgba(255,255,255,.12)',
     bannerBg: '#C99B30', bannerColor: '#1E120A',
     statsBg: '#1E120A', statsColor: '#F4EDD8',
-  };
+  }, [dark]);
 
   const toggleDark = () => setDark(d => {
     localStorage.setItem('mf-dark', d ? '0' : '1');
@@ -771,10 +783,17 @@ export default function MapPage() {
 
       {/* HEADER */}
       <header style={{ display:'flex', alignItems:'center', gap:12, padding:'9px 16px', background:T.headerBg, flexShrink:0, boxShadow:'0 2px 12px rgba(0,0,0,.3)', zIndex:1000 }}>
-        <button onClick={toggleSidebar} style={{ background:'none', border:'none', color:'#B8A882', cursor:'pointer', padding:4, display:'flex' }}>
-          {showSidebar ? <X size={18}/> : <Menu size={18}/>}
+        <button onClick={toggleSidebar} aria-label={showSidebar ? 'Zavřít seznam farem' : 'Otevřít seznam farem'} aria-expanded={showSidebar} style={{ background:'none', border:'none', color:'#B8A882', cursor:'pointer', padding:4, display:'flex' }}>
+          {showSidebar ? <X size={18} aria-hidden="true"/> : <Menu size={18} aria-hidden="true"/>}
         </button>
-        <div onClick={() => navigate('/')} style={{ fontFamily:"'Playfair Display',serif", fontSize:20, fontWeight:900, color:'#F4EDD8', cursor:'pointer', whiteSpace:'nowrap' }}>
+        <div
+          onClick={() => navigate('/')}
+          onKeyDown={e => (e.key === 'Enter' || e.key === ' ') && navigate('/')}
+          role="button"
+          tabIndex={0}
+          aria-label="MapaFarem.cz – zpět na úvod"
+          style={{ fontFamily:"'Playfair Display',serif", fontSize:20, fontWeight:900, color:'#F4EDD8', cursor:'pointer', whiteSpace:'nowrap' }}
+        >
           Mapa<span style={{ color:'#7DB05A' }}>Farem</span>.cz
         </div>
 
@@ -802,6 +821,9 @@ export default function MapPage() {
             onFocus={() => { setSearchFocused(true); if (search.length >= 2 && suggestions.length > 0) setShowSug(true); }}
             onKeyDown={e => { if (e.key === 'Enter' && search.trim()) { saveRecentSearch(search.trim()); setShowSug(false); } if (e.key === 'Escape') { setShowSug(false); setSearchFocused(false); } }}
             placeholder="Hledat farmu, produkt, obec…"
+            aria-label="Hledat farmy"
+            aria-autocomplete="list"
+            aria-haspopup="listbox"
             style={{ width:'100%', padding:'8px 14px 8px 34px', borderRadius:50, border:'1.5px solid rgba(255,255,255,.12)', background:'rgba(255,255,255,.08)', color:'#F4EDD8', fontFamily:"'DM Sans',sans-serif", fontSize:13, outline:'none' }}/>
           {/* Autocomplete suggestions */}
           {showSug && suggestions.length > 0 && (
@@ -838,7 +860,7 @@ export default function MapPage() {
         </div>
 
         {/* GPS tlačítko */}
-        <button onClick={handleLocate} style={{
+        <button onClick={handleLocate} aria-label={nearbyMode ? `Zrušit hledání v okolí ${radius} km` : gpsLoading ? 'Zjišťuji polohu…' : 'Hledat farmy kolem mě'} style={{
           display:'flex', alignItems:'center', gap:6, padding:'7px 14px', borderRadius:50,
           background: nearbyMode ? '#27AE60' : gpsLoading ? '#1E8449' : 'rgba(255,255,255,.1)',
           border: (nearbyMode || gpsLoading) ? 'none' : '1.5px solid rgba(255,255,255,.2)',
@@ -854,7 +876,7 @@ export default function MapPage() {
         </button>
 
         {/* Dark mode přepínač */}
-        <button className="hide-mobile" onClick={toggleDark} title={dark ? 'Světlý režim' : 'Tmavý režim'} style={{
+        <button className="hide-mobile" onClick={toggleDark} aria-label={dark ? 'Přepnout na světlý režim' : 'Přepnout na tmavý režim'} style={{
           display:'flex', alignItems:'center', justifyContent:'center',
           width:34, height:34, borderRadius:'50%',
           background: dark ? 'rgba(255,255,255,.12)' : 'rgba(255,255,255,.08)',
@@ -865,13 +887,21 @@ export default function MapPage() {
         </button>
 
         <div style={{ marginLeft:'auto', display:'flex', gap:8, alignItems:'center' }}>
-          <button onClick={() => navigate('/pokladna')} style={{ position:'relative', background:'none', border:'none', color:'#B8A882', cursor:'pointer', padding:6, display:'flex' }}>
-            <ShoppingCart size={20}/>
-            {cartCount > 0 && <span style={{ position:'absolute', top:0, right:0, background:'#C99B30', color:'white', fontSize:9, fontWeight:700, borderRadius:50, padding:'1px 5px' }}>{cartCount}</span>}
+          <button onClick={() => navigate('/pokladna')} aria-label={cartCount > 0 ? `Košík (${cartCount} položek)` : 'Košík'} style={{ position:'relative', background:'none', border:'none', color:'#B8A882', cursor:'pointer', padding:6, display:'flex' }}>
+            <ShoppingCart size={20} aria-hidden="true"/>
+            {cartCount > 0 && <span aria-hidden="true" style={{ position:'absolute', top:0, right:0, background:'#C99B30', color:'white', fontSize:9, fontWeight:700, borderRadius:50, padding:'1px 5px' }}>{cartCount}</span>}
           </button>
           {user ? (
             <div style={{ position:'relative' }}>
-              <div onClick={() => setUserMenuOpen(v => !v)} style={{ width:34, height:34, borderRadius:'50%', background:'#5F8050', display:'grid', placeItems:'center', fontWeight:700, color:'white', fontSize:13, cursor:'pointer' }}>
+              <div
+                onClick={() => setUserMenuOpen(v => !v)}
+                onKeyDown={e => (e.key === 'Enter' || e.key === ' ') && setUserMenuOpen(v => !v)}
+                role="button"
+                tabIndex={0}
+                aria-label={`Uživatelské menu – ${user.name}`}
+                aria-expanded={userMenuOpen}
+                style={{ width:34, height:34, borderRadius:'50%', background:'#5F8050', display:'grid', placeItems:'center', fontWeight:700, color:'white', fontSize:13, cursor:'pointer' }}
+              >
                 {user.name?.[0]?.toUpperCase()}
               </div>
               {userMenuOpen && (
@@ -1041,12 +1071,13 @@ export default function MapPage() {
             <div style={{ position:'absolute', top:16, right:56, zIndex:500, background:'white', borderRadius:14, padding:'14px 18px', boxShadow:'0 4px 24px rgba(0,0,0,.15)', minWidth:200 }}>
               <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:10 }}>
                 <span style={{ fontSize:13, fontWeight:700 }}>Okruh hledání</span>
-                <button onClick={() => setShowRadiusPanel(false)} style={{ background:'none', border:'none', cursor:'pointer', color:'#aaa', fontSize:16, padding:0 }}>✕</button>
+                <button onClick={() => setShowRadiusPanel(false)} aria-label="Zavřít panel okruhu" style={{ background:'none', border:'none', cursor:'pointer', color:'#aaa', fontSize:16, padding:0 }}>✕</button>
               </div>
               <div style={{ fontSize:12, color:'#888', marginBottom:8 }}>
                 Radius: <strong style={{ color:'#3A5728' }}>{radius} km</strong>
               </div>
               <input type="range" min="5" max="100" step="5" value={radius} onChange={e => setRadius(Number(e.target.value))}
+                aria-label={`Okruh hledání: ${radius} km`}
                 style={{ width:'100%', accentColor:'#3A5728' }}/>
               <div style={{ display:'flex', justifyContent:'space-between', fontSize:10, color:'#aaa', marginTop:4 }}>
                 <span>5 km</span><span>50 km</span><span>100 km</span>
@@ -1055,17 +1086,25 @@ export default function MapPage() {
           )}
 
           {/* Sezónní banner */}
-          <div onClick={() => navigate('/sezona')} style={{ position:'absolute', top:10, left:'50%', transform:'translateX(-50%)', background:'linear-gradient(135deg,#C99B30,#E0B84A)', color:'#1E120A', padding:'6px 18px', borderRadius:50, fontSize:12, fontWeight:700, zIndex:500, whiteSpace:'nowrap', cursor:'pointer', transition:'transform .15s', animation:'seasonPulse 2.8s ease-in-out infinite', display:'flex', alignItems:'center', gap:6 }}
+          <div
+            onClick={() => navigate('/sezona')}
+            onKeyDown={e => (e.key === 'Enter' || e.key === ' ') && navigate('/sezona')}
+            role="button"
+            tabIndex={0}
+            aria-label="Otevřít sezónního průvodce"
+            style={{ position:'absolute', top:10, left:'50%', transform:'translateX(-50%)', background:'linear-gradient(135deg,#C99B30,#E0B84A)', color:'#1E120A', padding:'6px 18px', borderRadius:50, fontSize:12, fontWeight:700, zIndex:500, whiteSpace:'nowrap', cursor:'pointer', transition:'transform .15s', animation:'seasonPulse 2.8s ease-in-out infinite', display:'flex', alignItems:'center', gap:6 }}
             onMouseEnter={e => { e.currentTarget.style.transform='translateX(-50%) scale(1.05)'; e.currentTarget.style.animation='none'; }}
             onMouseLeave={e => { e.currentTarget.style.transform='translateX(-50%) scale(1)'; e.currentTarget.style.animation='seasonPulse 2.8s ease-in-out infinite'; }}>
             {(() => { const m = new Date().getMonth()+1; return m>=3&&m<=5?'🌱 Jaro — co je teď v sezóně?':m>=6&&m<=8?'☀️ Léto — co je teď v sezóně?':m>=9&&m<=11?'🍂 Podzim — co je teď v sezóně?':'❄️ Zima — co je teď v sezóně?'; })()}
-            <span style={{ opacity:.7 }}>→</span>
+            <span aria-hidden="true" style={{ opacity:.7 }}>→</span>
           </div>
 
           {/* Plovoucí tlačítko Filtry — pouze mobile */}
           <button
             className="show-mobile"
             onClick={() => { toggleSidebar(); setMobileFiltersOpen(v => !v); }}
+            aria-label={showSidebar ? 'Zavřít filtry' : `Otevřít filtry${activeTypes.size > 0 ? ` (${activeTypes.size} vybrány)` : ''}`}
+            aria-expanded={showSidebar}
             style={{
               position:'absolute', bottom:80, left:12, zIndex:600,
               display:'none', alignItems:'center', gap:6,

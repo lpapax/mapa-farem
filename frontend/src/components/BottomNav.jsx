@@ -1,5 +1,5 @@
 // frontend/src/components/BottomNav.jsx
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo, memo } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { Home, Map, Store, Heart, User } from 'lucide-react';
 import { useAuthStore } from '../store/index.js';
@@ -12,7 +12,7 @@ const NAV_ITEMS = [
   { label: 'Profil',   Icon: User,  path: null }, // resolved dynamically
 ];
 
-export default function BottomNav() {
+function BottomNav() {
   const navigate = useNavigate();
   const location = useLocation();
   const { user } = useAuthStore();
@@ -25,18 +25,19 @@ export default function BottomNav() {
     return () => window.removeEventListener('resize', check);
   }, []);
 
-  if (!isMobile) return null;
-
-  const resolvedItems = NAV_ITEMS.map(item => ({
+  // resolvedItems only changes when the user logs in/out — stable between route changes
+  const resolvedItems = useMemo(() => NAV_ITEMS.map(item => ({
     ...item,
     path: item.path === null ? (user ? '/profil' : '/prihlaseni') : item.path,
     resolvedLabel: item.label === 'Profil' && !user ? 'Přihlásit' : item.label,
-  }));
+  })), [user]);
 
   const isActive = (path) => {
     if (path === '/') return location.pathname === '/';
     return location.pathname.startsWith(path);
   };
+
+  if (!isMobile) return null;
 
   return (
     <nav style={{
@@ -62,6 +63,7 @@ export default function BottomNav() {
               transition: 'color 150ms ease',
               fontFamily: "'Inter','DM Sans',sans-serif",
               minWidth: 0,
+              position: 'relative',
             }}
             onMouseEnter={e => { if (!active) e.currentTarget.style.color = '#2D5016'; }}
             onMouseLeave={e => { if (!active) e.currentTarget.style.color = '#6B7280'; }}
@@ -72,6 +74,7 @@ export default function BottomNav() {
               size={22}
               strokeWidth={active ? 2.5 : 1.8}
               color={active ? '#C8963E' : '#6B7280'}
+              aria-hidden="true"
             />
             <span style={{
               fontSize: 10, fontWeight: active ? 700 : 500,
@@ -83,7 +86,7 @@ export default function BottomNav() {
               {resolvedLabel || label}
             </span>
             {active && (
-              <div style={{
+              <div aria-hidden="true" style={{
                 position: 'absolute', top: 0,
                 width: 32, height: 2,
                 background: '#C8963E', borderRadius: '0 0 2px 2px',
@@ -95,3 +98,7 @@ export default function BottomNav() {
     </nav>
   );
 }
+
+// React.memo: BottomNav has no parent props — its only inputs are router location
+// and the auth store user. memo prevents re-renders triggered by unrelated parent state.
+export default memo(BottomNav);

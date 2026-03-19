@@ -506,6 +506,14 @@ export default function SeasonalGuidePage() {
         href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=Inter:wght@400;600;700&display=swap"
         rel="stylesheet"
       />
+      <style>{`
+        *{box-sizing:border-box;}
+        .sg-month-grid{grid-template-columns:repeat(12,1fr);}
+        @media(max-width:480px){
+          .sg-month-grid{grid-template-columns:repeat(6,1fr)!important;}
+          .sg-product-grid{grid-template-columns:1fr!important;}
+        }
+      `}</style>
 
       {/* HEADER */}
       <header style={{
@@ -557,7 +565,7 @@ export default function SeasonalGuidePage() {
 
       {/* 12-MONTH CALENDAR GRID */}
       <div style={{ background: 'white', padding: '32px 20px' }}>
-        <div style={{
+        <div className="sg-month-grid" style={{
           maxWidth: 900,
           margin: '0 auto',
           display: 'grid',

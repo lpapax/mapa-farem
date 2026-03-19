@@ -1,7 +1,7 @@
 // frontend/src/pages/RegisterFarmPage.jsx
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { Check, ChevronRight, ChevronLeft, Eye } from 'lucide-react';
+import { Check, ChevronRight, ChevronLeft } from 'lucide-react';
 
 const CSS_VARS = `
   :root { --green:#2D5016;--gold:#C8963E;--cream:#FAF7F2;--text:#1A1A1A;--muted:#6B7280;--border:#E8E0D0; }
@@ -128,7 +128,14 @@ export default function RegisterFarmPage() {
     if (topRef.current) topRef.current.scrollIntoView({ behavior: 'smooth' });
   }, [step]);
 
-  const setField = (key, val) => setForm(f => ({ ...f, [key]: val }));
+  const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  const PHONE_RE = /^(\+420|00420)?[\s-]?[0-9]{3}[\s-]?[0-9]{3}[\s-]?[0-9]{3}$|^\+?[0-9]{7,15}$/;
+  const URL_RE = /^https?:\/\/.+\..+/;
+
+  const setField = (key, val) => {
+    setForm(f => ({ ...f, [key]: val }));
+    setErrors(e => ({ ...e, [key]: undefined, contact: undefined }));
+  };
   const toggleProduct = (id) => setForm(f => ({
     ...f, products: f.products.includes(id) ? f.products.filter(p => p !== id) : [...f.products, id],
   }));
@@ -142,7 +149,17 @@ export default function RegisterFarmPage() {
       if (!form.description.trim()) e.description = 'Napište krátký popis.';
     }
     if (s === 2 && form.products.length === 0) e.products = 'Vyberte alespoň jeden produkt.';
-    if (s === 3 && !form.phone.trim() && !form.email.trim()) e.contact = 'Zadejte alespoň telefon nebo email.';
+    if (s === 3) {
+      const hasPhone = form.phone.trim().length > 0;
+      const hasEmail = form.email.trim().length > 0;
+      if (!hasPhone && !hasEmail) {
+        e.contact = 'Zadejte alespoň telefon nebo email.';
+      } else {
+        if (hasPhone && !PHONE_RE.test(form.phone.trim())) e.phone = 'Zadejte platné telefonní číslo (např. +420 123 456 789).';
+        if (hasEmail && !EMAIL_RE.test(form.email.trim())) e.email = 'Zadejte platnou e-mailovou adresu.';
+      }
+      if (form.website.trim() && !URL_RE.test(form.website.trim())) e.website = 'Zadejte platnou URL adresu začínající http:// nebo https://.';
+    }
     return e;
   }
 
@@ -342,21 +359,21 @@ export default function RegisterFarmPage() {
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
                 <div style={fieldStyle}>
                   <label style={labelStyle}>Ulice a číslo popisné</label>
-                  <input style={inputStyle} type="text" placeholder="Farmářská 12" value={form.street} onChange={e => setField('street', e.target.value)} />
+                  <input style={inputStyle} type="text" placeholder="Farmářská 12" value={form.street} onChange={e => setField('street', e.target.value)} maxLength={255} />
                 </div>
                 <div style={fieldStyle}>
                   <label style={labelStyle}>Město / obec</label>
-                  <input style={inputStyle} type="text" placeholder="Olomouc" value={form.city} onChange={e => setField('city', e.target.value)} />
+                  <input style={inputStyle} type="text" placeholder="Olomouc" value={form.city} onChange={e => setField('city', e.target.value)} maxLength={100} />
                 </div>
               </div>
               <div className="contact-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
                 <div style={fieldStyle}>
                   <label style={labelStyle}>GPS — šířka (lat)</label>
-                  <input style={inputStyle} type="number" placeholder="např. 49.5938" step="0.0001" value={form.lat} onChange={e => setField('lat', e.target.value)} />
+                  <input style={inputStyle} type="number" placeholder="např. 49.5938" step="0.0001" min={-90} max={90} value={form.lat} onChange={e => setField('lat', e.target.value)} />
                 </div>
                 <div style={fieldStyle}>
                   <label style={labelStyle}>GPS — délka (lng)</label>
-                  <input style={inputStyle} type="number" placeholder="např. 17.2509" step="0.0001" value={form.lng} onChange={e => setField('lng', e.target.value)} />
+                  <input style={inputStyle} type="number" placeholder="např. 17.2509" step="0.0001" min={-180} max={180} value={form.lng} onChange={e => setField('lng', e.target.value)} />
                 </div>
               </div>
               <p style={{ fontSize: 12, color: '#6B7280', background: '#FAF7F2', borderRadius: 8, padding: '8px 12px', border: '1px solid #E8E0D0' }}>
@@ -365,17 +382,20 @@ export default function RegisterFarmPage() {
               <div className="contact-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
                 <div style={fieldStyle}>
                   <label style={labelStyle}>Telefon</label>
-                  <input style={{ ...inputStyle, borderColor: errors.contact ? '#FCA5A5' : '#E8E0D0' }} type="tel" placeholder="+420 123 456 789" value={form.phone} onChange={e => setField('phone', e.target.value)} />
+                  <input style={{ ...inputStyle, borderColor: (errors.contact || errors.phone) ? '#FCA5A5' : '#E8E0D0' }} type="tel" placeholder="+420 123 456 789" value={form.phone} onChange={e => setField('phone', e.target.value)} maxLength={20} />
+                  {errors.phone && <ErrorMsg msg={errors.phone} />}
                 </div>
                 <div style={fieldStyle}>
                   <label style={labelStyle}>Email</label>
-                  <input style={{ ...inputStyle, borderColor: errors.contact ? '#FCA5A5' : '#E8E0D0' }} type="email" placeholder="farma@email.cz" value={form.email} onChange={e => setField('email', e.target.value)} />
+                  <input style={{ ...inputStyle, borderColor: (errors.contact || errors.email) ? '#FCA5A5' : '#E8E0D0' }} type="email" placeholder="farma@email.cz" value={form.email} onChange={e => setField('email', e.target.value)} maxLength={255} />
+                  {errors.email && <ErrorMsg msg={errors.email} />}
                 </div>
               </div>
               {errors.contact && <ErrorMsg msg={errors.contact} />}
               <div style={fieldStyle}>
                 <label style={labelStyle}>Web / e-shop <span style={{ fontWeight: 400, color: '#aaa' }}>(volitelné)</span></label>
-                <input style={inputStyle} type="url" placeholder="https://mojefarma.cz" value={form.website} onChange={e => setField('website', e.target.value)} />
+                <input style={{ ...inputStyle, borderColor: errors.website ? '#FCA5A5' : '#E8E0D0' }} type="url" placeholder="https://mojefarma.cz" value={form.website} onChange={e => setField('website', e.target.value)} maxLength={255} />
+                {errors.website && <ErrorMsg msg={errors.website} />}
               </div>
               <div style={fieldStyle}>
                 <label style={labelStyle}>Otevírací doba <span style={{ fontWeight: 400, color: '#aaa' }}>(volitelné)</span></label>

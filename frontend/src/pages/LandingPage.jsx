@@ -76,6 +76,12 @@ const CSS_VARS = `
     .farms-grid { grid-template-columns: 1fr !important; }
     .stats-row { flex-direction: column !important; gap: 24px !important; }
   }
+  @media (max-width: 480px) {
+    .lp-nav { padding: 0 16px !important; }
+    .lp-section { padding-left: 16px !important; padding-right: 16px !important; }
+    .cat-grid { grid-template-columns: repeat(2,1fr) !important; }
+    .footer-grid { grid-template-columns: 1fr !important; }
+  }
 `;
 
 /* ─── Ticker farms ─── */
@@ -198,6 +204,25 @@ const CATEGORIES = [
   { label: 'Víno & nápoje',    filter: 'wine',   Icon: Wine,    color: '#7D3C98' },
 ];
 
+/* ─── Static content arrays — defined at module scope to avoid recreating on every render ─── */
+const HOW_IT_WORKS_STEPS = [
+  { num: '01', Icon: MapPin,     iconColor: '#2D5016', title: 'Najdi farmu',          desc: 'Prohledej mapu 1 695 lokálních farem v celé ČR. Filtruj podle produktu, regionu nebo vzdálenosti.' },
+  { num: '02', Icon: Navigation, iconColor: '#C8963E', title: 'Zajeď nebo kontaktuj', desc: 'Vyber si farmu v okolí, zavolej farmáři nebo napiš objednávku přímo jemu. Žádní prostředníci.' },
+  { num: '03', Icon: Heart,      iconColor: '#2D5016', title: 'Podpoř lokální',       desc: 'Každý nákup přímo od farmáře podporuje lokální zemědělce a udržitelné hospodaření v ČR.' },
+];
+
+const TESTIMONIALS = [
+  { name: 'Jana K.',   city: 'Praha',   quote: 'Nejlepší zelenina, co jsem kdy ochutnala. Farmář vždy připraví čerstvou sklizeň přímo na moji objednávku.', stars: 5, avatar: 'Jana+K.' },
+  { name: 'Tomáš M.', city: 'Brno',    quote: 'Konečně vím, odkud pochází moje maso. Transparentní, čerstvé, férové. Doporučuji každému!',                stars: 5, avatar: 'Tomas+M.' },
+  { name: 'Petra N.', city: 'Ostrava', quote: 'Skvělá aplikace! Každý týden objednávám od tří různých farem v okolí. Nikdy nebyl nákup tak jednoduchý.',   stars: 5, avatar: 'Petra+N.' },
+];
+
+const FOOTER_COLUMNS = [
+  { title: 'Průzkum',     links: [['Mapa farem', '/mapa'], ['Sezónní průvodce', '/sezona'], ['Blog', '/blog']] },
+  { title: 'Pro farmáře', links: [['Registrace farmy', '/pridat-farmu'], ['Ceník', '/cenik'], ['Dashboard', '/dashboard']] },
+  { title: 'Pomoc',       links: [['O nás', '/o-nas'], ['Kontakt', '/o-nas'], ['Podmínky', '/o-nas']] },
+];
+
 /* ─── Counter component ─── */
 function AnimatedCounter({ target, suffix = '' }) {
   const [count, setCount] = useState(0);
@@ -262,15 +287,22 @@ export default function LandingPage() {
       <style>{CSS_VARS}</style>
 
       {/* ── NAV ── */}
-      <nav style={{
+      <nav className="lp-nav" style={{
         position: 'fixed', top: 0, left: 0, right: 0, zIndex: 300,
         background: 'rgba(45,80,22,0.97)', backdropFilter: 'blur(16px)',
         borderBottom: '1px solid rgba(200,150,62,0.15)',
         padding: '0 40px', height: 64,
         display: 'flex', alignItems: 'center', justifyContent: 'space-between',
       }}>
-        <div onClick={() => navigate('/')} style={{ display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer' }}>
-          <span style={{ fontSize: 22 }}>🌾</span>
+        <div
+          onClick={() => navigate('/')}
+          onKeyDown={e => (e.key === 'Enter' || e.key === ' ') && navigate('/')}
+          role="button"
+          tabIndex={0}
+          aria-label="MapaFarem.cz – zpět na úvod"
+          style={{ display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer' }}
+        >
+          <span style={{ fontSize: 22 }} aria-hidden="true">🌾</span>
           <div style={{ fontFamily: "'Playfair Display',serif", fontWeight: 700, fontSize: 19, color: '#FAF7F2' }}>
             Mapa<span style={{ color: '#C8963E' }}>Farem</span>.cz
           </div>
@@ -293,7 +325,7 @@ export default function LandingPage() {
           {/* User profile / login icon */}
           <button
             onClick={() => navigate(user ? '/profil' : '/prihlaseni')}
-            title={user ? 'Můj profil' : 'Přihlásit se'}
+            aria-label={user ? 'Můj profil' : 'Přihlásit se'}
             style={{ marginLeft: 8, width: 40, height: 40, borderRadius: '50%', border: '2px solid rgba(200,150,62,0.5)',
               background: user ? 'rgba(200,150,62,0.15)' : 'transparent', cursor: 'pointer',
               display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'all .15s' }}
@@ -318,7 +350,7 @@ export default function LandingPage() {
         <div style={{ position: 'absolute', top: -100, right: -60, width: 500, height: 500, background: 'radial-gradient(circle, rgba(200,150,62,0.07) 0%, transparent 65%)', pointerEvents: 'none' }} />
         <div style={{ position: 'absolute', bottom: -100, left: -80, width: 480, height: 480, background: 'radial-gradient(circle, rgba(45,80,22,0.2) 0%, transparent 65%)', pointerEvents: 'none' }} />
 
-        <div style={{ maxWidth: 1200, margin: '0 auto', width: '100%', padding: '48px 40px' }}>
+        <div className="lp-section" style={{ maxWidth: 1200, margin: '0 auto', width: '100%', padding: '48px 40px' }}>
           <div className="hero-grid" style={{ display: 'grid', gridTemplateColumns: '55% 45%', gap: 64, alignItems: 'center' }}>
 
             {/* LEFT */}
@@ -353,6 +385,7 @@ export default function LandingPage() {
                     value={searchQ}
                     onChange={e => setSearchQ(e.target.value)}
                     placeholder="Hledat farmu, region nebo produkt..."
+                    aria-label="Hledat farmu, region nebo produkt"
                     style={{ flex: 1, padding: '14px 12px', border: 'none', outline: 'none', fontSize: 15, fontFamily: "'Inter',sans-serif", background: 'transparent', color: '#1A1A1A' }}
                   />
                   <button type="submit"
@@ -366,10 +399,11 @@ export default function LandingPage() {
 
               {/* GPS button */}
               <button onClick={() => navigate('/mapa')}
+                aria-label="Zobrazit farmy kolem mě na mapě"
                 style={{ display: 'inline-flex', alignItems: 'center', gap: 8, padding: '10px 20px', background: 'transparent', border: '2px solid rgba(250,247,242,0.35)', color: '#FAF7F2', borderRadius: 9999, fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: "'Inter',sans-serif", transition: 'border-color .2s', marginBottom: 40 }}
                 onMouseEnter={e => e.currentTarget.style.borderColor = 'rgba(250,247,242,0.7)'}
                 onMouseLeave={e => e.currentTarget.style.borderColor = 'rgba(250,247,242,0.35)'}>
-                <Navigation size={14} /> Kolem mě
+                <Navigation size={14} aria-hidden="true" /> Kolem mě
               </button>
 
               {/* Stats row */}
@@ -429,18 +463,14 @@ export default function LandingPage() {
       </div>
 
       {/* ═══ C. JAK TO FUNGUJE ═══ */}
-      <section style={{ background: '#FFFFFF', padding: '88px 40px' }}>
+      <section className="lp-section" style={{ background: '#FFFFFF', padding: '88px 40px' }}>
         <div style={{ maxWidth: 1100, margin: '0 auto' }}>
           <div style={{ textAlign: 'center', marginBottom: 64 }}>
             <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: 4, color: '#C8963E', textTransform: 'uppercase', marginBottom: 12 }}>Postup</div>
             <h2 style={{ fontFamily: "'Playfair Display',serif", fontSize: 'clamp(28px,3vw,40px)', fontWeight: 700, color: '#1A1A1A' }}>Jak to funguje?</h2>
           </div>
           <div className="steps-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 24 }}>
-            {[
-              { num: '01', Icon: MapPin, iconColor: '#2D5016', title: 'Najdi farmu', desc: 'Prohledej mapu 1 695 lokálních farem v celé ČR. Filtruj podle produktu, regionu nebo vzdálenosti.' },
-              { num: '02', Icon: Navigation, iconColor: '#C8963E', title: 'Zajeď nebo kontaktuj', desc: 'Vyber si farmu v okolí, zavolej farmáři nebo napiš objednávku přímo jemu. Žádní prostředníci.' },
-              { num: '03', Icon: Heart, iconColor: '#2D5016', title: 'Podpoř lokální', desc: 'Každý nákup přímo od farmáře podporuje lokální zemědělce a udržitelné hospodaření v ČR.' },
-            ].map((s, i) => (
+            {HOW_IT_WORKS_STEPS.map((s, i) => (
               <motion.div
                 key={i} className="step-card"
                 initial={{ opacity: 0, y: 24 }}
@@ -462,7 +492,7 @@ export default function LandingPage() {
       </section>
 
       {/* ═══ D. CATEGORY GRID ═══ */}
-      <section style={{ background: '#FAF7F2', padding: '88px 40px' }}>
+      <section className="lp-section" style={{ background: '#FAF7F2', padding: '88px 40px' }}>
         <div style={{ maxWidth: 1100, margin: '0 auto' }}>
           <div style={{ textAlign: 'center', marginBottom: 56 }}>
             <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: 4, color: '#C8963E', textTransform: 'uppercase', marginBottom: 12 }}>Kategorie</div>
@@ -476,6 +506,10 @@ export default function LandingPage() {
                   key={c.filter}
                   className="cat-card"
                   onClick={() => navigate(`/mapa?filter=${c.filter}`)}
+                  onKeyDown={e => (e.key === 'Enter' || e.key === ' ') && navigate(`/mapa?filter=${c.filter}`)}
+                  role="button"
+                  tabIndex={0}
+                  aria-label={`${c.label} – ${count} farem`}
                   initial={{ opacity: 0, y: 20 }}
                   whileInView={{ opacity: 1, y: 0 }}
                   viewport={{ once: true, margin: '-40px' }}
@@ -495,7 +529,7 @@ export default function LandingPage() {
       </section>
 
       {/* ═══ E. STATS COUNTER ═══ */}
-      <section style={{ background: '#2D5016', padding: '88px 40px' }}>
+      <section className="lp-section" style={{ background: '#2D5016', padding: '88px 40px' }}>
         <div style={{ maxWidth: 900, margin: '0 auto' }}>
           <div className="stats-row" style={{ display: 'flex', gap: 0, justifyContent: 'center' }}>
             {[
@@ -517,7 +551,7 @@ export default function LandingPage() {
       </section>
 
       {/* ═══ F. FEATURED FARMS ═══ */}
-      <section style={{ background: '#FFFFFF', padding: '88px 40px' }}>
+      <section className="lp-section" style={{ background: '#FFFFFF', padding: '88px 40px' }}>
         <div style={{ maxWidth: 1200, margin: '0 auto' }}>
           <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', marginBottom: 52, flexWrap: 'wrap', gap: 16 }}>
             <div>
@@ -539,6 +573,10 @@ export default function LandingPage() {
                   key={farm.id}
                   className="farm-card"
                   onClick={() => navigate(`/farma/${farm.id}`)}
+                  onKeyDown={e => (e.key === 'Enter' || e.key === ' ') && navigate(`/farma/${farm.id}`)}
+                  role="button"
+                  tabIndex={0}
+                  aria-label={`Zobrazit farmu ${farm.name}`}
                   initial={{ opacity: 0, y: 24 }}
                   whileInView={{ opacity: 1, y: 0 }}
                   viewport={{ once: true, margin: '-40px' }}
@@ -579,7 +617,7 @@ export default function LandingPage() {
       </section>
 
       {/* ═══ G. SEASONAL BANNER ═══ */}
-      <section style={{ background: '#FAF7F2', padding: '88px 40px' }}>
+      <section className="lp-section" style={{ background: '#FAF7F2', padding: '88px 40px' }}>
         <div style={{ maxWidth: 1100, margin: '0 auto' }}>
           <div style={{ borderRadius: 24, overflow: 'hidden', position: 'relative', display: 'grid', gridTemplateColumns: '1fr 1fr', minHeight: 340 }}>
             {/* Left content */}
@@ -623,18 +661,14 @@ export default function LandingPage() {
       </section>
 
       {/* ═══ H. TESTIMONIALS ═══ */}
-      <section style={{ background: '#FFFFFF', padding: '88px 40px' }}>
+      <section className="lp-section" style={{ background: '#FFFFFF', padding: '88px 40px' }}>
         <div style={{ maxWidth: 1100, margin: '0 auto' }}>
           <div style={{ textAlign: 'center', marginBottom: 64 }}>
             <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: 4, color: '#C8963E', textTransform: 'uppercase', marginBottom: 12 }}>Hodnocení</div>
             <h2 style={{ fontFamily: "'Playfair Display',serif", fontSize: 'clamp(28px,3vw,40px)', fontWeight: 700, color: '#1A1A1A' }}>Co říkají zákazníci</h2>
           </div>
           <div className="testimonials-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 24 }}>
-            {[
-              { name: 'Jana K.', city: 'Praha', quote: 'Nejlepší zelenina, co jsem kdy ochutnala. Farmář vždy připraví čerstvou sklizeň přímo na moji objednávku.', stars: 5, avatar: 'Jana+K.' },
-              { name: 'Tomáš M.', city: 'Brno', quote: 'Konečně vím, odkud pochází moje maso. Transparentní, čerstvé, férové. Doporučuji každému!', stars: 5, avatar: 'Tomas+M.' },
-              { name: 'Petra N.', city: 'Ostrava', quote: 'Skvělá aplikace! Každý týden objednávám od tří různých farem v okolí. Nikdy nebyl nákup tak jednoduchý.', stars: 5, avatar: 'Petra+N.' },
-            ].map((t, i) => (
+            {TESTIMONIALS.map((t, i) => (
               <motion.div
                 key={i} className="testimonial-card"
                 initial={{ opacity: 0, y: 24 }}
@@ -662,7 +696,7 @@ export default function LandingPage() {
       </section>
 
       {/* ═══ I. NEWSLETTER ═══ */}
-      <section style={{ background: '#2D5016', padding: '88px 40px', position: 'relative', overflow: 'hidden' }}>
+      <section className="lp-section" style={{ background: '#2D5016', padding: '88px 40px', position: 'relative', overflow: 'hidden' }}>
         <div style={{ position: 'absolute', top: -80, right: -80, width: 360, height: 360, background: 'radial-gradient(circle, rgba(200,150,62,0.06) 0%, transparent 65%)', pointerEvents: 'none' }} />
         <div style={{ maxWidth: 600, margin: '0 auto', textAlign: 'center', position: 'relative' }}>
           <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: 4, color: '#C8963E', textTransform: 'uppercase', marginBottom: 16 }}>Newsletter</div>
@@ -679,6 +713,7 @@ export default function LandingPage() {
                 value={nlEmail}
                 onChange={e => setNlEmail(e.target.value)}
                 placeholder="váš@email.cz"
+                aria-label="Váš e-mail pro odběr newsletteru"
                 required
                 style={{ flex: 1, padding: '14px 18px', background: '#FAF7F2', border: 'none', borderRadius: '9999px 0 0 9999px', fontSize: 14, color: '#1A1A1A', fontFamily: "'Inter',sans-serif", outline: 'none' }}
               />
@@ -690,7 +725,7 @@ export default function LandingPage() {
                 {nlStatus === 'loading' ? 'Přihlašuji...' : 'Odebírat zdarma'}
               </button>
             </div>
-            <p style={{ fontSize: 12, color: 'rgba(250,247,242,0.35)' }}>Žádný spam. Odhlásit se lze kdykoliv.</p>
+            <p style={{ fontSize: 12, color: 'rgba(250,247,242,0.55)' }}>Žádný spam. Odhlásit se lze kdykoliv.</p>
             {nlStatus === 'success' && (
               <p style={{ marginTop: 12, fontSize: 14, fontWeight: 700, color: '#4ADE80' }}>Přihlášeno! Těšte se na tipy z farem.</p>
             )}
@@ -705,7 +740,7 @@ export default function LandingPage() {
       </section>
 
       {/* ═══ J. FOOTER ═══ */}
-      <footer style={{ background: '#1A1A1A', padding: '60px 40px 32px', borderTop: '1px solid rgba(200,150,62,0.08)' }}>
+      <footer className="lp-section" style={{ background: '#1A1A1A', padding: '60px 40px 32px', borderTop: '1px solid rgba(200,150,62,0.08)' }}>
         <div style={{ maxWidth: 1100, margin: '0 auto' }}>
           <div className="footer-grid" style={{ display: 'grid', gridTemplateColumns: '2fr 1fr 1fr 1fr', gap: 40, marginBottom: 48 }}>
             <div>
@@ -715,31 +750,30 @@ export default function LandingPage() {
                   Mapa<span style={{ color: '#C8963E' }}>Farem</span>.cz
                 </div>
               </div>
-              <p style={{ fontSize: 13, color: 'rgba(250,247,242,0.3)', lineHeight: 1.8, maxWidth: 230, marginBottom: 20 }}>
+              <p style={{ fontSize: 13, color: 'rgba(250,247,242,0.55)', lineHeight: 1.8, maxWidth: 230, marginBottom: 20 }}>
                 Největší mapa lokálních farem a přírodních produktů v České republice.
               </p>
               <div style={{ display: 'flex', gap: 12 }}>
-                <a href="https://instagram.com/mapafarem" target="_blank" rel="noopener noreferrer" style={{ width: 36, height: 36, borderRadius: 8, background: 'rgba(250,247,242,0.06)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', transition: 'background .15s' }}
+                <a href="https://instagram.com/mapafarem" target="_blank" rel="noopener noreferrer" aria-label="MapaFarem na Instagramu (otevře nové okno)" style={{ width: 36, height: 36, borderRadius: 8, background: 'rgba(250,247,242,0.06)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', transition: 'background .15s' }}
                   onMouseEnter={e => e.currentTarget.style.background = 'rgba(200,150,62,0.2)'}
                   onMouseLeave={e => e.currentTarget.style.background = 'rgba(250,247,242,0.06)'}>
-                  <Instagram size={16} color="rgba(250,247,242,0.5)" />
+                  <Instagram size={16} color="rgba(250,247,242,0.5)" aria-hidden="true" />
                 </a>
-                <a href="https://facebook.com/mapafarem" target="_blank" rel="noopener noreferrer" style={{ width: 36, height: 36, borderRadius: 8, background: 'rgba(250,247,242,0.06)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', transition: 'background .15s' }}
+                <a href="https://facebook.com/mapafarem" target="_blank" rel="noopener noreferrer" aria-label="MapaFarem na Facebooku (otevře nové okno)" style={{ width: 36, height: 36, borderRadius: 8, background: 'rgba(250,247,242,0.06)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', transition: 'background .15s' }}
                   onMouseEnter={e => e.currentTarget.style.background = 'rgba(200,150,62,0.2)'}
                   onMouseLeave={e => e.currentTarget.style.background = 'rgba(250,247,242,0.06)'}>
-                  <Facebook size={16} color="rgba(250,247,242,0.5)" />
+                  <Facebook size={16} color="rgba(250,247,242,0.5)" aria-hidden="true" />
                 </a>
               </div>
             </div>
-            {[
-              { title: 'Průzkum', links: [['Mapa farem','/mapa'],['Sezónní průvodce','/sezona'],['Blog','/blog']] },
-              { title: 'Pro farmáře', links: [['Registrace farmy','/pridat-farmu'],['Ceník','/cenik'],['Dashboard','/dashboard']] },
-              { title: 'Pomoc', links: [['O nás','/o-nas'],['Kontakt','/o-nas'],['Podmínky','/o-nas']] },
-            ].map(col => (
+            {FOOTER_COLUMNS.map(col => (
               <div key={col.title}>
                 <div style={{ fontWeight: 700, fontSize: 10, color: 'rgba(200,150,62,0.55)', textTransform: 'uppercase', letterSpacing: 3, marginBottom: 18 }}>{col.title}</div>
                 {col.links.map(([l, h]) => (
                   <div key={l} className="footer-link" onClick={() => navigate(h)}
+                    onKeyDown={e => (e.key === 'Enter' || e.key === ' ') && navigate(h)}
+                    role="link"
+                    tabIndex={0}
                     style={{ fontSize: 13, color: 'rgba(250,247,242,0.45)', cursor: 'pointer', marginBottom: 10, transition: 'color .15s' }}
                     onMouseEnter={e => e.currentTarget.style.color = '#C8963E'}
                     onMouseLeave={e => e.currentTarget.style.color = 'rgba(250,247,242,0.45)'}
@@ -749,8 +783,8 @@ export default function LandingPage() {
             ))}
           </div>
           <div style={{ borderTop: '1px solid rgba(200,150,62,0.06)', paddingTop: 24, display: 'flex', justifyContent: 'space-between', flexWrap: 'wrap', gap: 8 }}>
-            <p style={{ fontSize: 12, color: 'rgba(250,247,242,0.15)' }}>© 2026 MapaFarem.cz — Podporujeme lokální zemědělství v ČR</p>
-            <p style={{ fontSize: 12, color: 'rgba(250,247,242,0.15)' }}>Data: OpenStreetMap contributors 🌱</p>
+            <p style={{ fontSize: 12, color: 'rgba(250,247,242,0.4)' }}>© 2026 MapaFarem.cz — Podporujeme lokální zemědělství v ČR</p>
+            <p style={{ fontSize: 12, color: 'rgba(250,247,242,0.4)' }}>Data: OpenStreetMap contributors 🌱</p>
           </div>
         </div>
       </footer>

@@ -33,11 +33,11 @@ export function AuthLayout({ title, subtitle, children }) {
   );
 }
 
-export function Field({ label, type='text', value, onChange, placeholder }) {
+export function Field({ label, type='text', value, onChange, placeholder, minLength, maxLength, required }) {
   return (
     <div style={{ marginBottom:14 }}>
       <label style={{ display:'block', fontSize:12, fontWeight:700, color:'#555', marginBottom:5, textTransform:'uppercase', letterSpacing:.5 }}>{label}</label>
-      <input type={type} value={value} onChange={e => onChange(e.target.value)} placeholder={placeholder}
+      <input type={type} value={value} onChange={e => onChange(e.target.value)} placeholder={placeholder} minLength={minLength} maxLength={maxLength} required={required}
         style={{ width:'100%', padding:'10px 14px', borderRadius:9, border:'1.5px solid #EDE5D0', fontFamily:"'DM Sans',sans-serif", fontSize:14, outline:'none', background:'#FDFAF4', transition:'border-color 0.15s' }}
         onFocus={e => e.target.style.borderColor='#3A5728'}
         onBlur={e => e.target.style.borderColor='#EDE5D0'} />
@@ -54,13 +54,36 @@ export function AuthButton({ children, loading, onClick }) {
 }
 
 // ── REGISTER PAGE ──────────────────────────────────────────────────────────
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const ERR_STYLE = { color: '#DC2626', fontSize: 12, marginTop: 4 };
+
 export default function RegisterPage() {
   const navigate = useNavigate();
   const { register, loading } = useAuthStore();
-  const [form, setForm] = useState({ name:'', email:'', password:'', role:'CUSTOMER' });
+  const [form, setForm] = useState({ name:'', email:'', password:'', confirm:'', role:'CUSTOMER' });
+  const [errors, setErrors] = useState({});
+
+  const setField = (key, val) => {
+    setForm(f => ({...f, [key]: val}));
+    if (errors[key]) setErrors(e => ({...e, [key]: ''}));
+  };
+
+  const validate = () => {
+    const e = {};
+    if (!form.name.trim()) e.name = 'Zadejte jméno a příjmení.';
+    if (!form.email.trim()) e.email = 'Zadejte e-mailovou adresu.';
+    else if (!EMAIL_RE.test(form.email)) e.email = 'Zadejte platnou e-mailovou adresu (např. vas@email.cz).';
+    if (!form.password) e.password = 'Zadejte heslo.';
+    else if (form.password.length < 8) e.password = 'Heslo musí mít alespoň 8 znaků.';
+    if (!form.confirm) e.confirm = 'Potvrďte heslo.';
+    else if (form.password !== form.confirm) e.confirm = 'Hesla se neshodují.';
+    return e;
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    const errs = validate();
+    if (Object.keys(errs).length > 0) { setErrors(errs); return; }
     const result = await register(form.name, form.email, form.password, form.role);
     if (result.ok) { toast.success('Účet vytvořen! Vítejte 🌱'); navigate('/'); }
     else toast.error(result.error);
@@ -69,9 +92,22 @@ export default function RegisterPage() {
   return (
     <AuthLayout title="Registrace" subtitle="Vytvořte si účet zdarma">
       <form onSubmit={handleSubmit}>
-        <Field label="Jméno a příjmení" value={form.name} onChange={v => setForm(f => ({...f, name:v}))} placeholder="Jan Novák" />
-        <Field label="E-mail" type="email" value={form.email} onChange={v => setForm(f => ({...f, email:v}))} placeholder="vas@email.cz" />
-        <Field label="Heslo (min. 8 znaků)" type="password" value={form.password} onChange={v => setForm(f => ({...f, password:v}))} placeholder="••••••••" />
+        <div style={{ marginBottom: 14 }}>
+          <Field label="Jméno a příjmení" value={form.name} onChange={v => setField('name', v)} placeholder="Jan Novák" maxLength={100} />
+          {errors.name && <div style={ERR_STYLE}>{errors.name}</div>}
+        </div>
+        <div style={{ marginBottom: 14 }}>
+          <Field label="E-mail" type="email" value={form.email} onChange={v => setField('email', v)} placeholder="vas@email.cz" maxLength={255} />
+          {errors.email && <div style={ERR_STYLE}>{errors.email}</div>}
+        </div>
+        <div style={{ marginBottom: 14 }}>
+          <Field label="Heslo (min. 8 znaků)" type="password" value={form.password} onChange={v => setField('password', v)} placeholder="••••••••" maxLength={72} />
+          {errors.password && <div style={ERR_STYLE}>{errors.password}</div>}
+        </div>
+        <div style={{ marginBottom: 14 }}>
+          <Field label="Potvrzení hesla" type="password" value={form.confirm} onChange={v => setField('confirm', v)} placeholder="••••••••" maxLength={72} />
+          {errors.confirm && <div style={ERR_STYLE}>{errors.confirm}</div>}
+        </div>
 
         {/* Role selection */}
         <div style={{ marginBottom:18 }}>

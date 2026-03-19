@@ -159,6 +159,7 @@ export default function ProfileSetupPage() {
   const [step, setStep] = useState(1);
   const [saving, setSaving] = useState(false);
   const [direction, setDirection] = useState(1);
+  const [errors, setErrors] = useState({});
 
   const [profile, setProfile] = useState(() => {
     try {
@@ -172,7 +173,10 @@ export default function ProfileSetupPage() {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(profile));
   }, [profile]);
 
-  const update = (key, value) => setProfile(p => ({ ...p, [key]: value }));
+  const update = (key, value) => {
+    setProfile(p => ({ ...p, [key]: value }));
+    if (errors[key]) setErrors(e => ({ ...e, [key]: '' }));
+  };
 
   const toggleArray = (key, value) => {
     setProfile(p => {
@@ -198,8 +202,23 @@ export default function ProfileSetupPage() {
     return Math.min(s, 100);
   };
 
-  function goNext() { setDirection(1); setStep(s => s + 1); }
-  function goBack() { setDirection(-1); setStep(s => s - 1); }
+  function validateStep(s) {
+    const e = {};
+    if (s === 1) {
+      if (!profile.firstName.trim()) e.firstName = 'Zadejte své jméno.';
+      if (!profile.lastName.trim()) e.lastName = 'Zadejte své příjmení.';
+    }
+    return e;
+  }
+
+  function goNext() {
+    const errs = validateStep(step);
+    if (Object.keys(errs).length > 0) { setErrors(errs); return; }
+    setErrors({});
+    setDirection(1);
+    setStep(s => s + 1);
+  }
+  function goBack() { setErrors({}); setDirection(-1); setStep(s => s - 1); }
 
   const handleSave = async () => {
     setSaving(true);
@@ -229,8 +248,7 @@ export default function ProfileSetupPage() {
         }, { onConflict: 'user_id' });
       }
       navigate('/profil');
-    } catch (err) {
-      console.error('Profile save error:', err);
+    } catch {
       navigate('/profil');
     } finally {
       setSaving(false);
@@ -284,23 +302,37 @@ export default function ProfileSetupPage() {
 
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 20 }}>
           <div>
-            <label style={labelStyle}>Jméno</label>
-            <input style={inputStyle} value={profile.firstName} onChange={e => update('firstName', e.target.value)} placeholder="Jana" />
+            <label style={labelStyle}>Jméno *</label>
+            <input
+              style={{ ...inputStyle, borderColor: errors.firstName ? '#FCA5A5' : '#E8E0D0' }}
+              value={profile.firstName}
+              onChange={e => update('firstName', e.target.value)}
+              placeholder="Jana"
+              maxLength={50}
+            />
+            {errors.firstName && <div style={{ color: '#DC2626', fontSize: 12, marginTop: 4 }}>{errors.firstName}</div>}
           </div>
           <div>
-            <label style={labelStyle}>Příjmení</label>
-            <input style={inputStyle} value={profile.lastName} onChange={e => update('lastName', e.target.value)} placeholder="Nováková" />
+            <label style={labelStyle}>Příjmení *</label>
+            <input
+              style={{ ...inputStyle, borderColor: errors.lastName ? '#FCA5A5' : '#E8E0D0' }}
+              value={profile.lastName}
+              onChange={e => update('lastName', e.target.value)}
+              placeholder="Nováková"
+              maxLength={50}
+            />
+            {errors.lastName && <div style={{ color: '#DC2626', fontSize: 12, marginTop: 4 }}>{errors.lastName}</div>}
           </div>
         </div>
 
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 20 }}>
           <div>
             <label style={labelStyle}>Město</label>
-            <input style={inputStyle} value={profile.city} onChange={e => update('city', e.target.value)} placeholder="Praha" />
+            <input style={inputStyle} value={profile.city} onChange={e => update('city', e.target.value)} placeholder="Praha" maxLength={100} />
           </div>
           <div>
             <label style={labelStyle}>PSČ</label>
-            <input style={inputStyle} value={profile.zip} onChange={e => update('zip', e.target.value)} placeholder="110 00" />
+            <input style={inputStyle} value={profile.zip} onChange={e => update('zip', e.target.value)} placeholder="110 00" maxLength={20} />
           </div>
         </div>
 

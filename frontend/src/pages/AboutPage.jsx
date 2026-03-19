@@ -42,11 +42,13 @@ export default function AboutPage() {
         }
         @media(max-width:480px){
           .values-grid{grid-template-columns:1fr!important;}
+          .about-nav{padding:0 16px!important;}
+          .about-section{padding-left:16px!important;padding-right:16px!important;}
         }
       `}</style>
 
       {/* NAV */}
-      <nav style={{ position:'fixed',top:0,left:0,right:0,zIndex:300,background:'rgba(245,237,224,.96)',backdropFilter:'blur(14px)',borderBottom:'1px solid rgba(191,91,61,.1)',padding:'0 40px',height:64,display:'flex',alignItems:'center',justifyContent:'space-between' }}>
+      <nav className="about-nav" style={{ position:'fixed',top:0,left:0,right:0,zIndex:300,background:'rgba(245,237,224,.96)',backdropFilter:'blur(14px)',borderBottom:'1px solid rgba(191,91,61,.1)',padding:'0 40px',height:64,display:'flex',alignItems:'center',justifyContent:'space-between' }}>
         <div onClick={() => navigate('/')} style={{ display:'flex',alignItems:'center',gap:10,cursor:'pointer' }}>
           <span style={{ fontSize:24 }}>🌾</span>
           <div style={{ fontFamily:"'Playfair Display',serif",fontWeight:700,fontSize:19,color:C.brown }}>
@@ -67,7 +69,7 @@ export default function AboutPage() {
         <Leaf style={{ position:'absolute',bottom:40,left:30,width:40,height:60,color:C.terra,opacity:.18,transform:'rotate(35deg)' }}/>
         <div style={{ position:'absolute',top:-60,left:-80,width:320,height:320,borderRadius:'50%',background:`${C.terra}`,opacity:.05 }}/>
 
-        <div style={{ maxWidth:1100,margin:'0 auto',padding:'72px 40px 60px',width:'100%' }}>
+        <div className="about-section" style={{ maxWidth:1100,margin:'0 auto',padding:'72px 40px 60px',width:'100%' }}>
           <div className="about-two" style={{ display:'grid',gridTemplateColumns:'1fr 1fr',gap:64,alignItems:'center' }}>
             <div>
               <div style={{ display:'inline-flex',alignItems:'center',gap:8,background:'rgba(191,91,61,.1)',border:'1px solid rgba(191,91,61,.25)',padding:'5px 16px',borderRadius:50,fontSize:12,fontWeight:700,color:C.terra,marginBottom:22 }}>
@@ -114,7 +116,7 @@ export default function AboutPage() {
       </section>
 
       {/* PŘÍBĚH */}
-      <section style={{ padding:'80px 40px',background:'white' }}>
+      <section className="about-section" style={{ padding:'80px 40px',background:'white' }}>
         <div style={{ maxWidth:760,margin:'0 auto',textAlign:'center' }}>
           <div style={{ fontSize:12,fontWeight:700,letterSpacing:3,color:C.terra,textTransform:'uppercase',marginBottom:12 }}>Jak jsme začali</div>
           <h2 style={{ fontFamily:"'Playfair Display',serif",fontSize:34,fontWeight:700,color:C.brown,marginBottom:28 }}>Jeden problém, jedno řešení</h2>
@@ -134,7 +136,7 @@ export default function AboutPage() {
       </section>
 
       {/* HODNOTY */}
-      <section style={{ padding:'80px 40px',background:C.cream,position:'relative',overflow:'hidden' }}>
+      <section className="about-section" style={{ padding:'80px 40px',background:C.cream,position:'relative',overflow:'hidden' }}>
         <Leaf style={{ position:'absolute',bottom:40,right:60,width:60,height:90,color:C.green,opacity:.15,transform:'rotate(15deg)' }}/>
         <div style={{ maxWidth:1100,margin:'0 auto' }}>
           <div style={{ textAlign:'center',marginBottom:52 }}>
@@ -154,7 +156,7 @@ export default function AboutPage() {
       </section>
 
       {/* TÝM */}
-      <section style={{ padding:'80px 40px',background:'white' }}>
+      <section className="about-section" style={{ padding:'80px 40px',background:'white' }}>
         <div style={{ maxWidth:900,margin:'0 auto' }}>
           <div style={{ textAlign:'center',marginBottom:52 }}>
             <div style={{ fontSize:12,fontWeight:700,letterSpacing:3,color:C.terra,textTransform:'uppercase',marginBottom:12 }}>Kdo za tím stojí</div>
@@ -176,7 +178,7 @@ export default function AboutPage() {
       </section>
 
       {/* CTA */}
-      <section style={{ padding:'80px 40px',background:C.cream }}>
+      <section className="about-section" style={{ padding:'80px 40px',background:C.cream }}>
         <div style={{ maxWidth:700,margin:'0 auto',textAlign:'center' }}>
           <div style={{ background:`linear-gradient(135deg, ${C.green} 0%, #4A7535 100%)`,borderRadius:28,padding:'52px 40px',color:'white',position:'relative',overflow:'hidden' }}>
             <div style={{ position:'absolute',top:-40,right:-40,width:180,height:180,borderRadius:'50%',border:'1px solid rgba(255,255,255,.08)' }}/>
@@ -201,7 +203,7 @@ export default function AboutPage() {
       </section>
 
       {/* FOOTER mini */}
-      <footer style={{ background:C.brown,padding:'28px 40px',textAlign:'center' }}>
+      <footer className="about-section" style={{ background:C.brown,padding:'28px 40px',textAlign:'center' }}>
         <p style={{ fontSize:12,color:'rgba(255,255,255,.3)' }}>© 2026 MapaFarem.cz · Podpora lokálního zemědělství v ČR 🌱</p>
       </footer>
     </div>

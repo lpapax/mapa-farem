@@ -147,7 +147,7 @@ export default function LoginPage() {
           </div>
 
           {/* Google */}
-          <button className="ab ab-google" onClick={handleGoogle} disabled={loading} style={{ marginBottom:16 }}>
+          <button className="ab ab-google" onClick={handleGoogle} disabled={loading} aria-label="Přihlásit se přes Google" style={{ marginBottom:16 }}>
             <svg width="18" height="18" viewBox="0 0 48 48">
               <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/>
               <path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/>
@@ -165,13 +165,18 @@ export default function LoginPage() {
 
           <form onSubmit={handleSubmit} style={{ display:'flex', flexDirection:'column', gap:12 }}>
             {mode === 'register' && (
-              <input className="ai" type="text" placeholder="Jméno" value={name}
-                onChange={e => setName(e.target.value)} required minLength={2} />
+              <>
+                <label htmlFor="login-name" style={{ position:'absolute', width:1, height:1, overflow:'hidden', clip:'rect(0,0,0,0)', whiteSpace:'nowrap' }}>Jméno</label>
+                <input id="login-name" className="ai" type="text" placeholder="Jméno" value={name}
+                  onChange={e => setName(e.target.value)} required minLength={2} autoComplete="name" />
+              </>
             )}
-            <input className="ai" type="email" placeholder="Email" value={email}
-              onChange={e => setEmail(e.target.value)} required />
-            <input className="ai" type="password" placeholder="Heslo (min. 8 znaků)" value={password}
-              onChange={e => setPassword(e.target.value)} required minLength={8} />
+            <label htmlFor="login-email" style={{ position:'absolute', width:1, height:1, overflow:'hidden', clip:'rect(0,0,0,0)', whiteSpace:'nowrap' }}>E-mail</label>
+            <input id="login-email" className="ai" type="email" placeholder="Email" value={email}
+              onChange={e => setEmail(e.target.value)} required autoComplete="email" />
+            <label htmlFor="login-password" style={{ position:'absolute', width:1, height:1, overflow:'hidden', clip:'rect(0,0,0,0)', whiteSpace:'nowrap' }}>Heslo</label>
+            <input id="login-password" className="ai" type="password" placeholder="Heslo (min. 8 znaků)" value={password}
+              onChange={e => setPassword(e.target.value)} required minLength={8} autoComplete={mode === 'register' ? 'new-password' : 'current-password'} />
 
             {error && (
               <div style={{ background:'#FEE2E2', border:'1px solid #FCA5A5', borderRadius:9, padding:'10px 14px', fontSize:13, color:'#991B1B' }}>
@@ -191,8 +196,13 @@ export default function LoginPage() {
 
           <p style={{ textAlign:'center', marginTop:20, fontSize:13, color:'#aaa' }}>
             {mode === 'login' ? 'Ještě nemáš účet?' : 'Už máš účet?'}{' '}
-            <span onClick={() => { setMode(mode==='login'?'register':'login'); setError(''); setSuccess(''); }}
-              style={{ color:'#3A5728', cursor:'pointer', fontWeight:700 }}>
+            <span
+              onClick={() => { setMode(mode==='login'?'register':'login'); setError(''); setSuccess(''); }}
+              onKeyDown={e => (e.key === 'Enter' || e.key === ' ') && (setMode(mode==='login'?'register':'login'), setError(''), setSuccess(''))}
+              role="button"
+              tabIndex={0}
+              style={{ color:'#3A5728', cursor:'pointer', fontWeight:700 }}
+            >
               {mode === 'login' ? 'Zaregistruj se' : 'Přihlaš se'}
             </span>
           </p>

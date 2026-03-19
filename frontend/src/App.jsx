@@ -5,6 +5,8 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { useAuthStore } from './store/index.js';
 import BottomNav from './components/BottomNav';
 import PrivateRoute from './components/PrivateRoute';
+import ErrorBoundary from './components/ErrorBoundary';
+import PageSkeleton from './components/PageSkeleton';
 
 // All pages lazy-loaded for optimal code splitting
 const LandingPage       = lazy(() => import('./pages/LandingPage'));
@@ -34,15 +36,9 @@ export default function App() {
 
   return (
     <BrowserRouter>
-      <Suspense fallback={
-        <div style={{ display:'grid', placeItems:'center', height:'100vh', background:'#F5EDE0', fontFamily:"'DM Sans',sans-serif" }}>
-          <div style={{ textAlign:'center' }}>
-            <div style={{ fontSize:36, marginBottom:12 }}>🌾</div>
-            <div style={{ color:'#3A5728', fontWeight:600, fontSize:16 }}>Načítám…</div>
-          </div>
-        </div>
-      }>
-        <Routes>
+      <ErrorBoundary>
+        <Suspense fallback={<PageSkeleton />}>
+          <Routes>
           <Route path="/" element={<LandingPage />} />
           <Route path="/mapa" element={<MapPage />} />
           <Route path="/farma/:id" element={<FarmDetailPage />} />
@@ -68,9 +64,10 @@ export default function App() {
           {/* Stará URL přesměruje na mapu */}
           <Route path="/zeměplocha" element={<Navigate to="/mapa" replace />} />
           <Route path="*" element={<NotFoundPageLazy />} />
-        </Routes>
-        <BottomNav />
-      </Suspense>
+          </Routes>
+          <BottomNav />
+        </Suspense>
+      </ErrorBoundary>
     </BrowserRouter>
   );
 }
