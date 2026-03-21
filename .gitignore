@@ -19,3 +19,7 @@ zemeplocha/
 
 # Leftover dev artefacts
 frontend/diff.txt
+
+# One-off scripts (may contain API keys)
+enrich_farms.py
+google_farms_new.json
